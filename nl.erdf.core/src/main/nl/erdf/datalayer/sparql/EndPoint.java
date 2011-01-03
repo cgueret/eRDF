@@ -139,8 +139,13 @@ public class EndPoint {
 
 		connManager = new ThreadSafeClientConnManager(httpParams, schemeRegistry);
 
+		// Create an HTTP client, disable cookies and don't retry requests
 		httpClient = new DefaultHttpClient(connManager, httpParams);
-
+		((DefaultHttpClient) httpClient).setCookieStore(null);
+		((DefaultHttpClient) httpClient).setCookieSpecs(null);
+		((DefaultHttpClient) httpClient).setHttpRequestRetryHandler(null);
+		
+		
 		// Create an other executor for the data service
 		// executorService = Executors.newFixedThreadPool(5);
 		jobQueue = new LinkedBlockingQueue<Runnable>();

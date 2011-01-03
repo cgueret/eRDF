@@ -8,6 +8,7 @@
   <description>RDF query engine based on evolutionary algorithms</description>
   <url>http://www.erdf.nl</url>
   <scm>
+  	<developerConnection>Christophe Gueret</developerConnection>
   	<url>https://github.com/cgueret/eRDF</url>
   </scm>
   <modules>
