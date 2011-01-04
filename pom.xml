@@ -1,16 +1,45 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>nl.erdf</groupId>
-  <version>0.0.1-SNAPSHOT</version>
-  <artifactId>erdf-parent</artifactId>
-  <packaging>pom</packaging>
-  <name>eRDF query engine</name>
-  <description>RDF query engine based on evolutionary algorithms</description>
-  <url>http://www.erdf.nl</url>
-  <scm>
-  	<url>https://github.com/cgueret/eRDF</url>
-  </scm>
-  <modules>
-  	<module>nl.erdf.core</module>
-  </modules>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>nl.erdf</groupId>
+	<version>0.1-SNAPSHOT</version>
+	<artifactId>erdf-parent</artifactId>
+	<packaging>pom</packaging>
+	<name>eRDF query engine</name>
+	<description>RDF query engine based on evolutionary algorithms</description>
+	<url>http://www.erdf.nl</url>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.7</version>
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>2.3.1</version>
+			</plugin>
+		</plugins>
+	</build>
+	<properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    </properties>
+	<scm>
+		<url>https://github.com/cgueret/eRDF</url>
+	</scm>
+	<modules>
+		<module>nl.erdf.core</module>
+		<module>nl.erdf.datalayer.hbase</module>
+	</modules>
 </project>
