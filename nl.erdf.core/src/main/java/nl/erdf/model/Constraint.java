@@ -23,7 +23,7 @@ public interface Constraint {
 
 	/**
 	 * @param position
-	 * @return
+	 * @return a part of the constraint
 	 */
 	abstract Node getPart(int position);
 

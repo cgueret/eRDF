@@ -34,6 +34,8 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 
 	/**
 	 * @param directory
+	 * @throws FileNotFoundException 
+	 * @throws IOException 
 	 */
 	public SPARQLDataLayer(Directory directory) throws FileNotFoundException, IOException {
 		this.directory = directory;
@@ -219,20 +221,6 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 	protected void finalize() throws Throwable {
 		shutdown();
 	};
-
-	/**
-	 * @return
-	 */
-	public Directory getDirectory() {
-		return cache.getDirectory();
-	}
-
-	/**
-	 * @return
-	 */
-	public Cache getCache() {
-		return cache;
-	}
 
 	/*
 	 * (non-Javadoc)

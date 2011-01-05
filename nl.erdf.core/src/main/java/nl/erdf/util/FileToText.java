@@ -5,12 +5,16 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
+/**
+ * @author Christophe Guéret <christophe.gueret@gmail.com>
+ *
+ */
 public class FileToText {
 	/**
 	 * Loads a file into a string and returns it
 	 * 
 	 * @param file
-	 * @return
+	 * @return a string representing the content of the file
 	 */
 	public static String convert(File file) {
 		byte[] buffer = new byte[(int) file.length()];

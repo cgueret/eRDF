@@ -8,6 +8,10 @@ import nl.erdf.model.Constraint;
 import nl.erdf.model.Solution;
 import nl.erdf.model.Variable;
 
+/**
+ * @author cgueret
+ *
+ */
 public class TripleConstraint implements Constraint {
 	// The graph pattern is a triple with variables in it
 	protected final Triple graphPattern;

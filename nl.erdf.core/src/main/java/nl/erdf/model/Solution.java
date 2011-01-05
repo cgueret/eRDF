@@ -40,7 +40,7 @@ public class Solution implements Comparable<Solution> {
 	}
 
 	/**
-	 * @return
+	 * @return the number of bindings
 	 */
 	public int size() {
 		return bindings.size();
@@ -111,7 +111,7 @@ public class Solution implements Comparable<Solution> {
 	}
 
 	/**
-	 * @return
+	 * @return the fitness of this solution
 	 */
 	public double getFitness() {
 		return fitness;
@@ -127,7 +127,8 @@ public class Solution implements Comparable<Solution> {
 		final int prime = 31;
 		int result = 1;
 		for (Binding binding : bindings)
-			result = prime * result + ((binding == null) ? 0 : binding.hashCode());
+			result = prime * result
+					+ ((binding == null) ? 0 : binding.hashCode());
 		return result;
 	}
 
@@ -147,7 +148,8 @@ public class Solution implements Comparable<Solution> {
 			return false;
 		Solution other = (Solution) obj;
 		for (Binding binding : bindings) {
-			if (!other.getBinding(binding.getVariable()).getValue().equals(binding.getValue())) {
+			if (!other.getBinding(binding.getVariable()).getValue()
+					.equals(binding.getValue())) {
 				return false;
 			}
 		}
@@ -173,7 +175,7 @@ public class Solution implements Comparable<Solution> {
 	}
 
 	/**
-	 * @return
+	 * @return The collection of bindings defined by this solution
 	 */
 	public Collection<Binding> bindings() {
 		return bindings;
@@ -181,7 +183,7 @@ public class Solution implements Comparable<Solution> {
 
 	/**
 	 * @param isOptimal
-	 *           the isOptimal to set
+	 *            the isOptimal to set
 	 */
 	public void setOptimal(boolean isOptimal) {
 		this.isOptimal = isOptimal;

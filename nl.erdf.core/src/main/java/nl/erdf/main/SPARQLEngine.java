@@ -1,6 +1,7 @@
 package nl.erdf.main;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -29,6 +30,10 @@ import com.hp.hpl.jena.query.ResultSetFormatter;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 
+/**
+ * @author Christophe Guéret <christophe.gueret@gmail.com>
+ *
+ */
 public class SPARQLEngine {
 	static final Logger logger = LoggerFactory.getLogger(SPARQLEngine.class);
 
@@ -48,7 +53,7 @@ public class SPARQLEngine {
 
 			// Create a data layer
 			Directory directory = new Directory();
-			directory.initFromCKAN();
+			directory.loadFrom(new FileInputStream("data/dogfood_dbpedia.csv"));
 			//directory.add("sp2b", "http://127.0.0.1:10000/sparql/");
 			DataLayer datalayer = new SPARQLDataLayer(directory);
 
@@ -85,20 +90,19 @@ public class SPARQLEngine {
 
 			// Ignore non optimal solutions
 			Solution best = (Solution) arg;
-			// logger.info(best.toString());
+			logger.info(best.toString());
 			if (!best.isOptimal())
 				return;
 
 			int count = 0;
 			for (Triple triple : request.getTripleSet(best).getTriples()) {
-				// logger.info("Add " + triple);
+				logger.info("Add " + triple);
 				model.add(model.asStatement(triple));
 				count++;
 			}
 			// logger.info("Added " + count);
 
-			// Execute the query and obtain results
-
+			// Execute the query and display results
 			logger.info("Process query...");
 			QueryExecution qe = QueryExecutionFactory.create(query, model);
 			if (query.isSelectType()) {
@@ -113,11 +117,6 @@ public class SPARQLEngine {
 			}
 		}
 
-		public void stop() {
-			// Close
-			model.close();
-		}
-
 		public void start() {
 			optimizer.run();
 		}
@@ -130,9 +129,7 @@ public class SPARQLEngine {
 	 * @throws URISyntaxException
 	 */
 	public static void main(String[] args) throws FileNotFoundException, IOException, URISyntaxException {
-		Process p = new Process("data/who_knows_frank.sparql");
+		Process p = new Process("data/people.sparql");//"data/sp2bench/q02.sparql"
 		p.start();
-		p.stop();
 	}
-
 }

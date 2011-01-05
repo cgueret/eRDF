@@ -24,6 +24,14 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import com.hp.hpl.jena.datatypes.TypeMapper;
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.Node_ANY;
+import com.hp.hpl.jena.graph.Node_Blank;
+import com.hp.hpl.jena.graph.Node_Literal;
+import com.hp.hpl.jena.graph.Node_NULL;
+import com.hp.hpl.jena.graph.Node_URI;
+import com.hp.hpl.jena.graph.Node_Variable;
+import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.rdf.model.AnonId;
 
 /**
  * @author tolgam
@@ -39,16 +47,16 @@ public class CacheUpdateTask implements Runnable {
 	private final EndPoint endpoint;
 
 	// Is it a cancelled job?
-	private boolean isCancelled = false;
+	private boolean isCanceled = false;
+
+	// Delimiter to source the blank nodes
+	protected final static String BNODE_SRC_MARKER = "####";
 
 	/**
-	 * @param httpClient
-	 * @param params
-	 * @param cm
-	 * @param endpoints
-	 * @param queryPattern
+	 * @param endpoint
+	 *            The endpoint to query
 	 * @param resourceSet
-	 *           The result to update
+	 *            The result to update
 	 */
 	public CacheUpdateTask(EndPoint endpoint, NodeSet resourceSet) {
 		this.endpoint = endpoint;
@@ -64,6 +72,9 @@ public class CacheUpdateTask implements Runnable {
 		private ReentrantLock finishLock = new ReentrantLock();
 		private Condition finished = finishLock.newCondition();
 
+		// The end point providing the results
+		private final EndPoint source;
+
 		// The set of resources parsed
 		private final NodeSet resources;
 
@@ -76,21 +87,21 @@ public class CacheUpdateTask implements Runnable {
 		private String literLang = null;
 		private StringBuffer buffer = new StringBuffer();
 
-		// private List<Node> resultSet = new ArrayList<Node>();
-
 		/**
 		 * @param source
-		 *           the address of the sparql endpoint
-		 * @param results
+		 *            the address of the sparql endpoint
+		 * @param resources
 		 */
 		public Handler(EndPoint source, NodeSet resources) {
 			this.resources = resources;
+			this.source = source;
 		}
 
 		/*
 		 * (non-Javadoc)
 		 * 
-		 * @see org.xml.sax.helpers.DefaultHandler#startElement(java.lang.String,
+		 * @see
+		 * org.xml.sax.helpers.DefaultHandler#startElement(java.lang.String,
 		 * java.lang.String, java.lang.String, org.xml.sax.Attributes)
 		 */
 		@Override
@@ -141,10 +152,12 @@ public class CacheUpdateTask implements Runnable {
 				node = Node.createURI(buffer.toString());
 				buffer.delete(0, buffer.length());
 			} else if (qname.equals("bnode")) {
-				// FIXME We ignore the blank nodes for the moment
+				buffer.append(BNODE_SRC_MARKER).append(Integer.toString(source.hashCode()));
+				node = Node.createAnon(new AnonId(buffer.toString()));
 				buffer.delete(0, buffer.length());
 			} else if (qname.equals("literal")) {
-				node = Node.createLiteral(buffer.toString(), literLang, TypeMapper.getInstance().getTypeByName(literType));
+				node = Node.createLiteral(buffer.toString(), literLang,
+						TypeMapper.getInstance().getTypeByName(literType));
 				buffer.delete(0, buffer.length());
 			}
 		}
@@ -194,30 +207,34 @@ public class CacheUpdateTask implements Runnable {
 	@Override
 	public void run() {
 		try {
-			// If cancelled, return right away
-			if (isCancelled)
+			// If canceled, return right away
+			if (isCanceled)
 				return;
 
+			// Get the query pattern
 			QueryPattern pattern = resourceSet.getPattern();
 
-			// Don't test if a blank node not issued by that peer is used
-			/*
-			 * for (Resource node : pattern.nodes()) if (node instanceof BNode) if
-			 * (!((BNode) node).getSource().equals(endpoint)) return;
-			 */
+			// Don't query if a blank node not issued by that peer is in use
+			String srcid = Integer.toString(endpoint.hashCode());
+			Triple triple = pattern.getPattern();
+			if (triple.getSubject() instanceof Node_Blank)
+				if (!triple.getSubject().getBlankNodeLabel().split(BNODE_SRC_MARKER)[1].equals(srcid))
+					return;
+			if (triple.getPredicate() instanceof Node_Blank)
+				if (!triple.getPredicate().getBlankNodeLabel().split(BNODE_SRC_MARKER)[1].equals(srcid))
+					return;
+			if (triple.getObject() instanceof Node_Blank)
+				if (!triple.getObject().getBlankNodeLabel().split(BNODE_SRC_MARKER)[1].equals(srcid))
+					return;
 
 			HttpGet httpget = null;
 			HttpEntity entity = null;
 			String uri = null;
 			try {
 				// Get the query
-				String select = "SELECT " + QueryPattern.RETURN + " WHERE { ";
-				select += pattern.toQueryString();
-				select += ". } LIMIT 1000";
-				String query = URLEncoder.encode(select, "UTF-8");
+				String query = URLEncoder.encode(queryPatternToSPARQLSelect(pattern), "UTF-8");
 				uri = endpoint.getURI() + "?query=" + query;
-				//logger.info(""+select);
-				
+
 				// Record the request
 				endpoint.setRequestsCounter(endpoint.getRequestsCounter() + 1);
 
@@ -249,8 +266,10 @@ public class CacheUpdateTask implements Runnable {
 					// Update statistics
 					long latency = TimeUnit.MILLISECONDS.convert(System.nanoTime() - start, TimeUnit.NANOSECONDS);
 					endpoint.setTotalLatency(endpoint.getTotalLatency() + latency);
-					if (total > 0)
+					if (total > 0) {
 						endpoint.setInformativeCounter(endpoint.getInformativeCounter() + 1);
+						//logger.info(endpoint.getName());
+					}
 				} else {
 					if (httpget != null)
 						httpget.abort();
@@ -261,7 +280,8 @@ public class CacheUpdateTask implements Runnable {
 			} catch (Exception e) {
 				// There was an error when asking the provider
 				endpoint.setErrorsCounter(endpoint.getErrorsCounter() + 1);
-				//logger.error("Failed to query " + endpoint.getName() + " for " + pattern);
+				// logger.error("Failed to query " + endpoint.getName() +
+				// " for " + pattern);
 				if (httpget != null)
 					httpget.abort();
 			}
@@ -272,9 +292,69 @@ public class CacheUpdateTask implements Runnable {
 	}
 
 	/**
+	 * @param pattern
+	 * @return
+	 */
+	private String queryPatternToSPARQLSelect(QueryPattern queryPattern) {
+		StringBuffer buffer = new StringBuffer();
+		Triple pattern = queryPattern.getPattern();
+
+		// Open
+		buffer.append("SELECT ").append(QueryPattern.RETURN).append(" WHERE {");
+
+		// Convert
+		String s = nodeToString(pattern.getSubject());
+		buffer.append((s.equals("") ? "?s" : s)).append(" ");
+		String p = nodeToString(pattern.getPredicate());
+		buffer.append((p.equals("") ? "?p" : p)).append(" ");
+		String o = nodeToString(pattern.getObject());
+		buffer.append((o.equals("") ? "?o" : o)).append(".");
+
+		// Close
+		buffer.append("} LIMIT 1000");
+
+		return buffer.toString();
+	}
+
+	/**
+	 * @param node
+	 */
+	private String nodeToString(Node node) {
+		// Handle URIs
+		if (node instanceof Node_URI)
+			return "<" + node.getURI() + ">";
+
+		// Handle Variables
+		if (node instanceof Node_Variable)
+			return node.toString();
+
+		// Handle Literals
+		if (node instanceof Node_Literal) {
+			if (!node.getLiteralLanguage().equals(""))
+				return "\"" + node.getLiteralValue() + "\"" + node.getLiteralLanguage();
+			if (node.getLiteralDatatypeURI() != null)
+				return "\"" + node.getLiteralLexicalForm() + "\"^^<" + node.getLiteralDatatypeURI() + ">";
+			return node.toString();
+		}
+
+		// Handle Blanks
+		if (node instanceof Node_Blank) {
+			String[] blocks = node.getBlankNodeLabel().split(BNODE_SRC_MARKER);
+			return "<" + blocks[0] + ">";
+		}
+		
+		// Handle wild cards
+		if (node instanceof Node_NULL || node instanceof Node_ANY)
+			return "";
+
+		logger.info(node.getClass().toString());
+		return null;
+	}
+
+	/**
 	 * 
 	 */
 	public synchronized void cancel() {
-		isCancelled = true;
+		isCanceled = true;
 	}
 }

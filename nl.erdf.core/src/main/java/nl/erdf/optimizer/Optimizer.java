@@ -28,10 +28,10 @@ import com.hp.hpl.jena.graph.Node;
  */
 public class Optimizer extends Observable implements Runnable {
 	/** Population size */
-	private static final int POPULATION_SIZE = 2;
+	private static final int POPULATION_SIZE = 4;
 
 	/** Population size */
-	private static final int OFFSPRING_SIZE = 4;
+	private static final int OFFSPRING_SIZE = 6;
 
 	/** Maximum generation to wait before finding an optima */
 	private static final int MAXIMUM_GENERATION = OFFSPRING_SIZE;
@@ -71,9 +71,11 @@ public class Optimizer extends Observable implements Runnable {
 	 * 
 	 * @param datalayer
 	 * @param request
+	 * @param executor 
 	 * 
 	 */
-	public Optimizer(final DataLayer datalayer, final Request request, final ExecutorService executor) {
+	public Optimizer(final DataLayer datalayer, final Request request,
+			final ExecutorService executor) {
 		// Save a pointer to the request and the datalayer
 		this.request = (SPARQLRequest) request;
 		this.datalayer = datalayer;
@@ -133,7 +135,8 @@ public class Optimizer extends Observable implements Runnable {
 			// logger.info("Generate");
 			Set<Solution> newPopulation = new HashSet<Solution>();
 			newPopulation.addAll(population);// Add the parents
-			generateOp.createPopulation(population, newPopulation, OFFSPRING_SIZE);
+			generateOp.createPopulation(population, newPopulation,
+					OFFSPRING_SIZE);
 
 			//
 			// Evaluate all of them
@@ -172,8 +175,9 @@ public class Optimizer extends Observable implements Runnable {
 			}
 			boolean opt = ((age >= MAXIMUM_GENERATION) || (best.getFitness() == 1));
 			best.setOptimal(opt);
-			logger.info("Generation " + generation + " fitness best invididual (optimal/certain) : " + best.getFitness()
-					+ " (" + best.isOptimal() + ") " + age);
+			logger.info("Generation " + generation
+					+ " fitness best invididual (optimal/certain) : "
+					+ best.getFitness() + " (" + best.isOptimal() + ") " + age);
 			// logger.info(best.toString());
 
 			//
@@ -265,14 +269,14 @@ public class Optimizer extends Observable implements Runnable {
 	}
 
 	/**
-	 * @return
+	 * @return the evaluations counter
 	 */
 	public int getEvaluationsCounter() {
 		return evaluationsCounter;
 	}
 
 	/**
-	 * @return
+	 * @return the generations counter
 	 */
 	public int getGenerationsCounter() {
 		return generation;

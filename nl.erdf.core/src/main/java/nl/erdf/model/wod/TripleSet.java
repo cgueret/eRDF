@@ -13,7 +13,8 @@ import com.hp.hpl.jena.graph.Triple;
  */
 public class TripleSet {
 	// The set of triples
-	private Set<Triple> triples = Collections.synchronizedSet(new HashSet<Triple>());
+	private Set<Triple> triples = Collections
+			.synchronizedSet(new HashSet<Triple>());
 
 	/**
 	 * @param subject
@@ -42,10 +43,8 @@ public class TripleSet {
 	}
 
 	/**
-	 * @param subject
-	 * @param predicate
-	 * @param object
-	 * @return
+	 * @param triple
+	 * @return true if the set contains the triple
 	 */
 	public boolean contains(Triple triple) {
 		boolean res = false;
@@ -57,7 +56,7 @@ public class TripleSet {
 
 	/**
 	 * @param other
-	 * @return
+	 * @return the overlap ratio with the other set
 	 */
 	public double overlapWith(TripleSet other) {
 		// Find who is the biggest
@@ -84,7 +83,7 @@ public class TripleSet {
 	}
 
 	/**
-	 * @return
+	 * @return the triples
 	 */
 	public Set<Triple> getTriples() {
 		return triples;

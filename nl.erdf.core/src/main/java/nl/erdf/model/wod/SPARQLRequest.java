@@ -44,9 +44,9 @@ public class SPARQLRequest extends Request {
 	 * triples are returned
 	 * 
 	 * @param solution
-	 *           the solution to use to instantiate the request
+	 *            the solution to use to instantiate the request
 	 * @param filter
-	 *           if true, only valid triples are returned
+	 *            if true, only valid triples are returned
 	 * @return a {TripleSet} containing valid triples
 	 */
 	public TripleSet getTripleSet(Solution solution, boolean filter) {
@@ -78,7 +78,7 @@ public class SPARQLRequest extends Request {
 	 * getTripleSet(solution, true)
 	 * 
 	 * @param solution
-	 *           the solution to use to instantiate the request
+	 *            the solution to use to instantiate the request
 	 * @return a {TripleSet} containing valid triples
 	 */
 	public TripleSet getTripleSet(Solution solution) {
@@ -86,7 +86,7 @@ public class SPARQLRequest extends Request {
 	}
 
 	/**
-	 * @return
+	 * @return the number of constraints
 	 */
 	public int size() {
 		return constraints.size();

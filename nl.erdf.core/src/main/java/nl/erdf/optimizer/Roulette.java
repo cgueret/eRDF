@@ -14,9 +14,19 @@ import java.util.Random;
 public class Roulette implements Enumeration<Object> {
 	/** An entry of the roulette */
 	public class Entry {
+		/**
+		 * 
+		 */
 		public Object object;
+		/**
+		 * 
+		 */
 		public double value;
 
+		/**
+		 * @param object
+		 * @param value
+		 */
 		public Entry(Object object, double value) {
 			this.object = object;
 			this.value = value;
@@ -41,7 +51,7 @@ public class Roulette implements Enumeration<Object> {
 	}
 
 	/**
-	 * @return
+	 * @return the content
 	 */
 	public Collection<Entry> content() {
 		return content;

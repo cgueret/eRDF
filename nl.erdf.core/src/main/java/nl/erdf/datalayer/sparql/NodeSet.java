@@ -29,7 +29,8 @@ public class NodeSet {
 	public final static NodeSet EMPTY_SET = new NodeSet(null);
 
 	// Actual content of the set
-	private final Set<Node> content = Collections.synchronizedSet(new HashSet<Node>());
+	private final Set<Node> content = Collections
+			.synchronizedSet(new HashSet<Node>());
 
 	// The query pattern this set of resources correspond to
 	private final QueryPattern pattern;
@@ -66,7 +67,7 @@ public class NodeSet {
 	 * Add a resource to the set
 	 * 
 	 * @param resource
-	 *           the resource to add
+	 *            the resource to add
 	 */
 	public void add(Node resource) {
 		// Lock the access
@@ -91,7 +92,7 @@ public class NodeSet {
 	 * Get a random resource from the set
 	 * 
 	 * @param random
-	 *           a random number generator
+	 *            a random number generator
 	 * @return a resource from the set or URI.BLANK if the set is empty
 	 */
 	public Node get(Random random) {
@@ -116,7 +117,7 @@ public class NodeSet {
 	 * Tells if a given Resource is in the set of not
 	 * 
 	 * @param resource
-	 *           a Resource to check
+	 *            a Resource to check
 	 * @return true if the resource is in the set
 	 */
 	public boolean contains(Node resource) {
@@ -174,7 +175,7 @@ public class NodeSet {
 	}
 
 	/**
-	 * @return
+	 * @return the size of the set
 	 */
 	public int size() {
 		// Lock access to the content
@@ -213,7 +214,6 @@ public class NodeSet {
 	}
 
 	/**
-	 * @param value
 	 */
 	public void decreaseUpdateTasksCounter() {
 		// Lock access to the content

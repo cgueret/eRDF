@@ -4,11 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Node_ANY;
-import com.hp.hpl.jena.graph.Node_Literal;
-import com.hp.hpl.jena.graph.Node_NULL;
-import com.hp.hpl.jena.graph.Node_URI;
-import com.hp.hpl.jena.graph.Node_Variable;
 import com.hp.hpl.jena.graph.Triple;
 
 import nl.erdf.model.Variable;
@@ -89,51 +84,11 @@ public class QueryPattern {
 	}
 
 	/**
-	 * @return
+	 * Return the triple pattern wrapped by this QueryPattern
 	 * 
+	 * @return Triple the triple pattern
 	 */
-	// FIXME Blank nodes are not dealt with
-	public String toQueryString() {
-		Node node = null;
-		StringBuffer buffer = new StringBuffer();
-
-		// Subject
-		node = pattern.getSubject();
-		if (node instanceof Node_URI)
-			buffer.append("<" + node.getURI() + ">");
-		if (node instanceof Node_Variable)
-			buffer.append(node.toString());
-		if (node instanceof Node_NULL || node instanceof Node_ANY)
-			buffer.append("?s");
-		buffer.append(" ");
-
-		// Predicate
-		node = pattern.getPredicate();
-		if (node instanceof Node_URI)
-			buffer.append("<" + node.getURI() + ">");
-		if (node instanceof Node_Variable)
-			buffer.append(node.toString());
-		if (node instanceof Node_NULL || node instanceof Node_ANY)
-			buffer.append("?p");
-		buffer.append(" ");
-
-		// Object
-		node = pattern.getObject();
-		if (node instanceof Node_URI)
-			buffer.append("<" + node.getURI() + ">");
-		if (node instanceof Node_Variable)
-			buffer.append(node.toString());
-		if (node instanceof Node_Literal) {
-			if (!node.getLiteralLanguage().equals(""))
-				buffer.append("\"" + node.getLiteralValue() + "\"" + node.getLiteralLanguage());
-			else if (node.getLiteralDatatypeURI() != null)
-				buffer.append("\"" + node.getLiteralLexicalForm() + "\"^^<" + node.getLiteralDatatypeURI() + ">");
-			else
-				buffer.append(node.toString());
-		}
-		if (node instanceof Node_NULL || node instanceof Node_ANY)
-			buffer.append("?o");
-
-		return buffer.toString();
+	public Triple getPattern() {
+		return pattern;
 	}
 }

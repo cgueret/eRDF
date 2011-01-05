@@ -10,7 +10,6 @@ public class Binding {
 	private Variable variable;
 	private Node value;
 	private double reward;
-	private int validatedStatements;
 
 	/*
 	 * (non-Javadoc)
@@ -38,7 +37,6 @@ public class Binding {
 		this.variable = variable;
 		this.value = value;
 		reward = 0;
-		validatedStatements = 0;
 	}
 
 	/*
@@ -50,7 +48,6 @@ public class Binding {
 	public Object clone() {
 		Binding newBinding = new Binding(variable, value);
 		newBinding.reward = reward;
-		newBinding.validatedStatements = validatedStatements;
 		return newBinding;
 	}
 
@@ -123,7 +120,6 @@ public class Binding {
 	 */
 	public void resetReward() {
 		reward = 0;
-		validatedStatements = 0;
 	}
 
 	/**
@@ -160,19 +156,5 @@ public class Binding {
 	 */
 	public void rescaleReward(double dd) {
 		reward = reward * dd;
-	}
-
-	/**
-	 * 
-	 */
-	public void incrementStatements() {
-		validatedStatements++;
-	}
-
-	/**
-	 * @return
-	 */
-	public int getStatements() {
-		return validatedStatements;
 	}
 }

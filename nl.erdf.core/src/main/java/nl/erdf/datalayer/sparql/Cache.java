@@ -11,11 +11,14 @@ import nl.erdf.datalayer.QueryPattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hp.hpl.jena.graph.Node_Blank;
+import com.hp.hpl.jena.graph.Triple;
+
 /**
  * MTF-HashTables based implementation of a cache
  * 
  * 
- * @author tolgam
+ * @author Christophe Guéret <christophe.gueret@gmail.com>
  * 
  */
 public class Cache {
@@ -42,8 +45,9 @@ public class Cache {
 	/**
 	 * Create a new cache instance
 	 * 
-	 * @param httpclient
-	 * @param executorService
+	 * @param directory
+	 *            the {@link Directory} to use
+	 * 
 	 */
 	public Cache(Directory directory) {
 		this.directory = directory;
@@ -62,14 +66,13 @@ public class Cache {
 	}
 
 	/**
-	 * @param hashCode
-	 *           the hashCode of the object to return
+	 * @param pattern
 	 * @return the object associated to the hasCode
 	 */
 	public NodeSet get(QueryPattern pattern) {
 		// Get the bucket
 		Bucket bucket = getBucket(pattern);
-		
+
 		bucket.lock.lock();
 		try {
 			// Find the entry
@@ -132,13 +135,18 @@ public class Cache {
 		resources.setUpdateTasksCounter(directory.endPoints().size());
 
 		// Iterate over all the end points and execute a new update task
-		for (EndPoint endpoint : directory.endPoints())
-			if (endpoint.getErrorsCounter() < 4)
-				endpoint.executeCacheUpdateTask(resources);
+		for (EndPoint endpoint : directory.endPoints()) {
+			// Don't query disabled end points
+			if (!endpoint.isEnabled())
+				continue;
+
+			// Queue an update task for that end point
+			endpoint.executeCacheUpdateTask(resources);
+		}
 	}
 
 	/**
-	 * @return
+	 * @return the directory
 	 */
 	public Directory getDirectory() {
 		return directory;

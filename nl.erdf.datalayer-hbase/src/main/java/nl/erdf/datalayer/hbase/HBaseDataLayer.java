@@ -20,6 +20,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 
 /**
@@ -68,6 +69,9 @@ public class HBaseDataLayer implements DataLayer {
 
 	private HBaseAdmin admin;
 
+	/**
+	 * @throws IOException
+	 */
 	public HBaseDataLayer() throws IOException {
 		// Get configuration from the path
 		admin = new HBaseAdmin(new HBaseConfiguration());
@@ -106,11 +110,14 @@ public class HBaseDataLayer implements DataLayer {
 	 */
 	private HTable getCountTable(QueryPattern queryPattern) {
 		HTable t;
-		if (queryPattern.nodes()[0].equals(QueryPattern.WILDCARD)) {
+		if (queryPattern.getPattern().getSubject()
+				.equals(QueryPattern.WILDCARD)) {
 			t = po_counts;
-		} else if (queryPattern.nodes()[1].equals(QueryPattern.WILDCARD)) {
+		} else if (queryPattern.getPattern().getPredicate()
+				.equals(QueryPattern.WILDCARD)) {
 			t = so_counts;
-		} else if (queryPattern.nodes()[2].equals(QueryPattern.WILDCARD)) {
+		} else if (queryPattern.getPattern().getObject()
+				.equals(QueryPattern.WILDCARD)) {
 			t = sp_counts;
 		} else
 			throw new IllegalArgumentException(
@@ -125,11 +132,14 @@ public class HBaseDataLayer implements DataLayer {
 	 */
 	private HTable getDataTable(QueryPattern queryPattern) {
 		HTable t;
-		if (queryPattern.nodes()[0].equals(QueryPattern.WILDCARD)) {
+		if (queryPattern.getPattern().getSubject()
+				.equals(QueryPattern.WILDCARD)) {
 			t = po_data;
-		} else if (queryPattern.nodes()[1].equals(QueryPattern.WILDCARD)) {
+		} else if (queryPattern.getPattern().getPredicate()
+				.equals(QueryPattern.WILDCARD)) {
 			t = so_data;
-		} else if (queryPattern.nodes()[2].equals(QueryPattern.WILDCARD)) {
+		} else if (queryPattern.getPattern().getObject()
+				.equals(QueryPattern.WILDCARD)) {
 			t = sp_data;
 		} else
 			throw new IllegalArgumentException(
@@ -137,9 +147,14 @@ public class HBaseDataLayer implements DataLayer {
 		return t;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see nl.erdf.datalayer.DataLayer#getRandomResource(java.util.Random,
+	 * nl.erdf.datalayer.QueryPattern)
+	 */
 	@Override
-	public Resource getRandomResource(Random mersenneTwisterFast,
-			QueryPattern queryPattern) {
+	public Node getRandomResource(Random random, QueryPattern queryPattern) {
 		try {
 			byte[] query = queryPatternToByteArray(queryPattern);
 
@@ -147,7 +162,7 @@ public class HBaseDataLayer implements DataLayer {
 			if (numberOfResources == 0)
 				return null; // Nothing matches this pattern
 			// FIXME: optimize: reuse computation
-			long index = mersenneTwisterFast.nextInt((int) numberOfResources);
+			long index = random.nextInt((int) numberOfResources);
 
 			byte[] queryWithRandom = new byte[query.length + 8];
 			System.arraycopy(query, 0, queryWithRandom, 0, query.length);
@@ -167,22 +182,27 @@ public class HBaseDataLayer implements DataLayer {
 						+ (c == null ? "null" : Arrays.toString(c)));
 
 			if (c != null)
-				return Resource.fromBytes(c);
+				return NodeSerializer.fromBytes(c);
 		} catch (IOException e) {
 			logger.error("Could not perform scan", e);
 		}
 		return null;
 	}
 
-	public void insert(Resource sub, Resource pred, Resource obj) {
+	/**
+	 * @param sub
+	 * @param pred
+	 * @param obj
+	 */
+	public void insert(Node sub, Node pred, Node obj) {
 		try {
 			if (logger.isDebugEnabled())
 				logger.debug("Inserting: " + sub + " " + pred + " " + obj);
 
 			// FIXME: Can be made more compact by using resourcesToBytes
-			byte[] s = sub.toBytes();
-			byte[] p = pred.toBytes();
-			byte[] o = obj.toBytes();
+			byte[] s = NodeSerializer.toBytes(sub);
+			byte[] p = NodeSerializer.toBytes(pred);
+			byte[] o = NodeSerializer.toBytes(obj);
 
 			byte[] sp = concat(s, p);
 			byte[] po = concat(p, o);
@@ -254,18 +274,23 @@ public class HBaseDataLayer implements DataLayer {
 	@Override
 	public boolean isValid(Triple triple) {
 		try {
-			Get g = new Get(resourcesToBytes(s, p, o));
+			Get g = new Get(resourcesToBytes(triple.getSubject(),
+					triple.getPredicate(), triple.getObject()));
 			Result res = spo_data.get(g); // FIXME: make sure that an empty byte
 											// array is a good value
 
-			return (res.isEmpty() ? Answer.NO : Answer.YES);
+			return !res.isEmpty();
 		} catch (IOException e) {
-			logger.error("Could not check existence for " + s + " , " + p
-					+ " , " + o, e);
-			return Answer.MAYBE;
+			logger.error("Could not check existence for " + triple, e);
+			return false;
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see nl.erdf.datalayer.DataLayer#clear()
+	 */
 	@Override
 	public void clear() {
 		logger.info("Clearing tables");
@@ -289,11 +314,20 @@ public class HBaseDataLayer implements DataLayer {
 		logger.info("Tables cleared");
 	}
 
+	/**
+	 * @param table
+	 * @throws IOException
+	 */
 	private void disableAndDeleteTable(HTable table) throws IOException {
 		admin.disableTable(table.getTableName());
 		admin.deleteTable(table.getTableName());
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see nl.erdf.datalayer.DataLayer#shutdown()
+	 */
 	@Override
 	public void shutdown() {
 		try {
@@ -312,6 +346,10 @@ public class HBaseDataLayer implements DataLayer {
 		}
 	}
 
+	/**
+	 * @param tableName
+	 * @throws IOException
+	 */
 	protected void createTable(String tableName) throws IOException {
 		HTableDescriptor hTableDescriptor = new HTableDescriptor(tableName);
 		hTableDescriptor.addFamily(new HColumnDescriptor(COLUMN));
@@ -319,6 +357,9 @@ public class HBaseDataLayer implements DataLayer {
 		logger.info("Created table: " + tableName);
 	}
 
+	/**
+	 * @throws IOException
+	 */
 	protected void initialiseTables() throws IOException {
 		String[] tableNames = new String[] { "sp_data", "po_data", "so_data",
 				"sp_counts", "po_counts", "so_counts", "spo_data" };
@@ -346,14 +387,14 @@ public class HBaseDataLayer implements DataLayer {
 	 * @return
 	 */
 	protected byte[] queryPatternToByteArray(QueryPattern pattern) {
-		Resource[] nodes = pattern.nodes();
+		Triple triple = pattern.getPattern();
 
-		if (nodes[0].equals(QueryPattern.WILDCARD))
-			return resourcesToBytes(nodes[1], nodes[2]);
-		else if (nodes[1].equals(QueryPattern.WILDCARD))
-			return resourcesToBytes(nodes[0], nodes[2]);
-		else if (nodes[2].equals(QueryPattern.WILDCARD))
-			return resourcesToBytes(nodes[0], nodes[1]);
+		if (triple.getSubject().equals(QueryPattern.WILDCARD))
+			return resourcesToBytes(triple.getPredicate(), triple.getObject());
+		else if (triple.getPredicate().equals(QueryPattern.WILDCARD))
+			return resourcesToBytes(triple.getSubject(), triple.getObject());
+		else if (triple.getObject().equals(QueryPattern.WILDCARD))
+			return resourcesToBytes(triple.getSubject(), triple.getPredicate());
 		else
 			throw new IllegalArgumentException(
 					"Query pattern has no wildcards: " + pattern);
@@ -375,12 +416,12 @@ public class HBaseDataLayer implements DataLayer {
 	 * @param r
 	 * @return
 	 */
-	private byte[] resourcesToBytes(Resource... r) {
+	private byte[] resourcesToBytes(Node... r) {
 		byte[][] ba = new byte[r.length][];
 		int count = 0;
 
 		for (int i = 0; i < ba.length; i++) {
-			ba[i] = r[i].toBytes();
+			ba[i] = NodeSerializer.toBytes(r[i]);
 			count += ba[i].length;
 		}
 
@@ -391,62 +432,6 @@ public class HBaseDataLayer implements DataLayer {
 			count += ba[i].length;
 		}
 		return ret;
-	}
-
-	/**
-	 * Test. Takes as single argument the number of triples to check. IT WILL
-	 * DELETE EVERYTHING IN HBASE. It should fail 50% of the time ;-)
-	 * 
-	 * @param args
-	 * @throws IOException
-	 */
-	public static void main(String[] args) throws IOException {
-		int count = 1;
-		HBaseDataLayer dl = new HBaseDataLayer();
-
-		dl.clear();
-
-		if (args.length > 0) {
-			count = Integer.parseInt(args[0]);
-		}
-
-		Random r1 = new Random(0);
-
-		// Write values
-		for (int i = 0; i < count; i++) {
-			Resource s = new URI("http://" + r1.nextLong(), null);
-			Resource p = new BNode("_:" + r1.nextLong(), null);
-			Resource o = new Literal(r1.nextLong() + "", "no", null);
-			Resource o2 = new Literal(r1.nextLong() + "", "no", null);
-
-			dl.insert(s, p, o);
-			dl.insert(s, p, o2);
-		}
-
-		Random r2 = new Random();
-		r1 = new Random(0); // Use the same seed to get the same values
-
-		// Read values
-		for (int i = 0; i < count; i++) {
-			Resource s = new URI("http://" + r1.nextLong(), null);
-			Resource p = new BNode("_:" + r1.nextLong(), null);
-			Resource o = new Literal(r1.nextLong() + "", "no", null);
-
-			if (!dl.getRandomResource(r2,
-					new QueryPattern(s, p, QueryPattern.WILDCARD)).equals(o)) {
-				System.err.println("Retrieval test failed");
-			}
-
-			if (!dl.getRandomResource(r2,
-					new QueryPattern(QueryPattern.WILDCARD, p, o)).equals(s)) {
-				System.err.println("Retrieval test failed");
-			}
-
-			if (!dl.getRandomResource(r2,
-					new QueryPattern(s, QueryPattern.WILDCARD, o)).equals(p)) {
-				System.err.println("Retrieval test failed");
-			}
-		}
 	}
 
 	/*

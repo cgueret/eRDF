@@ -28,20 +28,17 @@ public interface DataLayer {
 	 * @param queryPattern
 	 * @return a random term (URI/Literal/BNode)
 	 */
-	public abstract Node getRandomResource(Random random, QueryPattern queryPattern);
+	public abstract Node getRandomResource(Random random,
+			QueryPattern queryPattern);
 
 	/**
 	 * Check is the combination of S,P and O is valid according to one of the
 	 * available end points. This combination may contains blank nodes and/or
 	 * wildcards
 	 * 
-	 * @param s
-	 *           subject node
-	 * @param p
-	 *           predicate node
-	 * @param o
-	 *           object node
-	 * @return true if combination is valid
+	 * @param triple
+	 *            the Triple to check
+	 * @return true if the triple is valid
 	 */
 	public abstract boolean isValid(Triple triple);
 

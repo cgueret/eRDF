@@ -6,6 +6,7 @@ package nl.erdf.datalayer.sparql;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -25,6 +26,9 @@ import org.apache.http.params.HttpParams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hp.hpl.jena.query.Query;
+import com.hp.hpl.jena.query.QueryFactory;
+
 /**
  * @author tolgam
  * 
@@ -32,6 +36,10 @@ import org.slf4j.LoggerFactory;
 public class EndPoint {
 	// Logger instance
 	static final Logger logger = LoggerFactory.getLogger(EndPoint.class);
+
+	// The Ping query used to check if an end point is alive
+	static final Query query = QueryFactory
+			.create("SELECT * WHERE {?s ?p ?o} LIMIT 1");
 
 	// The name of this end point
 	private final String name;
@@ -64,14 +72,16 @@ public class EndPoint {
 	// Number of queries that returned some results
 	private int informativeCounter = 0;
 
+	// By default, the end point is not enabled
+	private boolean enabled = false;
+
 	/**
 	 * @param name
 	 * @param address
-	 * @param params
-	 * @param cm
 	 * @throws URISyntaxException
 	 */
-	public EndPoint(final String name, final String address) throws URISyntaxException {
+	public EndPoint(final String name, final String address)
+			throws URISyntaxException {
 		this.name = name;
 		this.URI = new URI(address);
 
@@ -79,9 +89,8 @@ public class EndPoint {
 		HttpConnectionParams.setConnectionTimeout(httpParams, 500);
 		// ConnManagerParams.setTimeout(httpParams, 5000);
 		ConnManagerParams.setMaxTotalConnections(httpParams, 200);
-		ConnManagerParams.setMaxConnectionsPerRoute(httpParams, new ConnPerRouteBean(2));
-
-		start();
+		ConnManagerParams.setMaxConnectionsPerRoute(httpParams,
+				new ConnPerRouteBean(2));
 	}
 
 	/**
@@ -113,45 +122,56 @@ public class EndPoint {
 	 * 
 	 */
 	public void shutdown() {
+		if (!isEnabled())
+			return;
+		
+		// Stop the http client
+		//httpClient.getConnectionManager().shutdown();
+		
 		// Stop the data executor
+		jobQueue.clear();
 		executor.shutdown();
 		try {
-			if (!executor.awaitTermination(3, TimeUnit.SECONDS)) {
+			if (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
+				logger.error(name + "'s data pool did not terminate");
 				executor.shutdownNow();
-				if (!executor.awaitTermination(3, TimeUnit.SECONDS))
-					logger.error(name + "'s data pool did not terminate");
+				if (!executor.awaitTermination(1, TimeUnit.SECONDS))
+					logger.error(name + "'s data pool did not terminate again");
 			}
 		} catch (InterruptedException ie) {
+			logger.error(name + " was interrupted");
 			executor.shutdownNow();
 			Thread.currentThread().interrupt();
 		}
 
-		// Stop the http client
-		httpClient.getConnectionManager().shutdown();
 	}
 
 	/**
 	 * 
 	 */
 	public void start() {
+		// Create a scheme registry
 		SchemeRegistry schemeRegistry = new SchemeRegistry();
-		schemeRegistry.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
+		schemeRegistry.register(new Scheme("http", PlainSocketFactory
+				.getSocketFactory(), 80));
 
-		connManager = new ThreadSafeClientConnManager(httpParams, schemeRegistry);
+		// Create a connection manager
+		connManager = new ThreadSafeClientConnManager(httpParams,
+				schemeRegistry);
 
 		// Create an HTTP client, disable cookies and don't retry requests
 		httpClient = new DefaultHttpClient(connManager, httpParams);
 		((DefaultHttpClient) httpClient).setCookieStore(null);
 		((DefaultHttpClient) httpClient).setCookieSpecs(null);
 		((DefaultHttpClient) httpClient).setHttpRequestRetryHandler(null);
-		
-		
+
 		// Create an other executor for the data service
-		// executorService = Executors.newFixedThreadPool(5);
+		//executor = Executors.newFixedThreadPool(5);
 		jobQueue = new LinkedBlockingQueue<Runnable>();
-		executor = new ThreadPoolExecutor(2, 2, 1, TimeUnit.SECONDS, jobQueue);
-		// FIXME Test the effect of
-		// ((ThreadPoolExecutor) executor).prestartAllCoreThreads();
+		executor = new ThreadPoolExecutor(2, 2, 10, TimeUnit.SECONDS, jobQueue);
+		((ThreadPoolExecutor) executor).prestartAllCoreThreads();
+
+		setEnabled(true);
 	}
 
 	/**
@@ -210,7 +230,7 @@ public class EndPoint {
 
 	/**
 	 * @param requestsCounter
-	 *           the requestsCounter to set
+	 *            the requestsCounter to set
 	 */
 	public synchronized void setRequestsCounter(long requestsCounter) {
 		this.requestsCounter = requestsCounter;
@@ -225,7 +245,7 @@ public class EndPoint {
 
 	/**
 	 * @param totalLatency
-	 *           the totalLatency to set
+	 *            the totalLatency to set
 	 */
 	public synchronized void setTotalLatency(long totalLatency) {
 		this.totalLatency = totalLatency;
@@ -240,7 +260,7 @@ public class EndPoint {
 
 	/**
 	 * @param errorsCounter
-	 *           the errorsCounter to set
+	 *            the errorsCounter to set
 	 */
 	public synchronized void setErrorsCounter(long errorsCounter) {
 		this.errorsCounter = errorsCounter;
@@ -255,7 +275,7 @@ public class EndPoint {
 
 	/**
 	 * @param informativeCounter
-	 *           the informativeCounter to set
+	 *            the informativeCounter to set
 	 */
 	public synchronized void setInformativeCounter(int informativeCounter) {
 		this.informativeCounter = informativeCounter;
@@ -269,17 +289,30 @@ public class EndPoint {
 	}
 
 	/**
-	 * @return
+	 * @return the job queue size
 	 */
 	public int getQueueSize() {
 		return jobQueue.size();
 	}
 
 	/**
-	 * @return
+	 * @return the http client
 	 */
 	public HttpClient getHttpClient() {
 		return httpClient;
 	}
 
+	/**
+	 * @return true if the end point seems to be usable
+	 */
+	public synchronized boolean isEnabled() {
+		return enabled;
+	}
+
+	/**
+	 * @param enabled
+	 */
+	private synchronized void setEnabled(boolean enabled) {
+		this.enabled = enabled;
+	}
 }
