@@ -53,7 +53,7 @@ public class SPARQLEngine {
 
 			// Create a data layer
 			Directory directory = new Directory();
-			directory.loadFrom(new FileInputStream("data/dogfood_dbpedia.csv"));
+			directory.loadFrom(new FileInputStream("data/ckan-endpoints.csv"));
 			//directory.add("sp2b", "http://127.0.0.1:10000/sparql/");
 			DataLayer datalayer = new SPARQLDataLayer(directory);
 
@@ -90,7 +90,7 @@ public class SPARQLEngine {
 
 			// Ignore non optimal solutions
 			Solution best = (Solution) arg;
-			logger.info(best.toString());
+			//logger.info(best.toString());
 			if (!best.isOptimal())
 				return;
 

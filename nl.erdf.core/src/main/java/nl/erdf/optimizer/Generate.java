@@ -36,7 +36,7 @@ public class Generate {
 	/**
 	 * @param datalayer
 	 * @param request
-	 *           the request to solve
+	 *            the request to solve
 	 */
 	public Generate(DataLayer datalayer, Request request) {
 		this.datalayer = datalayer;
@@ -51,8 +51,8 @@ public class Generate {
 	}
 
 	/**
-	 * Create a set of new candidate solutions. The set created is duplicate free
-	 * and a duplicate count is set for all individuals
+	 * Create a set of new candidate solutions. The set created is duplicate
+	 * free and a duplicate count is set for all individuals
 	 * 
 	 * @param population
 	 * @param target
@@ -89,9 +89,9 @@ public class Generate {
 				}
 
 				// FIXME: Gives blank bindings more importance
-				for (Entry entry : rouletteVariable.content())
-					if (((Binding) entry.object).getValue().equals(Node.NULL))
-						entry.value = max / 2;
+				// for (Entry entry : rouletteVariable.content())
+				// if (((Binding) entry.object).getValue().equals(Node.NULL))
+				// entry.value = max / 2;
 				rouletteVariable.prepare();
 				binding = ((Binding) rouletteVariable.nextElement());
 				// logger.info("Mutate " + binding.getVariable());

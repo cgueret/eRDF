@@ -34,8 +34,8 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 
 	/**
 	 * @param directory
-	 * @throws FileNotFoundException 
-	 * @throws IOException 
+	 * @throws FileNotFoundException
+	 * @throws IOException
 	 */
 	public SPARQLDataLayer(Directory directory) throws FileNotFoundException, IOException {
 		this.directory = directory;
@@ -52,7 +52,7 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 		// Create a query pattern
 		QueryPattern query = new QueryPattern(triple);
 
-		// Deal with obvious answers... if there is BLANK in the pattern it is
+		// Deal with obvious answers... if there is NULL in the pattern it is
 		// sure the answer is no
 		if (query.contains(null) || query.contains(Node.NULL))
 			return false;
@@ -61,10 +61,12 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 		Node s = triple.getSubject();
 		Node p = triple.getPredicate();
 		Node o = triple.getObject();
-		if (query.contains(Node.ANY))
+		if (query.contains(Node.ANY)) {
 			return isPartiallyValid(s, p, o);
-		else
+		} else {
+			//logger.info("Valid? " + query.getPattern());
 			return isFullyValid(s, p, o);
+		}
 	}
 
 	/**
@@ -104,16 +106,16 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 	 * Test if a fully instantiated triple is valid. First, check if the object
 	 * is cached amongst one of the *PO index. Then, is needed, check if the
 	 * object is cached in a SP* index. If that also fails, ask for the SP* and
-	 * wait to see what result comes out. NOTE: asking for *PO may not help as it
-	 * may request subjects having generic PO such as rdf:type Person. The SP*
-	 * are expected to lead to fewer results and a complete check.
+	 * wait to see what result comes out. NOTE: asking for *PO may not help as
+	 * it may request subjects having generic PO such as rdf:type Person. The
+	 * SP* are expected to lead to fewer results and a complete check.
 	 * 
 	 * @param s
-	 *           The subject
+	 *            The subject
 	 * @param p
-	 *           The predicate
+	 *            The predicate
 	 * @param o
-	 *           The object
+	 *            The object
 	 * @return True if this triple exists, false otherwise
 	 */
 	private boolean isFullyValid(final Node s, final Node p, final Node o) {
@@ -124,7 +126,8 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 		QueryPattern partialSP = new QueryPattern(s, p, QueryPattern.RETURN);
 		NodeSet resourcesSP = cache.get(partialSP);
 		// logger.info("(1) " + partialSP.toQueryString() + " " +
-		// resourcesSP.contains(o) + "/" + resourcesSP.isFinal() + " " + o + " " +
+		// resourcesSP.contains(o) + "/" + resourcesSP.isFinal() + " " + o + " "
+		// +
 		// o.getClass());
 		if (resourcesSP.contains(o))
 			return true;

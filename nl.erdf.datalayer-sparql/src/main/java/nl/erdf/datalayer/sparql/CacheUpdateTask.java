@@ -230,9 +230,10 @@ public class CacheUpdateTask implements Runnable {
 			HttpGet httpget = null;
 			HttpEntity entity = null;
 			String uri = null;
+			String queryStr = queryPatternToSPARQLSelect(pattern);
 			try {
 				// Get the query
-				String query = URLEncoder.encode(queryPatternToSPARQLSelect(pattern), "UTF-8");
+				String query = URLEncoder.encode(queryStr, "UTF-8");
 				uri = endpoint.getURI() + "?query=" + query;
 
 				// Record the request
@@ -268,7 +269,7 @@ public class CacheUpdateTask implements Runnable {
 					endpoint.setTotalLatency(endpoint.getTotalLatency() + latency);
 					if (total > 0) {
 						endpoint.setInformativeCounter(endpoint.getInformativeCounter() + 1);
-						//logger.info(endpoint.getName());
+						// logger.info(endpoint.getName());
 					}
 				} else {
 					if (httpget != null)
@@ -280,8 +281,7 @@ public class CacheUpdateTask implements Runnable {
 			} catch (Exception e) {
 				// There was an error when asking the provider
 				endpoint.setErrorsCounter(endpoint.getErrorsCounter() + 1);
-				// logger.error("Failed to query " + endpoint.getName() +
-				// " for " + pattern);
+				//logger.error("Failed to query " + endpoint.getURI() + " for " + queryStr);
 				if (httpget != null)
 					httpget.abort();
 			}
@@ -342,7 +342,7 @@ public class CacheUpdateTask implements Runnable {
 			String[] blocks = node.getBlankNodeLabel().split(BNODE_SRC_MARKER);
 			return "<" + blocks[0] + ">";
 		}
-		
+
 		// Handle wild cards
 		if (node instanceof Node_NULL || node instanceof Node_ANY)
 			return "";

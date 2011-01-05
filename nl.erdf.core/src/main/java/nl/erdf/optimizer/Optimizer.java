@@ -28,10 +28,10 @@ import com.hp.hpl.jena.graph.Node;
  */
 public class Optimizer extends Observable implements Runnable {
 	/** Population size */
-	private static final int POPULATION_SIZE = 4;
+	private static final int POPULATION_SIZE = 6;
 
 	/** Population size */
-	private static final int OFFSPRING_SIZE = 6;
+	private static final int OFFSPRING_SIZE = 10;
 
 	/** Maximum generation to wait before finding an optima */
 	private static final int MAXIMUM_GENERATION = OFFSPRING_SIZE;
@@ -159,6 +159,9 @@ public class Optimizer extends Observable implements Runnable {
 			while (population.size() > POPULATION_SIZE)
 				population.remove(population.first());
 
+			for (Solution s :population)
+				logger.info(s.toString());
+			
 			//
 			// Track for optimality
 			//
