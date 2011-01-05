@@ -11,8 +11,6 @@ import nl.erdf.datalayer.QueryPattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hp.hpl.jena.graph.Node_Blank;
-import com.hp.hpl.jena.graph.Triple;
 
 /**
  * MTF-HashTables based implementation of a cache

@@ -43,6 +43,7 @@
 	</scm>
 	<modules>
 		<module>nl.erdf.core</module>
-		<module>nl.erdf.datalayer.hbase</module>
+		<module>nl.erdf.datalayer-hbase</module>
+		<module>nl.erdf.datalayer-sparql</module>
 	</modules>
 </project>
