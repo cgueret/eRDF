@@ -208,7 +208,7 @@ public class CacheUpdateTask implements Runnable {
 	public void run() {
 		try {
 			// If canceled, return right away
-			if (isCanceled)
+			if (isCanceled || !endpoint.isEnabled())
 				return;
 
 			// Get the query pattern
@@ -247,6 +247,8 @@ public class CacheUpdateTask implements Runnable {
 				long start = System.nanoTime();
 
 				// Execute the request
+				if (!endpoint.isEnabled())
+					return; 
 				HttpResponse response = endpoint.getHttpClient().execute(httpget);
 				entity = response.getEntity();
 

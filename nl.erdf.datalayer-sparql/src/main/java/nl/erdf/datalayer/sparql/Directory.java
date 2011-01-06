@@ -13,6 +13,16 @@ import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.LinkedList;
 
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.params.ConnManagerParams;
+import org.apache.http.conn.params.ConnPerRouteBean;
+import org.apache.http.conn.scheme.PlainSocketFactory;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,11 +33,36 @@ import org.slf4j.LoggerFactory;
 // Use
 // http://download.oracle.com/javase/tutorial/essential/concurrency/forkjoin.html
 public class Directory {
-	/** Logger instance */
-	private static final Logger logger = LoggerFactory.getLogger(Directory.class);
+	// Logger instance
+	protected static final Logger logger = LoggerFactory.getLogger(Directory.class);
 
-	/** A list of SPARQL end points */
+	// A list of SPARQL end points
 	private LinkedList<EndPoint> listOfEndPoints = new LinkedList<EndPoint>();
+
+	// The client connection manager with avoids DoS
+	private final ClientConnectionManager connManager;
+
+	// Connection parameters
+	private final HttpParams httpParams;
+
+	/**
+	 * 
+	 */
+	public Directory() {
+		// Create a scheme registry
+		SchemeRegistry schemeRegistry = new SchemeRegistry();
+		schemeRegistry.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
+
+		// Set some parameters for the connections
+		httpParams = new BasicHttpParams();
+		HttpConnectionParams.setConnectionTimeout(httpParams, 200);
+		ConnManagerParams.setTimeout(httpParams, 1000);
+		ConnManagerParams.setMaxTotalConnections(httpParams, 400);
+		ConnManagerParams.setMaxConnectionsPerRoute(httpParams, new ConnPerRouteBean(2));
+
+		// Create a connection manager
+		connManager = new ThreadSafeClientConnManager(httpParams, schemeRegistry);
+	}
 
 	/**
 	 * @return a copy of endPoints in that directory
@@ -49,7 +84,7 @@ public class Directory {
 			EndPoint endPoint = new EndPoint(name, URI);
 			synchronized (listOfEndPoints) {
 				listOfEndPoints.add(endPoint);
-				endPoint.start();
+				endPoint.start(connManager, httpParams);
 			}
 			return endPoint;
 		} catch (URISyntaxException e) {
@@ -66,9 +101,9 @@ public class Directory {
 	 */
 	public synchronized void loadFrom(InputStream input) {
 		// Shutdown the end points if they are running
-		for (EndPoint endPoint: listOfEndPoints)
+		for (EndPoint endPoint : listOfEndPoints)
 			endPoint.shutdown();
-		
+
 		// Clear the current list
 		listOfEndPoints.clear();
 
@@ -106,5 +141,16 @@ public class Directory {
 			} catch (Exception e) {
 			}
 		}
+	}
+
+	/**
+	 * 
+	 */
+	public void close() {
+		logger.info("Shutdown connections");
+		for (EndPoint endPoint: listOfEndPoints)
+			endPoint.shutdown();
+		
+		connManager.shutdown();
 	}
 }

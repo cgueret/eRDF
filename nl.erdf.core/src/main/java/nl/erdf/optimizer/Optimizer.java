@@ -71,11 +71,10 @@ public class Optimizer extends Observable implements Runnable {
 	 * 
 	 * @param datalayer
 	 * @param request
-	 * @param executor 
+	 * @param executor
 	 * 
 	 */
-	public Optimizer(final DataLayer datalayer, final Request request,
-			final ExecutorService executor) {
+	public Optimizer(final DataLayer datalayer, final Request request, final ExecutorService executor) {
 		// Save a pointer to the request and the datalayer
 		this.request = (SPARQLRequest) request;
 		this.datalayer = datalayer;
@@ -135,8 +134,7 @@ public class Optimizer extends Observable implements Runnable {
 			// logger.info("Generate");
 			Set<Solution> newPopulation = new HashSet<Solution>();
 			newPopulation.addAll(population);// Add the parents
-			generateOp.createPopulation(population, newPopulation,
-					OFFSPRING_SIZE);
+			generateOp.createPopulation(population, newPopulation, OFFSPRING_SIZE);
 
 			//
 			// Evaluate all of them
@@ -159,9 +157,9 @@ public class Optimizer extends Observable implements Runnable {
 			while (population.size() > POPULATION_SIZE)
 				population.remove(population.first());
 
-			for (Solution s :population)
-				logger.info(s.toString());
-			
+			// for (Solution s :population)
+			// logger.info(s.toString());
+
 			//
 			// Track for optimality
 			//
@@ -178,9 +176,7 @@ public class Optimizer extends Observable implements Runnable {
 			}
 			boolean opt = ((age >= MAXIMUM_GENERATION) || (best.getFitness() == 1));
 			best.setOptimal(opt);
-			logger.info("Generation " + generation
-					+ " fitness best invididual (optimal/certain) : "
-					+ best.getFitness() + " (" + best.isOptimal() + ") " + age);
+			logger.info("Generation " + generation + " fitness best invididual: " + best.getFitness());
 			// logger.info(best.toString());
 
 			//

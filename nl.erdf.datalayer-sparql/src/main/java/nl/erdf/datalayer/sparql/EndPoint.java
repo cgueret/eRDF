@@ -12,15 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.conn.ClientConnectionManager;
-import org.apache.http.conn.params.ConnManagerParams;
-import org.apache.http.conn.params.ConnPerRouteBean;
-import org.apache.http.conn.scheme.PlainSocketFactory;
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,20 +29,13 @@ public class EndPoint {
 	static final Logger logger = LoggerFactory.getLogger(EndPoint.class);
 
 	// The Ping query used to check if an end point is alive
-	static final Query query = QueryFactory
-			.create("SELECT * WHERE {?s ?p ?o} LIMIT 1");
+	static final Query query = QueryFactory.create("SELECT * WHERE {?s ?p ?o} LIMIT 1");
 
 	// The name of this end point
 	private final String name;
 
 	// The URI poiting to it
 	private final URI URI;
-
-	// Parameters for the connections to SPARQL end points
-	private final HttpParams httpParams;
-
-	// The client connection manager with avoids DoS
-	private ClientConnectionManager connManager;
 
 	// Executor to run the update tasks against this end point
 	private ExecutorService executor;
@@ -79,17 +64,10 @@ public class EndPoint {
 	 * @param address
 	 * @throws URISyntaxException
 	 */
-	public EndPoint(final String name, final String address)
-			throws URISyntaxException {
+	public EndPoint(final String name, final String address) throws URISyntaxException {
 		this.name = name;
 		this.URI = new URI(address);
 
-		httpParams = new BasicHttpParams();
-		HttpConnectionParams.setConnectionTimeout(httpParams, 500);
-		// ConnManagerParams.setTimeout(httpParams, 5000);
-		ConnManagerParams.setMaxTotalConnections(httpParams, 200);
-		ConnManagerParams.setMaxConnectionsPerRoute(httpParams,
-				new ConnPerRouteBean(2));
 	}
 
 	/**
@@ -123,19 +101,29 @@ public class EndPoint {
 	public void shutdown() {
 		if (!isEnabled())
 			return;
-		
-		// Stop the http client
-		//httpClient.getConnectionManager().shutdown();
+		setEnabled(false);
+
+		// Cancel remaining tasks
+		for (Runnable runnable : jobQueue)
+			if (runnable instanceof CacheUpdateTask)
+				((CacheUpdateTask) runnable).cancel();
+		jobQueue.clear();
+
+		// Wait for the running ones to be stopped
+		try {
+			while (((ThreadPoolExecutor) executor).getActiveCount() != 0)
+				Thread.sleep(100);
+		} catch (InterruptedException ie) {
+		}
+
 		
 		// Stop the data executor
-		jobQueue.clear();
 		executor.shutdown();
 		try {
 			if (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
-				logger.error(name + "'s data pool did not terminate");
 				executor.shutdownNow();
 				if (!executor.awaitTermination(1, TimeUnit.SECONDS))
-					logger.error(name + "'s data pool did not terminate again");
+					logger.error(name + "'s data pool did not terminate");
 			}
 		} catch (InterruptedException ie) {
 			logger.error(name + " was interrupted");
@@ -148,16 +136,7 @@ public class EndPoint {
 	/**
 	 * 
 	 */
-	public void start() {
-		// Create a scheme registry
-		SchemeRegistry schemeRegistry = new SchemeRegistry();
-		schemeRegistry.register(new Scheme("http", PlainSocketFactory
-				.getSocketFactory(), 80));
-
-		// Create a connection manager
-		connManager = new ThreadSafeClientConnManager(httpParams,
-				schemeRegistry);
-
+	public void start(ClientConnectionManager connManager, HttpParams httpParams) {
 		// Create an HTTP client, disable cookies and don't retry requests
 		httpClient = new DefaultHttpClient(connManager, httpParams);
 		((DefaultHttpClient) httpClient).setCookieStore(null);
@@ -165,7 +144,7 @@ public class EndPoint {
 		((DefaultHttpClient) httpClient).setHttpRequestRetryHandler(null);
 
 		// Create an other executor for the data service
-		//executor = Executors.newFixedThreadPool(5);
+		// executor = Executors.newFixedThreadPool(5);
 		jobQueue = new LinkedBlockingQueue<Runnable>();
 		executor = new ThreadPoolExecutor(2, 2, 10, TimeUnit.SECONDS, jobQueue);
 		((ThreadPoolExecutor) executor).prestartAllCoreThreads();

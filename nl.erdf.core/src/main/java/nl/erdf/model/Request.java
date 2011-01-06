@@ -124,7 +124,7 @@ public abstract class Request {
 	 */
 	@Override
 	public String toString() {
-		String buffer = "Variables   : " + variables.size() + "\n";
+		String buffer = "Variables : " + variables.size() + "\n";
 		buffer += "Constraints :\n";
 		for (Constraint cstr : constraints)
 			buffer += cstr.toString() + "\n";

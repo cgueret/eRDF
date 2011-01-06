@@ -46,7 +46,7 @@ public class Generate {
 					constraint.getPart(2));
 			providers.add(provider);
 		}
-		logger.info("Number of providers: " + providers.size());
+		//logger.info("Number of providers: " + providers.size());
 	}
 
 	/**
