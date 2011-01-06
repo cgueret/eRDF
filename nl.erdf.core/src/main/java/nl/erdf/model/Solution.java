@@ -211,7 +211,7 @@ public class Solution implements Comparable<Solution> {
 	public int getAge() {
 		return age;
 	}
-
+	
 	/**
 	 * 
 	 */
