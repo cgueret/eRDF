@@ -5,6 +5,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
@@ -86,8 +88,7 @@ public class SPARQLEngine {
 		/*
 		 * (non-Javadoc)
 		 * 
-		 * @see java.util.Observer#update(java.util.Observable,
-		 * java.lang.Object)
+		 * @see java.util.Observer#update(java.util.Observable, java.lang.Object)
 		 */
 		@Override
 		public void update(Observable source, Object arg) {
@@ -95,12 +96,17 @@ public class SPARQLEngine {
 			if (!(source instanceof Optimizer))
 				return;
 
-			// Get the solution and its triples
-			Solution best = (Solution) arg;
-			Set<Triple> triples = request.getTripleSet(best).getTriples();
+			// Get the solutions and their triples
+			Set<Triple> triples = new HashSet<Triple>();
+			@SuppressWarnings("unchecked")
+			Collection<Solution> solutions = (Collection<Solution>) arg;
+			for (Solution s : solutions)
+				if (s.isOptimal())
+					for (Triple triple : request.getTripleSet(s).getTriples())
+						triples.add(triple);
 
 			// Add the triples
-			if (triples.size() > 0 && best.isOptimal()) {
+			if (triples.size() > 0) {
 				logger.info("Found " + triples.size() + " relevant triples");
 				for (Triple triple : triples) {
 					logger.info(triple.toString());
@@ -125,12 +131,12 @@ public class SPARQLEngine {
 					ResultSetFormatter.out(System.out, result);
 					qe.close();
 				}
-				
+
 				// Print a list of informative sources
 				logger.info("List of end points that provided information");
-				for (EndPoint endPoint: directory.endPoints()) {
+				for (EndPoint endPoint : directory.endPoints()) {
 					if (endPoint.getInformativeCounter() > 0)
-						logger.info(endPoint.getName()+" gave results to " + endPoint.getInformativeCounter() + " queries");
+						logger.info(endPoint.getName() + " gave results to " + endPoint.getInformativeCounter() + " queries");
 				}
 			}
 		}

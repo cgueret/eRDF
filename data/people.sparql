@@ -3,7 +3,7 @@ PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX db: <http://dbpedia.org/ontology/>
 
-SELECT DISTINCT * WHERE {
+SELECT DISTINCT ?person ?first ?last ?capital WHERE {
 	?person  rdf:type foaf:Person.
 	?country rdf:type db:Country.
 	?capital rdf:type db:Place.

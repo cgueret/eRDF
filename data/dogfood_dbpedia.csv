@@ -1,3 +1,3 @@
 DBpedia (dbpedia);http://dbpedia.org/sparql
 Semantic Web Dog Food Corpus (semantic-web-dog-food);http://data.semanticweb.org/sparql
-OpenLink Software LOD Cache (openlink-lod-cache);http://lod.openlinksw.com/sparql
+#OpenLink Software LOD Cache (openlink-lod-cache);http://lod.openlinksw.com/sparql
