@@ -179,15 +179,10 @@ public class Optimizer extends Observable implements Runnable {
 				}
 
 				// Print solution
-<<<<<<< HEAD
 				// logger.info(s.toString());
 			}
+
 			logger.info("Generation " + generation + ", best fitness=" + topFitness);
-=======
-				//logger.info(s.toString());
-			}
-			logger.info("Generation " + generation + ", best fitness=" + population.last().getFitness());
->>>>>>> 0fd7eafd4bee8dcbadf0cc2ae8eea0995b84a83d
 
 			//
 			// Notify observers that a loop has been done
