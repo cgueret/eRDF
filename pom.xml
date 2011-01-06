@@ -10,6 +10,7 @@
 	<url>http://www.erdf.nl</url>
 	<build>
 		<plugins>
+			<!--
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
@@ -27,6 +28,7 @@
 					</execution>
 				</executions>
 			</plugin>
+			-->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
@@ -45,5 +47,6 @@
 		<module>nl.erdf.core</module>
 		<module>nl.erdf.datalayer-hbase</module>
 		<module>nl.erdf.datalayer-sparql</module>
+		<module>nl.erdf.www</module>
 	</modules>
 </project>

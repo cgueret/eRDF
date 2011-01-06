@@ -8,7 +8,7 @@
 	</parent>
 	<groupId>nl.erdf</groupId>
 	<artifactId>datalayer-hbase</artifactId>
-	<name>eRDF query engine (HBase datalayer)</name>
+	<name>eRDF HBase DataLayer</name>
 	<version>0.1-SNAPSHOT</version>
 	<dependencies>
 		<dependency>
