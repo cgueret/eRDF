@@ -16,6 +16,9 @@ public class Solution implements Comparable<Solution> {
 	// Relevance with respect to the query
 	private double fitness = 0;
 
+	// The age of that solution
+	private int age = 0;
+
 	// Is that an optimal solution?
 	private boolean isOptimal = false;
 
@@ -65,7 +68,7 @@ public class Solution implements Comparable<Solution> {
 	 */
 	@Override
 	public String toString() {
-		String str = " (rel=" + fitness + "|opt=" + isOptimal + ")\n";
+		String str = " (rel=" + fitness + "|opt=" + isOptimal + "|age=" + age + ")\n";
 
 		for (Binding b : bindings) {
 			str += b.getReward() + "/" + b.getMaximumReward() + " ";
@@ -89,9 +92,10 @@ public class Solution implements Comparable<Solution> {
 		for (Binding binding : bindings)
 			solution.add((Binding) binding.clone());
 
-		// Copy everything else
-		solution.fitness = fitness;
-		solution.isOptimal = isOptimal;
+		// Reset everything else
+		solution.fitness = 0;
+		solution.isOptimal = false;
+		solution.age = 0;
 
 		return solution;
 	}
@@ -127,8 +131,7 @@ public class Solution implements Comparable<Solution> {
 		final int prime = 31;
 		int result = 1;
 		for (Binding binding : bindings)
-			result = prime * result
-					+ ((binding == null) ? 0 : binding.hashCode());
+			result = prime * result + ((binding == null) ? 0 : binding.hashCode());
 		return result;
 	}
 
@@ -148,8 +151,7 @@ public class Solution implements Comparable<Solution> {
 			return false;
 		Solution other = (Solution) obj;
 		for (Binding binding : bindings) {
-			if (!other.getBinding(binding.getVariable()).getValue()
-					.equals(binding.getValue())) {
+			if (!other.getBinding(binding.getVariable()).getValue().equals(binding.getValue())) {
 				return false;
 			}
 		}
@@ -183,7 +185,7 @@ public class Solution implements Comparable<Solution> {
 
 	/**
 	 * @param isOptimal
-	 *            the isOptimal to set
+	 *           the isOptimal to set
 	 */
 	public void setOptimal(boolean isOptimal) {
 		this.isOptimal = isOptimal;
@@ -194,5 +196,19 @@ public class Solution implements Comparable<Solution> {
 	 */
 	public boolean isOptimal() {
 		return isOptimal;
+	}
+
+	/**
+	 * 
+	 */
+	public void incrementAge() {
+		age++;
+	}
+
+	/**
+	 * @return
+	 */
+	public int getAge() {
+		return age;
 	}
 }

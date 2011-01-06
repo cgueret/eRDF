@@ -1,6 +1,8 @@
 package nl.erdf.optimizer;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Observable;
 import java.util.Set;
 import java.util.SortedSet;
@@ -31,10 +33,10 @@ public class Optimizer extends Observable implements Runnable {
 	private static final int POPULATION_SIZE = 6;
 
 	/** Population size */
-	private static final int OFFSPRING_SIZE = 10;
+	private static final int OFFSPRING_SIZE = 12;
 
 	/** Maximum generation to wait before finding an optima */
-	private static final int MAXIMUM_GENERATION = OFFSPRING_SIZE;
+	private static final int MAXIMUM_GENERATION = POPULATION_SIZE;
 
 	/** Logger */
 	protected final Logger logger = LoggerFactory.getLogger(Optimizer.class);
@@ -96,19 +98,6 @@ public class Optimizer extends Observable implements Runnable {
 		if (isTerminated)
 			return;
 
-		// The best so far guy
-		Solution best = null;
-		int age = 0;
-
-		//
-		// Initialise the population with a dummy individual
-		//
-		Solution solution = new Solution();
-		for (Variable variable : request.variables())
-			solution.add(new Binding(variable, Node.NULL));
-		best = (Solution) solution.clone();
-		population.add(solution);
-
 		logger.info("Run optimizer");
 		while (true) {
 			pauseLock.lock();
@@ -122,6 +111,16 @@ public class Optimizer extends Observable implements Runnable {
 				return;
 			} finally {
 				pauseLock.unlock();
+			}
+
+			//
+			// Initialise the population with a dummy individual
+			//
+			if (population.isEmpty()) {
+				Solution solution = new Solution();
+				for (Variable variable : request.variables())
+					solution.add(new Binding(variable, Node.NULL));
+				population.add(solution);
 			}
 
 			// Increment the generation counter
@@ -157,44 +156,49 @@ public class Optimizer extends Observable implements Runnable {
 			while (population.size() > POPULATION_SIZE)
 				population.remove(population.first());
 
-			// for (Solution s :population)
-			// logger.info(s.toString());
-
 			//
 			// Track for optimality
 			//
-			Solution challenger = population.last();
-			if (challenger.equals(best)) {
-				best = (Solution) challenger.clone();// Clone it anyway to take
-				// the new fitness in
-				// account
-				// if (best.isCertain())
-				age++;
-			} else {
-				best = (Solution) challenger.clone();
-				age = 0;
-			}
-			boolean opt = ((age >= MAXIMUM_GENERATION) || (best.getFitness() == 1));
-			best.setOptimal(opt);
-			logger.info("Generation " + generation + " fitness best invididual: " + best.getFitness());
-			// logger.info(best.toString());
+			for (Solution s : population) {
+				// Increment age
+				s.incrementAge();
 
-			//
-			// If the solution is optimal add its (valid!) triples to the
-			// black list
-			//
-			synchronized (blackListedTriples) {
-				if (best.isOptimal())
-					blackListedTriples.addAll(request.getTripleSet(best));
+				// Check optimality
+				boolean isOptimal = ((s.getAge() >= MAXIMUM_GENERATION) || (s.getFitness() == 1));
+				s.setOptimal(isOptimal);
+
+				// If the solution is optimal add its (valid!) triples to the black
+				// list
+				if (isOptimal) {
+					synchronized (blackListedTriples) {
+						blackListedTriples.addAll(request.getTripleSet(s));
+					}
+				}
+
+				// Print solution
+				//logger.info(s.toString());
 			}
+			logger.info("Generation " + generation + ", best fitness=" + population.last().getFitness());
 
 			//
 			// Notify observers that a loop has been done
 			//
 			setChanged();
-			notifyObservers(best);
+			notifyObservers(population);
 
+			//
+			// Wait a bit for the data layer
+			//
 			datalayer.waitForLatencyBuffer();
+
+			//
+			// Remove all optimum individuals from the population
+			//
+			List<Solution> toRemove = new ArrayList<Solution>();
+			for (Solution s : population)
+				if (s.isOptimal())
+					toRemove.add(s);
+			population.removeAll(toRemove);
 		}
 	}
 
