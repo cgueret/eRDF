@@ -243,15 +243,15 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 	 */
 	@Override
 	public void waitForLatencyBuffer() {
-		// This function blocks until there is on average less that 10
+		// This function blocks until there is on average less that 4
 		// jobs per end point queuing to be executed
 		double load = Double.MAX_VALUE;
-		while (load > 10) {
+		while (load > 4) {
 			load = 0;
 			for (EndPoint endpoint : directory.endPoints())
 				load += endpoint.getQueueSize();
 			load = load / directory.endPoints().size();
-
+			
 			// We don't have
 			try {
 				Thread.sleep((long) (50 + 2 * load));
