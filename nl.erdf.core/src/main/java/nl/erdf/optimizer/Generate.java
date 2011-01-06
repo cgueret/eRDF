@@ -13,7 +13,6 @@ import nl.erdf.model.Constraint;
 import nl.erdf.model.Request;
 import nl.erdf.model.Solution;
 import nl.erdf.model.Variable;
-import nl.erdf.optimizer.Roulette.Entry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
