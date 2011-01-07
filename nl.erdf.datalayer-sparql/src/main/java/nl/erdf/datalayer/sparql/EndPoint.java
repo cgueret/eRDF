@@ -5,6 +5,7 @@ package nl.erdf.datalayer.sparql;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -17,8 +18,6 @@ import org.apache.http.params.HttpParams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryFactory;
 
 /**
  * @author tolgam
@@ -28,9 +27,6 @@ public class EndPoint {
 	// Logger instance
 	static final Logger logger = LoggerFactory.getLogger(EndPoint.class);
 
-	// The Ping query used to check if an end point is alive
-	static final Query query = QueryFactory.create("SELECT * WHERE {?s ?p ?o} LIMIT 1");
-
 	// The name of this end point
 	private final String name;
 
@@ -39,7 +35,7 @@ public class EndPoint {
 
 	// Executor to run the update tasks against this end point
 	private ExecutorService executor;
-	private LinkedBlockingQueue<Runnable> jobQueue;
+	private BlockingQueue<Runnable> jobQueue;
 
 	// The http client used to connect to the end point
 	private DefaultHttpClient httpClient;
@@ -141,11 +137,11 @@ public class EndPoint {
 		httpClient = new DefaultHttpClient(connManager, httpParams);
 		((DefaultHttpClient) httpClient).setCookieStore(null);
 		((DefaultHttpClient) httpClient).setCookieSpecs(null);
-		((DefaultHttpClient) httpClient).setHttpRequestRetryHandler(null);
+		((DefaultHttpClient) httpClient).setHttpRequestRetryHandler(new RetryHandler());
 
 		// Create an other executor for the data service
 		// executor = Executors.newFixedThreadPool(5);
-		jobQueue = new LinkedBlockingQueue<Runnable>();
+		jobQueue = new LIFOQueue<Runnable>();
 		executor = new ThreadPoolExecutor(2, 2, 10, TimeUnit.SECONDS, jobQueue);
 		((ThreadPoolExecutor) executor).prestartAllCoreThreads();
 

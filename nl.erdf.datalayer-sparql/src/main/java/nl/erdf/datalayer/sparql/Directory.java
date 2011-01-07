@@ -13,6 +13,7 @@ import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.LinkedList;
 
+import org.apache.http.HttpVersion;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.params.ConnManagerParams;
 import org.apache.http.conn.params.ConnPerRouteBean;
@@ -21,10 +22,13 @@ import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
+import org.apache.http.params.HttpProtocolParams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 /**
  * @author tolgam
@@ -44,6 +48,8 @@ public class Directory {
 
 	// Connection parameters
 	private final HttpParams httpParams;
+	
+	
 
 	/**
 	 * 
@@ -55,13 +61,19 @@ public class Directory {
 
 		// Set some parameters for the connections
 		httpParams = new BasicHttpParams();
+    	HttpProtocolParams.setVersion(httpParams, HttpVersion.HTTP_1_1);
+    	HttpProtocolParams.setContentCharset(httpParams, "UTF-8");
+    	HttpProtocolParams.setUseExpectContinue(httpParams, true);
 		HttpConnectionParams.setConnectionTimeout(httpParams, 200);
-		ConnManagerParams.setTimeout(httpParams, 1000);
+		httpParams.setParameter(CoreConnectionPNames.SO_TIMEOUT, 200);
+		httpParams.setParameter(CoreConnectionPNames.TCP_NODELAY, true);
+		httpParams.setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, 200);
 		ConnManagerParams.setMaxTotalConnections(httpParams, 400);
 		ConnManagerParams.setMaxConnectionsPerRoute(httpParams, new ConnPerRouteBean(2));
 
 		// Create a connection manager
 		connManager = new ThreadSafeClientConnManager(httpParams, schemeRegistry);
+
 	}
 
 	/**
