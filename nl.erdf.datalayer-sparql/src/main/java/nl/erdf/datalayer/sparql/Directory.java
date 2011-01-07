@@ -147,7 +147,6 @@ public class Directory {
 			StringBuffer buffer = new StringBuffer();
 			buffer.append(endPoint.getName()).append(";").append(endPoint.getURI().toString()).append("\n");
 			try {
-				logger.info(buffer.toString());
 				writer.write(buffer.toString());
 				writer.flush();
 			} catch (Exception e) {
@@ -159,7 +158,7 @@ public class Directory {
 	 * 
 	 */
 	public void close() {
-		logger.info("Shutdown connections");
+		logger.info("Shutdown connections from the directory");
 		for (EndPoint endPoint: listOfEndPoints)
 			endPoint.shutdown();
 		

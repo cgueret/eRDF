@@ -88,7 +88,8 @@ public class SPARQLEngine {
 		/*
 		 * (non-Javadoc)
 		 * 
-		 * @see java.util.Observer#update(java.util.Observable, java.lang.Object)
+		 * @see java.util.Observer#update(java.util.Observable,
+		 * java.lang.Object)
 		 */
 		@Override
 		public void update(Observable source, Object arg) {
@@ -125,18 +126,24 @@ public class SPARQLEngine {
 				if (query.isSelectType()) {
 					ResultSet results = qe.execSelect();
 					ResultSetFormatter.out(System.out, results, query);
-					qe.close();
 				} else if (query.isAskType()) {
 					boolean result = qe.execAsk();
 					ResultSetFormatter.out(System.out, result);
-					qe.close();
+				} else if (query.isDescribeType()) {
+					Model result = qe.execDescribe();
+					result.write(System.out);
+				} else if (query.isConstructType()) {
+					Model result = qe.execConstruct();
+					result.write(System.out);
 				}
+				qe.close();
 
 				// Print a list of informative sources
 				logger.info("List of end points that provided information");
 				for (EndPoint endPoint : directory.endPoints()) {
 					if (endPoint.getInformativeCounter() > 0)
-						logger.info(endPoint.getName() + " gave results to " + endPoint.getInformativeCounter() + " queries");
+						logger.info(endPoint.getName() + " had results for " + endPoint.getInformativeCounter()
+								+ " queries");
 				}
 			}
 		}

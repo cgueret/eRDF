@@ -9,7 +9,7 @@ public class NodeSerializer {
 	 * @return
 	 */
 	public static Node fromBytes(byte[] bytes) {
-		// TODO Auto-generated method stub
+		// TODO Import code from SVN
 		return null;
 	}
 
@@ -18,7 +18,7 @@ public class NodeSerializer {
 	 * @return
 	 */
 	public static byte[] toBytes(Node resource) {
-		// TODO Auto-generated method stub
+		// TODO Import code from SVN
 		return null;
 	}
 

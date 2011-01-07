@@ -99,5 +99,8 @@ public class GetEndPointsFromCKAN {
 		OutputStream os = new FileOutputStream("ckan-endpoints.csv");
 		d.writeTo(os);
 		os.close();
+		
+		// Close the directory
+		d.close();
 	}
 }

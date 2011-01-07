@@ -1,0 +1,4 @@
+eRDF is a query engine able to solve SPARQL queries over a set of RDF sources, abstracted through a single data layer.
+
+There is a component for the core optimisation algorithm and one per datalayer. 
+(an other component is reserved for the webapp, not available yet).
