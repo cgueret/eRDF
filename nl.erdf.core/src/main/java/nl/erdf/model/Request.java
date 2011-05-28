@@ -3,6 +3,9 @@ package nl.erdf.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import nl.erdf.datalayer.DataLayer;
 
 /**
@@ -10,6 +13,8 @@ import nl.erdf.datalayer.DataLayer;
  * 
  */
 public abstract class Request {
+	static final Logger logger = LoggerFactory.getLogger(Request.class);
+	
 	/** List of variables that compose the request */
 	protected final List<Variable> variables = new ArrayList<Variable>();
 
@@ -87,11 +92,13 @@ public abstract class Request {
 	 */
 	public Constraint add(Constraint constraint) {
 		// Add the constraint
+		logger.info("Add " + constraint);
 		constraints.add(constraint);
 
 		// Tell the variables they are now part of that constraint
 		for (int i = 0; i < constraint.getSize(); i++) {
 			Object part = constraint.getPart(i);
+			System.out.println(part.getClass());
 			if (part instanceof Variable)
 				((Variable) part).addConstraint(constraint);
 		}

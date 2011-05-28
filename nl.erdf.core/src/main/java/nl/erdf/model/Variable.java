@@ -15,6 +15,7 @@ import com.hp.hpl.jena.graph.Node_Variable;
  * @author tolgam
  * 
  */
+// TODO Get rid of this class and store the information into the request
 public class Variable extends Node_Variable {
 	/** Logger class */
 	static final Logger logger = LoggerFactory.getLogger(Variable.class);
@@ -74,8 +75,7 @@ public class Variable extends Node_Variable {
 	 */
 	public void addConstraint(Constraint constraint) {
 		constraints.add(constraint);
-		// logger.debug(this.label + " in " + constraint + " "
-		// + constraints.size());
+		logger.info("Found " + this.label + " in " + constraint);
 	}
 
 	/**

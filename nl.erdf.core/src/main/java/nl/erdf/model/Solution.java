@@ -206,7 +206,7 @@ public class Solution implements Comparable<Solution> {
 	}
 
 	/**
-	 * @return
+	 * @return age
 	 */
 	public int getAge() {
 		return age;
