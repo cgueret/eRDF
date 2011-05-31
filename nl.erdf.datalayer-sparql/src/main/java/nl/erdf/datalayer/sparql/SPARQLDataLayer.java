@@ -30,7 +30,7 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 
 	// If BLOCKING is set to true, no MAYBE answer will be allowed
 	// every function will block until the final results are known
-	private static final boolean BLOCKING = false;
+	private static final boolean BLOCKING = true;
 
 	/**
 	 * @param directory
@@ -64,7 +64,7 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 		if (query.contains(Node.ANY)) {
 			return isPartiallyValid(s, p, o);
 		} else {
-			//logger.info("Valid? " + query.getPattern());
+			// logger.info("Valid? " + query.getPattern());
 			return isFullyValid(s, p, o);
 		}
 	}
@@ -75,7 +75,7 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 	 * @param o
 	 * @return
 	 */
-	private boolean isPartiallyValid(final Node s, final Node p, final Node o) {
+	private boolean isPartiallyValid(Node s, Node p, Node o) {
 		// Create the relevant partial query pattern
 		Node s2 = (s.equals(Node.ANY) ? QueryPattern.RETURN : s);
 		Node p2 = (p.equals(Node.ANY) ? QueryPattern.RETURN : p);
@@ -168,7 +168,8 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 	 * datalayer.wod.QueryPattern)
 	 */
 	@Override
-	public Node getRandomResource(Random rand, final QueryPattern queryPattern) {
+	public Node getRandomResource(Random rand, QueryPattern queryPattern) {
+
 		// Default resourceSet to use
 		NodeSet resources = NodeSet.EMPTY_SET;
 
@@ -178,6 +179,9 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 		// If blocking, wait until the result set has something in it
 		if (BLOCKING)
 			resources.waitForSomeContent();
+		
+		//logger.info(queryPattern.toString());
+		//logger.info(""+resources.size());
 
 		// Return a random resource from the set
 		return resources.get(rand);
@@ -251,8 +255,7 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 			for (EndPoint endpoint : directory.endPoints())
 				load += endpoint.getQueueSize();
 			load = load / directory.endPoints().size();
-			
-			// We don't have
+
 			try {
 				Thread.sleep((long) (50 + 2 * load));
 			} catch (InterruptedException e) {

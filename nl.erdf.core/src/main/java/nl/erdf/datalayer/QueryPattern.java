@@ -6,8 +6,6 @@ import org.slf4j.LoggerFactory;
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 
-import nl.erdf.model.Variable;
-
 /**
  * @author Christophe Guéret <christophe.gueret@gmail.com>
  * 
@@ -16,7 +14,7 @@ public class QueryPattern {
 	protected final static Logger logger = LoggerFactory.getLogger(QueryPattern.class);
 
 	/** Value used to get a result */
-	public final static Node RETURN = new Variable("value");
+	public final static Node RETURN = Node.createVariable("value");
 
 	/** Value used to represent a wildcard */
 	public final static Node WILDCARD = Node.ANY;
@@ -44,9 +42,7 @@ public class QueryPattern {
 	 * @param o
 	 * @return true if one of the nodes equals o
 	 */
-	public boolean contains(Object o) {
-		if (!(o instanceof Node))
-			return false;
+	public boolean contains(Node o) {
 		return (pattern.getSubject().equals(o) || pattern.getPredicate().equals(o) || pattern.getObject().equals(o));
 	}
 

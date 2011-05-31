@@ -1,13 +1,14 @@
 package nl.erdf.model;
 
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.Node_Variable;
 
 /**
  * @author tolgam
  * 
  */
 public class Binding {
-	private Variable variable;
+	private Node_Variable variable;
 	private Node value;
 	private double reward;
 
@@ -18,14 +19,14 @@ public class Binding {
 	 */
 	@Override
 	public String toString() {
-		return "[" + reward + "/" + getMaximumReward() + "] " + variable + "=" + value;
+		return "[" + reward + "] " + variable + "=" + value;
 	}
 
 	/**
 	 * @param variable
 	 * 
 	 */
-	public Binding(Variable variable) {
+	public Binding(Node_Variable variable) {
 		this(variable, null);
 	}
 
@@ -33,7 +34,7 @@ public class Binding {
 	 * @param variable
 	 * @param value
 	 */
-	public Binding(Variable variable, Node value) {
+	public Binding(Node_Variable variable, Node value) {
 		this.variable = variable;
 		this.value = value;
 		reward = 0;
@@ -102,7 +103,7 @@ public class Binding {
 	/**
 	 * @return the variable
 	 */
-	public Variable getVariable() {
+	public Node_Variable getVariable() {
 		return variable;
 	}
 
@@ -123,25 +124,10 @@ public class Binding {
 	}
 
 	/**
-	 * @return the ratio between the current and maximum rewards
-	 */
-	public double getRelativeReward() {
-		return reward / getMaximumReward();
-	}
-
-	/**
 	 * @return the amount of reward received
 	 */
 	public double getReward() {
 		return reward;
-	}
-
-	/**
-	 * @return the maximum reward that variable may get. That is, 1 per
-	 *         constraint
-	 */
-	public double getMaximumReward() {
-		return variable.getConstraintsSize();
 	}
 
 	/**

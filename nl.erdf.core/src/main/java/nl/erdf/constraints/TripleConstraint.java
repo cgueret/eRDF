@@ -1,23 +1,25 @@
-package nl.erdf.model.wod;
+package nl.erdf.constraints;
+
+import java.util.Set;
 
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.Node_Variable;
 import com.hp.hpl.jena.graph.Triple;
 
 import nl.erdf.datalayer.DataLayer;
 import nl.erdf.model.Constraint;
 import nl.erdf.model.Solution;
-import nl.erdf.model.Variable;
 
 /**
  * @author cgueret
- *
+ * 
  */
 public class TripleConstraint implements Constraint {
 	// The graph pattern is a triple with variables in it
 	protected final Triple graphPattern;
 
 	// The set of blacklisted triples
-	protected TripleSet blackListedTriples = null;
+	protected Set<Triple> blackListedTriples = null;
 
 	/** Low reward given to false bindings */
 	public final static double NULL_REWARD = 0;
@@ -50,7 +52,7 @@ public class TripleConstraint implements Constraint {
 	/**
 	 * @param blackListedTriples
 	 */
-	public void setBlackListedTriples(TripleSet blackListedTriples) {
+	public void setBlackListedTriples(Set<Triple> blackListedTriples) {
 		this.blackListedTriples = blackListedTriples;
 	}
 
@@ -66,23 +68,25 @@ public class TripleConstraint implements Constraint {
 		// Instantiate the triple based on the given solution
 		Node subject = graphPattern.getSubject();
 		if (subject.isVariable())
-			subject = solution.getBinding((Variable) subject).getValue();
+			subject = solution.getBinding((Node_Variable) subject).getValue();
 		Node predicate = graphPattern.getPredicate();
 		if (predicate.isVariable())
-			predicate = solution.getBinding((Variable) predicate).getValue();
+			predicate = solution.getBinding((Node_Variable) predicate).getValue();
 		Node object = graphPattern.getObject();
 		if (object.isVariable())
-			object = solution.getBinding((Variable) object).getValue();
+			object = solution.getBinding((Node_Variable) object).getValue();
 		Triple triple = Triple.create(subject, predicate, object);
 
 		// Check if it is a black listed triple and eventually return right away
-		if (blackListedTriples.contains(triple)) {
-			assignReward(solution, graphPattern.getSubject(), LOW_REWARD);
-			assignReward(solution, graphPattern.getPredicate(), LOW_REWARD);
-			assignReward(solution, graphPattern.getObject(), LOW_REWARD);
-			return;
+		if (blackListedTriples != null) {
+			if (blackListedTriples.contains(triple)) {
+				assignReward(solution, graphPattern.getSubject(), LOW_REWARD);
+				assignReward(solution, graphPattern.getPredicate(), LOW_REWARD);
+				assignReward(solution, graphPattern.getObject(), LOW_REWARD);
+				return;
+			}
 		}
-
+		
 		// Check if the triple is valid and eventually return right away
 		if (dataLayer.isValid(triple)) {
 			assignReward(solution, graphPattern.getSubject(), HIGH_REWARD);
@@ -134,7 +138,7 @@ public class TripleConstraint implements Constraint {
 			return;
 
 		// Credit the binding with the reward
-		solution.getBinding((Variable) node).incrementReward(reward);
+		solution.getBinding((Node_Variable) node).incrementReward(reward);
 	}
 
 	/*

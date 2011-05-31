@@ -3,6 +3,8 @@ package nl.erdf.model;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import com.hp.hpl.jena.graph.Node_Variable;
+
 /**
  * A solution to a request is a set of bindings
  * 
@@ -26,7 +28,7 @@ public class Solution implements Comparable<Solution> {
 	 * @param variable
 	 * @return the binding for that variable
 	 */
-	public Binding getBinding(final Variable variable) {
+	public Binding getBinding(Node_Variable variable) {
 		for (int i = 0; i < size(); i++)
 			if (get(i).getVariable().equals(variable))
 				return get(i);
@@ -49,17 +51,12 @@ public class Solution implements Comparable<Solution> {
 		return bindings.size();
 	}
 
-	/**
-	 * @param variable
-	 * @return true if the solution has a binding for that variable
+	/*
+	 * public boolean containsVariable(Node_Variable variable) { for (int i = 0;
+	 * i < size(); i++) if (get(i).getVariable().equals(variable)) return true;
+	 * 
+	 * return false; }
 	 */
-	public boolean containsVariable(final Variable variable) {
-		for (int i = 0; i < size(); i++)
-			if (get(i).getVariable().equals(variable))
-				return true;
-
-		return false;
-	}
 
 	/*
 	 * (non-Javadoc)
@@ -71,7 +68,7 @@ public class Solution implements Comparable<Solution> {
 		String str = " (rel=" + fitness + "|opt=" + isOptimal + "|age=" + age + ")\n";
 
 		for (Binding b : bindings) {
-			str += b.getReward() + "/" + b.getMaximumReward() + " ";
+			str += b.getReward() + " ";
 			str += b.getVariable() + " = ";
 			str += (b.getValue() != null ? b.getValue() : "null") + "\n";
 		}
@@ -185,7 +182,7 @@ public class Solution implements Comparable<Solution> {
 
 	/**
 	 * @param isOptimal
-	 *           the isOptimal to set
+	 *            the isOptimal to set
 	 */
 	public void setOptimal(boolean isOptimal) {
 		this.isOptimal = isOptimal;
@@ -211,7 +208,7 @@ public class Solution implements Comparable<Solution> {
 	public int getAge() {
 		return age;
 	}
-	
+
 	/**
 	 * 
 	 */

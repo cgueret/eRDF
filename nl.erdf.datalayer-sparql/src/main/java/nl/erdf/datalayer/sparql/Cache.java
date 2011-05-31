@@ -11,7 +11,6 @@ import nl.erdf.datalayer.QueryPattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 /**
  * MTF-HashTables based implementation of a cache
  * 
@@ -28,8 +27,8 @@ public class Cache {
 
 	// The cache content
 	private class Bucket {
-		public final ReentrantLock lock = new ReentrantLock();
-		public final LinkedList<NodeSet> content = new LinkedList<NodeSet>();
+		final ReentrantLock lock = new ReentrantLock();
+		final LinkedList<NodeSet> content = new LinkedList<NodeSet>();
 	}
 
 	private List<Bucket> cache;

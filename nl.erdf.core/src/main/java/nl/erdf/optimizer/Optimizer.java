@@ -15,14 +15,13 @@ import nl.erdf.datalayer.DataLayer;
 import nl.erdf.model.Binding;
 import nl.erdf.model.Request;
 import nl.erdf.model.Solution;
-import nl.erdf.model.Variable;
-import nl.erdf.model.wod.SPARQLRequest;
-import nl.erdf.model.wod.TripleSet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.Node_Variable;
+import com.hp.hpl.jena.graph.Triple;
 
 /**
  * @author tolgam
@@ -36,7 +35,7 @@ public class Optimizer extends Observable implements Runnable {
 	private static final int OFFSPRING_SIZE = 12;
 
 	/** Maximum generation to wait before finding an optima */
-	private static final int MAXIMUM_GENERATION = POPULATION_SIZE;
+	private static final int MAXIMUM_GENERATION = POPULATION_SIZE*100;
 
 	/** Logger */
 	protected final Logger logger = LoggerFactory.getLogger(Optimizer.class);
@@ -45,7 +44,7 @@ public class Optimizer extends Observable implements Runnable {
 	protected final SortedSet<Solution> population = new TreeSet<Solution>();
 
 	/** Hall of fame to put all the results found */
-	private final TripleSet blackListedTriples = new TripleSet();
+	private final Set<Triple> blackListedTriples = new HashSet<Triple>();
 
 	/** Mutation operator used to generate new populations */
 	private final Generate generateOp;
@@ -55,7 +54,7 @@ public class Optimizer extends Observable implements Runnable {
 
 	/** Counter for statistics about the number of evaluations */
 	private int evaluationsCounter = 0;
-	private final SPARQLRequest request;
+	private final Request request;
 
 	/** Activity control */
 	private boolean isPaused = false;
@@ -78,7 +77,7 @@ public class Optimizer extends Observable implements Runnable {
 	 */
 	public Optimizer(final DataLayer datalayer, final Request request, final ExecutorService executor) {
 		// Save a pointer to the request and the datalayer
-		this.request = (SPARQLRequest) request;
+		this.request = request;
 		this.datalayer = datalayer;
 
 		// Create the operators
@@ -118,7 +117,7 @@ public class Optimizer extends Observable implements Runnable {
 			//
 			if (population.isEmpty()) {
 				Solution solution = new Solution();
-				for (Variable variable : request.variables())
+				for (Node_Variable variable : request.variables())
 					solution.add(new Binding(variable, Node.NULL));
 				population.add(solution);
 			}
@@ -167,7 +166,7 @@ public class Optimizer extends Observable implements Runnable {
 				s.incrementAge();
 
 				// Check optimality
-				boolean isOptimal = ((s.getAge() >= MAXIMUM_GENERATION) || (s.getFitness() == 1));
+				boolean isOptimal = ((s.getAge() >= MAXIMUM_GENERATION && s.getFitness() > 0) || (s.getFitness() == 1));
 				s.setOptimal(isOptimal);
 
 				// If the solution is optimal add its (valid!) triples to the black

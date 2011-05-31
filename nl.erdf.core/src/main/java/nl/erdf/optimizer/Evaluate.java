@@ -3,18 +3,20 @@ package nl.erdf.optimizer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
+import nl.erdf.constraints.TripleConstraint;
 import nl.erdf.model.Constraint;
 import nl.erdf.model.Request;
 import nl.erdf.model.Solution;
-import nl.erdf.model.wod.TripleConstraint;
-import nl.erdf.model.wod.TripleSet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.hp.hpl.jena.graph.Triple;
 
 /**
  * @author tolgam
@@ -35,7 +37,7 @@ public class Evaluate {
 	 * @param blackListedTriples
 	 * @param executor
 	 */
-	public Evaluate(Request request, TripleSet blackListedTriples, ExecutorService executor) {
+	public Evaluate(Request request, Set<Triple> blackListedTriples, ExecutorService executor) {
 		// Save the request
 		this.request = request;
 

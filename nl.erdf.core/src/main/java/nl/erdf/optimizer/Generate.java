@@ -1,9 +1,11 @@
 package nl.erdf.optimizer;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.SortedSet;
 
 import nl.erdf.datalayer.DataLayer;
@@ -12,12 +14,12 @@ import nl.erdf.model.Binding;
 import nl.erdf.model.Constraint;
 import nl.erdf.model.Request;
 import nl.erdf.model.Solution;
-import nl.erdf.model.Variable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.Node_Variable;
 
 /**
  * @author tolgam
@@ -25,12 +27,15 @@ import com.hp.hpl.jena.graph.Node;
  */
 public class Generate {
 	/** Logger */
-	protected final Logger logger = LoggerFactory.getLogger(Generate.class);
+	final Logger logger = LoggerFactory.getLogger(Generate.class);
+
 	/** List of providers to use for the generation of new candidate solutions */
-	protected final Collection<Provider> providers = new ArrayList<Provider>();
+	final Map<Node_Variable, Set<Provider>> providersMap = new HashMap<Node_Variable, Set<Provider>>();
+
 	/** Random number generator */
 	private static final Random twister = new Random();
 	private final DataLayer datalayer;
+	private final Request request;
 
 	/**
 	 * @param datalayer
@@ -39,14 +44,35 @@ public class Generate {
 	 */
 	public Generate(DataLayer datalayer, Request request) {
 		this.datalayer = datalayer;
+		this.request = request;
 
 		// Turn all the constraints from the request into providers
 		for (Constraint constraint : request.constraints()) {
 			Provider provider = new Provider(datalayer, constraint.getPart(0), constraint.getPart(1),
 					constraint.getPart(2));
-			providers.add(provider);
+			for (int i = 0; i < 3; i++)
+				registerProvider(constraint.getPart(i), provider);
+
 		}
-		//logger.info("Number of providers: " + providers.size());
+		// logger.info("Number of providers: " + providers.size());
+	}
+
+	/**
+	 * @param part
+	 * @param provider
+	 */
+	private void registerProvider(Node node, Provider provider) {
+		// Only register for variables
+		if (!node.isVariable())
+			return;
+
+		Node_Variable variable = (Node_Variable) node;
+		Set<Provider> set = providersMap.get(variable);
+		if (set == null) {
+			set = new HashSet<Provider>();
+			providersMap.put(variable, set);
+		}
+		set.add(provider);
 	}
 
 	/**
@@ -75,39 +101,40 @@ public class Generate {
 
 			// By default, mutate the first binding
 			Binding binding = (Binding) solution.bindings().toArray()[0];
+			// logger.info(binding.toString());
 
 			// If more than 1, select a variable to mutate
 			if (solution.bindings().size() > 1) {
 				double max = 0;
 				Roulette rouletteVariable = new Roulette();
 				for (Binding b : solution.bindings()) {
-					double val = b.getMaximumReward() - b.getReward();
+					double val = request.getMaximumReward(b.getVariable()) - b.getReward();
 					rouletteVariable.add(b, val);
 					if (val > max)
 						max = val;
 				}
 
-				// FIXME: Gives blank bindings more importance
+				// Gives blank bindings more importance
 				// for (Entry entry : rouletteVariable.content())
 				// if (((Binding) entry.object).getValue().equals(Node.NULL))
 				// entry.value = max / 2;
 				rouletteVariable.prepare();
 				binding = ((Binding) rouletteVariable.nextElement());
-				// logger.info("Mutate " + binding.getVariable());
 			}
+			// logger.info("Mutate " + binding.getVariable());
 
 			// Pick up one of the providers able to mutate that variable
 			// then, get a resource from the datalayer and assign it
-			Variable variable = binding.getVariable();
+			Node_Variable variable = binding.getVariable();
 			Provider provider = getProvider(variable, solution);
 			if (provider != null) {
 				QueryPattern query = provider.getQuery(variable, solution);
-				logger.debug("Use provider " + query);
+				// logger.info("Use provider " + query);
 				Node resource = datalayer.getRandomResource(twister, query);
 				binding.setValue(resource);
-				logger.debug("New value " + resource);
+				// logger.info("New value " + resource);
 			} else {
-				logger.debug("No provider");
+				// logger.info("No provider");
 			}
 
 			// Add to the target population
@@ -115,18 +142,17 @@ public class Generate {
 				target.add(solution);
 		}
 
-		logger.debug("Created " + target.size() + " new individuals (maximum " + (offspringSize + population.size())
-				+ ")");
+		// logger.info("Created " + target.size() + " new individuals (maximum "
+		// + (offspringSize + population.size())
+		// + ")");
 	}
 
-	private Provider getProvider(Variable variable, Solution solution) {
-		// Get a list of all the suitable providers and their selectivity
-		List<Provider> p = new ArrayList<Provider>();
+	private Provider getProvider(Node_Variable variable, Solution solution) {
+		// Find the highest selectivity
 		float maxS = -1;
-		for (Provider provider : providers) {
-			if (provider.appliesFor(variable)) {
-				p.add(provider);
-				QueryPattern query = provider.getQuery(variable, solution);
+		for (Provider provider : providersMap.get(variable)) {
+			QueryPattern query = provider.getQuery(variable, solution);
+			if (!query.contains(Node.NULL)) {
 				long selectivity = datalayer.getNumberOfResources(query);
 				if (selectivity > maxS)
 					maxS = selectivity;
@@ -135,26 +161,28 @@ public class Generate {
 
 		// Build a roulette
 		Roulette rouletteProvider = new Roulette();
-		for (Provider provider : p) {
+		for (Provider provider : providersMap.get(variable)) {
 			QueryPattern query = provider.getQuery(variable, solution);
-			long selectivity = datalayer.getNumberOfResources(query);
+			if (!query.contains(Node.NULL)) {
+				long selectivity = datalayer.getNumberOfResources(query);
 
-			// Initial expectation depends on the reward
-			double expectation = provider.getExpectedReward(variable, solution);
+				// Initial expectation depends on the reward
+				double expectation = provider.getExpectedReward(request, variable, solution);
 
-			// Adjust with the selectivity
-			double minProb = 0.1;
-			double maxProb = 0.9;
-			double expo = (maxS == 1 ? 0 : (Math.log(minProb) - Math.log(maxProb)) / Math.log(maxS));
-			if (selectivity > 0)
-				expectation *= maxProb * Math.pow(selectivity, expo);
-			else if (selectivity < 0)
-				expectation *= minProb;
-			else if (selectivity == 0)
-				expectation = 0;
+				// Adjust with the selectivity
+				double minProb = 0.1;
+				double maxProb = 0.9;
+				double expo = (maxS == 1 ? 0 : (Math.log(minProb) - Math.log(maxProb)) / Math.log(maxS));
+				if (selectivity > 0)
+					expectation *= maxProb * Math.pow(selectivity, expo);
+				else if (selectivity < 0)
+					expectation *= minProb;
+				else if (selectivity == 0)
+					expectation = 0;
 
-			// Add to the roulette
-			rouletteProvider.add(provider, expectation);
+				// Add to the roulette
+				rouletteProvider.add(provider, expectation);
+			}
 		}
 
 		if (!rouletteProvider.hasMoreElements())

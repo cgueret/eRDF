@@ -75,7 +75,7 @@ public class Variable extends Node_Variable {
 	 */
 	public void addConstraint(Constraint constraint) {
 		constraints.add(constraint);
-		logger.info("Found " + this.label + " in " + constraint);
+		System.out.println(constraints.size());
 	}
 
 	/**

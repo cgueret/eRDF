@@ -17,9 +17,9 @@ import nl.erdf.datalayer.DataLayer;
 import nl.erdf.datalayer.sparql.Directory;
 import nl.erdf.datalayer.sparql.EndPoint;
 import nl.erdf.datalayer.sparql.SPARQLDataLayer;
+import nl.erdf.datalayer.sparql.SPARQLParser;
+import nl.erdf.datalayer.sparql.SPARQLRequest;
 import nl.erdf.model.Solution;
-import nl.erdf.model.wod.SPARQLParser;
-import nl.erdf.model.wod.SPARQLRequest;
 import nl.erdf.optimizer.Optimizer;
 import nl.erdf.util.FileToText;
 
@@ -103,7 +103,7 @@ public class SPARQLEngine {
 			Collection<Solution> solutions = (Collection<Solution>) arg;
 			for (Solution s : solutions)
 				if (s.isOptimal())
-					for (Triple triple : request.getTripleSet(s).getTriples())
+					for (Triple triple : request.getTripleSet(s))
 						triples.add(triple);
 
 			// Add the triples

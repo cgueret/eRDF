@@ -1,16 +1,14 @@
-package nl.erdf.model.wod;
+package nl.erdf.datalayer.sparql;
 
 import java.io.File;
 
+import nl.erdf.constraints.TripleConstraint;
 import nl.erdf.model.Constraint;
 import nl.erdf.model.Request;
-import nl.erdf.model.Variable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Node_Variable;
 import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryFactory;
@@ -80,21 +78,6 @@ public class SPARQLParser implements ElementVisitor {
 	}
 
 	/**
-	 * Converts a Jena Node into one of the elements of our model
-	 * 
-	 * @param node
-	 * @return
-	 */
-	private Node getVariable(Node node) {
-		// This is not a variable
-		if (!node.isVariable())
-			return node;
-
-		// This is a variable
-		return request.add(new Variable(((Node_Variable) node).getName()));
-	}
-
-	/**
 	 * @param triple
 	 */
 	private void handleTriple(Triple triple) {
@@ -105,14 +88,7 @@ public class SPARQLParser implements ElementVisitor {
 		}
 
 		// Count the number of variables and deal with the result
-		int vars = 0;
-		if (triple.getSubject().isVariable())
-			vars++;
-		if (triple.getPredicate().isVariable())
-			vars++;
-		if (triple.getObject().isVariable())
-			vars++;
-		if (vars == 0) {
+		if (triple.getSubject().isVariable() && triple.getPredicate().isVariable() && triple.getObject().isVariable()) {
 			logger.warn("Don't know what to search in a fully defined <S,P,O>");
 			return;
 		}
@@ -132,11 +108,8 @@ public class SPARQLParser implements ElementVisitor {
 			return;
 		}
 
-		Node s = getVariable(triple.getSubject());
-		Node p = getVariable(triple.getPredicate());
-		Node o = getVariable(triple.getObject());
-		Constraint constraint = new TripleConstraint(s, p, o);
-		request.add(constraint);
+		Constraint constraint = new TripleConstraint(triple);
+		request.addConstraint(constraint);
 	}
 
 	/*
