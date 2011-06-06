@@ -1,11 +1,14 @@
 package nl.erdf.model;
 
+import java.util.Set;
+
 import nl.erdf.datalayer.DataLayer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.Node_Variable;
 
 /**
  * @author tolgam
@@ -28,10 +31,7 @@ public interface Constraint {
 	abstract Node getPart(int position);
 
 	/**
-	 * Returns the size of a constraint, that is its number of parts
-	 * 
-	 * @return the size of the constraint
+	 * @return the set of variables used in the constraint
 	 */
-	abstract int getSize();
-
+	abstract Set<Node_Variable> getVariables();
 }

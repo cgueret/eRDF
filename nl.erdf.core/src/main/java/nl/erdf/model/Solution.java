@@ -30,18 +30,10 @@ public class Solution implements Comparable<Solution> {
 	 */
 	public Binding getBinding(Node_Variable variable) {
 		for (int i = 0; i < size(); i++)
-			if (get(i).getVariable().equals(variable))
-				return get(i);
+			if (bindings.get(i).getVariable().equals(variable))
+				return bindings.get(i);
 
 		return null;
-	}
-
-	/**
-	 * @param i
-	 * @return
-	 */
-	private Binding get(int i) {
-		return bindings.get(i);
 	}
 
 	/**

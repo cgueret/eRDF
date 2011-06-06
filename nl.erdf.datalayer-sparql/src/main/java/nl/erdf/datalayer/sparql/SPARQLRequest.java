@@ -2,11 +2,8 @@ package nl.erdf.datalayer.sparql;
 
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Node_Variable;
-import com.hp.hpl.jena.graph.Triple;
-
 import nl.erdf.datalayer.DataLayer;
 import nl.erdf.model.Binding;
-import nl.erdf.model.Constraint;
 import nl.erdf.model.Request;
 import nl.erdf.model.Solution;
 

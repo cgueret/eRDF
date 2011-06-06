@@ -30,6 +30,9 @@ public abstract class Request {
 	/** Mapping of variable -> constraints */
 	protected final Map<Node_Variable, Set<Constraint>> constraintsMap = new HashMap<Node_Variable, Set<Constraint>>();
 
+	/** Mapping of variable -> resource providers */
+	protected final Map<Node_Variable, Set<ResourceProvider>> providersMap = new HashMap<Node_Variable, Set<ResourceProvider>>();
+
 	/** The model on top of which this request is expressed */
 	protected final DataLayer dataLayer;
 
@@ -99,7 +102,7 @@ public abstract class Request {
 	public double getMaximumReward(Node_Variable variable) {
 		return constraintsMap.get(variable).size();
 	}
-	
+
 	/**
 	 * Add a new constraint to the request. At the same time, link all the
 	 * variable concerned by the constraint to that constraint.
@@ -113,20 +116,39 @@ public abstract class Request {
 		constraints.add(constraint);
 
 		// Find the variables and map them they are now part of that constraint
-		for (int i = 0; i < constraint.getSize(); i++) {
-			Node part = constraint.getPart(i);
-			if (part instanceof Node_Variable) {
-				Node_Variable v = (Node_Variable) part;
-				Set<Constraint> set = constraintsMap.get(v);
-				if (set == null) {
-					set = new HashSet<Constraint>();
-					constraintsMap.put(v, set);
-				}
-				set.add(constraint);
+		for (Node_Variable v : constraint.getVariables()) {
+			Set<Constraint> set = constraintsMap.get(v);
+			if (set == null) {
+				set = new HashSet<Constraint>();
+				constraintsMap.put(v, set);
 			}
+			set.add(constraint);
 		}
 
 		return constraint;
+	}
+
+	/**
+	 * Add a new resource provider to the request. At the same time, link all
+	 * the variable concerned by the provider to that provider.
+	 * 
+	 * @param provider
+	 * @return the newly added constraint
+	 */
+	public ResourceProvider addResourceProvider(ResourceProvider provider) {
+		logger.info("Add provider " + provider);
+
+		// Find the variables and map them they are now part of that constraint
+		for (Node_Variable v : provider.getVariables()) {
+			Set<ResourceProvider> set = providersMap.get(v);
+			if (set == null) {
+				set = new HashSet<ResourceProvider>();
+				providersMap.put(v, set);
+			}
+			set.add(provider);
+		}
+
+		return provider;
 	}
 
 	/**
@@ -202,6 +224,14 @@ public abstract class Request {
 		for (Constraint cstr : constraints)
 			buffer += cstr.toString() + "\n";
 		return buffer;
+	}
+
+	/**
+	 * @param variable
+	 * @return
+	 */
+	public Set<ResourceProvider> getProvidersFor(Node_Variable variable) {
+		return providersMap.get(variable);
 	}
 
 }

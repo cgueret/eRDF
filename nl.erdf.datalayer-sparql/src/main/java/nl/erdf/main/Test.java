@@ -3,9 +3,7 @@
  */
 package nl.erdf.main;
 
-import java.io.BufferedReader;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Observable;
@@ -14,6 +12,7 @@ import java.util.Observer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import nl.erdf.constraints.TripleBlockConstraint;
 import nl.erdf.constraints.TripleConstraint;
 import nl.erdf.datalayer.sparql.Directory;
 import nl.erdf.datalayer.sparql.SPARQLDataLayer;
@@ -46,11 +45,30 @@ public class Test implements Observer {
 
 		// Create the request
 		request = new SPARQLRequest(datalayer);
-		Triple birthPlace = Triple.create(Node.createVariable("person"),Node.createURI("http://dbpedia.org/ontology/birthPlace"), Node.createURI("http://dbpedia.org/resource/Netherlands"));
-		request.addConstraint(new TripleConstraint(birthPlace));
-		Triple artist = Triple.create(Node.createVariable("person"),Node.createURI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"), Node.createURI("http://dbpedia.org/ontology/Artist"));
-		request.addConstraint(new TripleConstraint(artist));
-		
+
+		// We can match either a nationality or birthPlace
+		TripleBlockConstraint birthPlaceOrNationality = new TripleBlockConstraint();
+		TripleConstraint birthPlace = new TripleConstraint(Triple.create(Node.createVariable("person"),
+				Node.createURI("http://dbpedia.org/ontology/birthPlace"),
+				Node.createURI("http://dbpedia.org/resource/Netherlands")));
+		birthPlaceOrNationality.add(birthPlace);
+		TripleConstraint nationality = new TripleConstraint(Triple.create(Node.createVariable("person"),
+				Node.createURI("http://dbpedia.org/ontology/nationality"),
+				Node.createURI("http://dbpedia.org/resource/Netherlands")));
+		birthPlaceOrNationality.add(nationality);
+		request.addConstraint(birthPlaceOrNationality);
+
+		// We want artists
+		TripleConstraint artist = new TripleConstraint(Triple.create(Node.createVariable("person"),
+				Node.createURI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"),
+				Node.createURI("http://dbpedia.org/ontology/Artist")));
+		request.addConstraint(artist);
+
+		// All the three triples can be used to provide new bindings
+		request.addResourceProvider(birthPlace);
+		request.addResourceProvider(nationality);
+		request.addResourceProvider(artist);
+
 		// Create the optimiser
 		optimizer = new Optimizer(datalayer, request, null);
 		optimizer.addObserver(this);

@@ -35,7 +35,7 @@ public class Optimizer extends Observable implements Runnable {
 	private static final int OFFSPRING_SIZE = 12;
 
 	/** Maximum generation to wait before finding an optima */
-	private static final int MAXIMUM_GENERATION = POPULATION_SIZE*100;
+	private static final int MAXIMUM_GENERATION = POPULATION_SIZE*4;
 
 	/** Logger */
 	protected final Logger logger = LoggerFactory.getLogger(Optimizer.class);

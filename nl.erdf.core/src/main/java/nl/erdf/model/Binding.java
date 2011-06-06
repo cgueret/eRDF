@@ -4,12 +4,17 @@ import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Node_Variable;
 
 /**
- * @author tolgam
- * 
+ * @author Christophe Guéret <christophe.gueret@gmail.com>
+ *
  */
 public class Binding {
+	/** The variable part of the binding */
 	private Node_Variable variable;
+
+	/** The node the variable is bound to */
 	private Node value;
+
+	/** The reward assigned for this binding */
 	private double reward;
 
 	/*

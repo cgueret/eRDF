@@ -1,18 +1,14 @@
 package nl.erdf.optimizer;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 import java.util.SortedSet;
 
 import nl.erdf.datalayer.DataLayer;
 import nl.erdf.datalayer.QueryPattern;
 import nl.erdf.model.Binding;
-import nl.erdf.model.Constraint;
 import nl.erdf.model.Request;
+import nl.erdf.model.ResourceProvider;
 import nl.erdf.model.Solution;
 
 import org.slf4j.Logger;
@@ -29,9 +25,6 @@ public class Generate {
 	/** Logger */
 	final Logger logger = LoggerFactory.getLogger(Generate.class);
 
-	/** List of providers to use for the generation of new candidate solutions */
-	final Map<Node_Variable, Set<Provider>> providersMap = new HashMap<Node_Variable, Set<Provider>>();
-
 	/** Random number generator */
 	private static final Random twister = new Random();
 	private final DataLayer datalayer;
@@ -45,34 +38,6 @@ public class Generate {
 	public Generate(DataLayer datalayer, Request request) {
 		this.datalayer = datalayer;
 		this.request = request;
-
-		// Turn all the constraints from the request into providers
-		for (Constraint constraint : request.constraints()) {
-			Provider provider = new Provider(datalayer, constraint.getPart(0), constraint.getPart(1),
-					constraint.getPart(2));
-			for (int i = 0; i < 3; i++)
-				registerProvider(constraint.getPart(i), provider);
-
-		}
-		// logger.info("Number of providers: " + providers.size());
-	}
-
-	/**
-	 * @param part
-	 * @param provider
-	 */
-	private void registerProvider(Node node, Provider provider) {
-		// Only register for variables
-		if (!node.isVariable())
-			return;
-
-		Node_Variable variable = (Node_Variable) node;
-		Set<Provider> set = providersMap.get(variable);
-		if (set == null) {
-			set = new HashSet<Provider>();
-			providersMap.put(variable, set);
-		}
-		set.add(provider);
 	}
 
 	/**
@@ -109,6 +74,7 @@ public class Generate {
 				Roulette rouletteVariable = new Roulette();
 				for (Binding b : solution.bindings()) {
 					double val = request.getMaximumReward(b.getVariable()) - b.getReward();
+					val = 1; // FIXME hack
 					rouletteVariable.add(b, val);
 					if (val > max)
 						max = val;
@@ -121,20 +87,20 @@ public class Generate {
 				rouletteVariable.prepare();
 				binding = ((Binding) rouletteVariable.nextElement());
 			}
-			// logger.info("Mutate " + binding.getVariable());
+			logger.info("Mutate " + binding.getVariable());
 
 			// Pick up one of the providers able to mutate that variable
 			// then, get a resource from the datalayer and assign it
 			Node_Variable variable = binding.getVariable();
-			Provider provider = getProvider(variable, solution);
+			ResourceProvider provider = getProvider(variable, solution);
 			if (provider != null) {
 				QueryPattern query = provider.getQuery(variable, solution);
-				// logger.info("Use provider " + query);
+				logger.info("Use provider " + query);
 				Node resource = datalayer.getRandomResource(twister, query);
 				binding.setValue(resource);
-				// logger.info("New value " + resource);
+				logger.info("New value " + resource);
 			} else {
-				// logger.info("No provider");
+				logger.info("No provider");
 			}
 
 			// Add to the target population
@@ -142,18 +108,18 @@ public class Generate {
 				target.add(solution);
 		}
 
-		// logger.info("Created " + target.size() + " new individuals (maximum "
-		// + (offspringSize + population.size())
-		// + ")");
+		logger.info("Created " + target.size() + " new individuals (maximum " + (offspringSize + population.size())
+				+ ")");
 	}
 
-	private Provider getProvider(Node_Variable variable, Solution solution) {
+	private ResourceProvider getProvider(Node_Variable variable, Solution solution) {
 		// Find the highest selectivity
 		float maxS = -1;
-		for (Provider provider : providersMap.get(variable)) {
+		for (ResourceProvider provider : request.getProvidersFor(variable)) {
 			QueryPattern query = provider.getQuery(variable, solution);
 			if (!query.contains(Node.NULL)) {
 				long selectivity = datalayer.getNumberOfResources(query);
+				selectivity = 1;// FIXME hack
 				if (selectivity > maxS)
 					maxS = selectivity;
 			}
@@ -161,7 +127,7 @@ public class Generate {
 
 		// Build a roulette
 		Roulette rouletteProvider = new Roulette();
-		for (Provider provider : providersMap.get(variable)) {
+		for (ResourceProvider provider : request.getProvidersFor(variable)) {
 			QueryPattern query = provider.getQuery(variable, solution);
 			if (!query.contains(Node.NULL)) {
 				long selectivity = datalayer.getNumberOfResources(query);
@@ -189,6 +155,6 @@ public class Generate {
 			return null;
 
 		rouletteProvider.prepare();
-		return (Provider) rouletteProvider.nextElement();
+		return (ResourceProvider) rouletteProvider.nextElement();
 	}
 }

@@ -1,5 +1,6 @@
 package nl.erdf.constraints;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import com.hp.hpl.jena.graph.Node;
@@ -7,14 +8,17 @@ import com.hp.hpl.jena.graph.Node_Variable;
 import com.hp.hpl.jena.graph.Triple;
 
 import nl.erdf.datalayer.DataLayer;
+import nl.erdf.datalayer.QueryPattern;
 import nl.erdf.model.Constraint;
+import nl.erdf.model.Request;
+import nl.erdf.model.ResourceProvider;
 import nl.erdf.model.Solution;
 
 /**
  * @author cgueret
  * 
  */
-public class TripleConstraint implements Constraint {
+public class TripleConstraint implements Constraint, ResourceProvider {
 	// The graph pattern is a triple with variables in it
 	protected final Triple graphPattern;
 
@@ -86,7 +90,7 @@ public class TripleConstraint implements Constraint {
 				return;
 			}
 		}
-		
+
 		// Check if the triple is valid and eventually return right away
 		if (dataLayer.isValid(triple)) {
 			assignReward(solution, graphPattern.getSubject(), HIGH_REWARD);
@@ -170,16 +174,6 @@ public class TripleConstraint implements Constraint {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see nl.erdf.main.model.Constraint#getSize()
-	 */
-	@Override
-	public int getSize() {
-		return 3;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -195,6 +189,88 @@ public class TripleConstraint implements Constraint {
 	@Override
 	public boolean equals(Object other) {
 		return graphPattern.equals(other);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see nl.erdf.model.Constraint#getVariables()
+	 */
+	@Override
+	public Set<Node_Variable> getVariables() {
+		Set<Node_Variable> vars = new HashSet<Node_Variable>();
+		if (graphPattern.getSubject().isVariable())
+			vars.add((Node_Variable) graphPattern.getSubject());
+		if (graphPattern.getPredicate().isVariable())
+			vars.add((Node_Variable) graphPattern.getPredicate());
+		if (graphPattern.getObject().isVariable())
+			vars.add((Node_Variable) graphPattern.getObject());
+		return vars;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * nl.erdf.model.ResourceProvider#getQuery(com.hp.hpl.jena.graph.Node_Variable
+	 * , nl.erdf.model.Solution)
+	 */
+	@Override
+	public QueryPattern getQuery(Node_Variable variable, Solution solution) {
+		// Instantiate the pattern into a full triple
+		Node subject = graphPattern.getSubject();
+		if (graphPattern.getSubject().isVariable())
+			subject = solution.getBinding((Node_Variable) graphPattern.getSubject()).getValue();
+		Node predicate = graphPattern.getPredicate();
+		if (graphPattern.getPredicate().isVariable())
+			predicate = solution.getBinding((Node_Variable) graphPattern.getPredicate()).getValue();
+		Node object = graphPattern.getObject();
+		if (graphPattern.getObject().isVariable())
+			object = solution.getBinding((Node_Variable) graphPattern.getObject()).getValue();
+
+		// Replace the target variable by a return and create a query
+		QueryPattern query = null;
+		if ((graphPattern.getSubject().isVariable()) && (variable.equals(graphPattern.getSubject())))
+			query = new QueryPattern(QueryPattern.RETURN, predicate, object);
+		if ((graphPattern.getPredicate().isVariable()) && (variable.equals(graphPattern.getPredicate())))
+			query = new QueryPattern(subject, QueryPattern.RETURN, object);
+		if ((graphPattern.getObject().isVariable()) && (variable.equals(graphPattern.getObject())))
+			query = new QueryPattern(subject, predicate, QueryPattern.RETURN);
+
+		return query;
+
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * nl.erdf.model.ResourceProvider#getExpectedReward(nl.erdf.model.Request,
+	 * com.hp.hpl.jena.graph.Node_Variable, nl.erdf.model.Solution)
+	 */
+	@Override
+	public double getExpectedReward(Request request, Node_Variable variable, Solution solution) {
+		double reward = 0;
+
+		if (graphPattern.getSubject().isVariable())
+			reward += solution.getBinding((Node_Variable) graphPattern.getSubject()).getReward()
+					/ request.getMaximumReward((Node_Variable) graphPattern.getSubject());
+		else
+			reward += 1;
+
+		if (graphPattern.getPredicate().isVariable())
+			reward += solution.getBinding((Node_Variable) graphPattern.getPredicate()).getReward()
+					/ request.getMaximumReward((Node_Variable) graphPattern.getPredicate());
+		else
+			reward += 1;
+
+		if (graphPattern.getObject().isVariable())
+			reward += solution.getBinding((Node_Variable) graphPattern.getObject()).getReward()
+					/ request.getMaximumReward((Node_Variable) graphPattern.getObject());
+		else
+			reward += 1;
+
+		return reward / 3;
 	}
 
 }
