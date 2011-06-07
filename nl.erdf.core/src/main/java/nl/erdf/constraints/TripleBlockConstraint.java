@@ -6,8 +6,8 @@ package nl.erdf.constraints;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Node_Variable;
+import com.hp.hpl.jena.graph.Triple;
 
 import nl.erdf.datalayer.DataLayer;
 import nl.erdf.model.Constraint;
@@ -24,21 +24,18 @@ public class TripleBlockConstraint implements Constraint {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see nl.erdf.model.Constraint#assignRewards(nl.erdf.model.Solution,
+	 * @see nl.erdf.model.Constraint#getReward(nl.erdf.model.Solution,
 	 * nl.erdf.datalayer.DataLayer)
 	 */
 	@Override
-	public void assignRewards(Solution solution, DataLayer dataLayer) {
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see nl.erdf.model.Constraint#getPart(int)
-	 */
-	@Override
-	public Node getPart(int position) {
-		return null;
+	public double getReward(Solution solution, DataLayer dataLayer) {
+		double max = Double.MIN_VALUE;
+		for (TripleConstraint cstr : tripleConstraints) {
+			double reward = cstr.getReward(solution, dataLayer);
+			if (reward > max)
+				max = reward;
+		}
+		return max;
 	}
 
 	/*
@@ -60,4 +57,16 @@ public class TripleBlockConstraint implements Constraint {
 	public void add(TripleConstraint tripleConstraint) {
 		tripleConstraints.add(tripleConstraint);
 	}
+	
+	/**
+	 * @param solution
+	 * @return
+	 */
+	public Set<Triple> getInstanciatedTriples(Solution solution) {
+		Set<Triple> triples = new HashSet<Triple>();
+		for (TripleConstraint cstr : tripleConstraints)
+			triples.add(cstr.getInstanciatedTriple(solution));
+		return triples;
+	}
+
 }

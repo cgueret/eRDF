@@ -7,7 +7,6 @@ import nl.erdf.datalayer.DataLayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Node_Variable;
 
 /**
@@ -22,13 +21,7 @@ public interface Constraint {
 	 * @param solution
 	 * @param dataLayer
 	 */
-	abstract void assignRewards(Solution solution, DataLayer dataLayer);
-
-	/**
-	 * @param position
-	 * @return a part of the constraint
-	 */
-	abstract Node getPart(int position);
+	abstract double getReward(Solution solution, DataLayer dataLayer);
 
 	/**
 	 * @return the set of variables used in the constraint

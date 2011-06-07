@@ -70,7 +70,10 @@ public class Directory {
 		httpParams.setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, 200);
 		ConnManagerParams.setMaxTotalConnections(httpParams, 400);
 		ConnManagerParams.setMaxConnectionsPerRoute(httpParams, new ConnPerRouteBean(2));
-
+		//HttpParams params = httpClient.getParams();
+		//HttpConnectionParams.setConnectionTimeout(params, 2000);
+		//HttpConnectionParams.setSoTimeout(params, 2000);
+		
 		// Create a connection manager
 		connManager = new ThreadSafeClientConnManager(httpParams, schemeRegistry);
 

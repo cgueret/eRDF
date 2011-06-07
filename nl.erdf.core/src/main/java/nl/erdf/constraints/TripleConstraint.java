@@ -10,7 +10,6 @@ import com.hp.hpl.jena.graph.Triple;
 import nl.erdf.datalayer.DataLayer;
 import nl.erdf.datalayer.QueryPattern;
 import nl.erdf.model.Constraint;
-import nl.erdf.model.Request;
 import nl.erdf.model.ResourceProvider;
 import nl.erdf.model.Solution;
 
@@ -58,107 +57,6 @@ public class TripleConstraint implements Constraint, ResourceProvider {
 	 */
 	public void setBlackListedTriples(Set<Triple> blackListedTriples) {
 		this.blackListedTriples = blackListedTriples;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * nl.erdf.main.model.Constraint#assignRewards(nl.erdf.main.model.Solution,
-	 * nl.erdf.main.datalayer.DataLayer)
-	 */
-	@Override
-	public void assignRewards(Solution solution, DataLayer dataLayer) {
-		// Instantiate the triple based on the given solution
-		Node subject = graphPattern.getSubject();
-		if (subject.isVariable())
-			subject = solution.getBinding((Node_Variable) subject).getValue();
-		Node predicate = graphPattern.getPredicate();
-		if (predicate.isVariable())
-			predicate = solution.getBinding((Node_Variable) predicate).getValue();
-		Node object = graphPattern.getObject();
-		if (object.isVariable())
-			object = solution.getBinding((Node_Variable) object).getValue();
-		Triple triple = Triple.create(subject, predicate, object);
-
-		// Check if it is a black listed triple and eventually return right away
-		if (blackListedTriples != null) {
-			if (blackListedTriples.contains(triple)) {
-				assignReward(solution, graphPattern.getSubject(), LOW_REWARD);
-				assignReward(solution, graphPattern.getPredicate(), LOW_REWARD);
-				assignReward(solution, graphPattern.getObject(), LOW_REWARD);
-				return;
-			}
-		}
-
-		// Check if the triple is valid and eventually return right away
-		if (dataLayer.isValid(triple)) {
-			assignReward(solution, graphPattern.getSubject(), HIGH_REWARD);
-			assignReward(solution, graphPattern.getPredicate(), HIGH_REWARD);
-			assignReward(solution, graphPattern.getObject(), HIGH_REWARD);
-			return;
-		}
-
-		// In the following, we test partial bindings. One part of the triple
-		// is removed at a time and the validity of the rest is tested
-
-		// Handle the case where S is a variable
-		if (graphPattern.getSubject().isVariable()) {
-			if (dataLayer.isValid(Triple.create(Node.ANY, predicate, object))) {
-				assignReward(solution, graphPattern.getPredicate(), MEDIUM_REWARD);
-				assignReward(solution, graphPattern.getObject(), MEDIUM_REWARD);
-				return;
-			}
-		}
-
-		// Handle the case where P is a variable
-		if (graphPattern.getPredicate().isVariable()) {
-			if (dataLayer.isValid(Triple.create(subject, Node.ANY, object))) {
-				assignReward(solution, graphPattern.getSubject(), MEDIUM_REWARD);
-				assignReward(solution, graphPattern.getObject(), MEDIUM_REWARD);
-				return;
-			}
-		}
-
-		// Handle the case where O is a variable
-		if (graphPattern.getObject().isVariable()) {
-			if (dataLayer.isValid(Triple.create(subject, predicate, Node.ANY))) {
-				assignReward(solution, graphPattern.getSubject(), MEDIUM_REWARD);
-				assignReward(solution, graphPattern.getPredicate(), MEDIUM_REWARD);
-				return;
-			}
-		}
-	}
-
-	/**
-	 * Assign a reward to a particular binding
-	 * 
-	 * @param object
-	 * @param reward
-	 */
-	private void assignReward(Solution solution, Node node, double reward) {
-		// We can only assign rewards to variable bindings
-		if (!node.isVariable())
-			return;
-
-		// Credit the binding with the reward
-		solution.getBinding((Node_Variable) node).incrementReward(reward);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see nl.erdf.main.model.Constraint#getPart(int)
-	 */
-	@Override
-	public Node getPart(int position) {
-		if (position == 0)
-			return graphPattern.getSubject();
-		if (position == 1)
-			return graphPattern.getPredicate();
-		if (position == 2)
-			return graphPattern.getObject();
-		return null;
 	}
 
 	/*
@@ -244,33 +142,60 @@ public class TripleConstraint implements Constraint, ResourceProvider {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * nl.erdf.model.ResourceProvider#getExpectedReward(nl.erdf.model.Request,
-	 * com.hp.hpl.jena.graph.Node_Variable, nl.erdf.model.Solution)
+	 * @see nl.erdf.model.Constraint#getReward(nl.erdf.model.Solution,
+	 * nl.erdf.datalayer.DataLayer)
 	 */
 	@Override
-	public double getExpectedReward(Request request, Node_Variable variable, Solution solution) {
-		double reward = 0;
+	public double getReward(Solution solution, DataLayer dataLayer) {
+		// Instantiate the triple based on the given solution
+		Node subject = graphPattern.getSubject();
+		if (subject.isVariable())
+			subject = solution.getBinding((Node_Variable) subject).getValue();
+		Node predicate = graphPattern.getPredicate();
+		if (predicate.isVariable())
+			predicate = solution.getBinding((Node_Variable) predicate).getValue();
+		Node object = graphPattern.getObject();
+		if (object.isVariable())
+			object = solution.getBinding((Node_Variable) object).getValue();
 
-		if (graphPattern.getSubject().isVariable())
-			reward += solution.getBinding((Node_Variable) graphPattern.getSubject()).getReward()
-					/ request.getMaximumReward((Node_Variable) graphPattern.getSubject());
-		else
-			reward += 1;
+		// Check if it is a black listed triple and eventually return right away
+		if (blackListedTriples != null && blackListedTriples.contains(Triple.create(subject, predicate, object)))
+			return LOW_REWARD;
 
-		if (graphPattern.getPredicate().isVariable())
-			reward += solution.getBinding((Node_Variable) graphPattern.getPredicate()).getReward()
-					/ request.getMaximumReward((Node_Variable) graphPattern.getPredicate());
-		else
-			reward += 1;
+		// Check if the triple is valid and eventually return right away
+		if (dataLayer.isValid(Triple.create(subject, predicate, object)))
+			return HIGH_REWARD;
 
-		if (graphPattern.getObject().isVariable())
-			reward += solution.getBinding((Node_Variable) graphPattern.getObject()).getReward()
-					/ request.getMaximumReward((Node_Variable) graphPattern.getObject());
-		else
-			reward += 1;
+		// If we could change O to get a solution, return a MEDIUM reward
+		if (graphPattern.getObject().isVariable() && dataLayer.isValid(Triple.create(subject, predicate, Node.ANY)))
+			return MEDIUM_REWARD;
 
-		return reward / 3;
+		// If we could change S to get a solution, return a MEDIUM reward
+		if (graphPattern.getSubject().isVariable() && dataLayer.isValid(Triple.create(Node.ANY, predicate, object)))
+			return MEDIUM_REWARD;
+
+		// If we could change P to get a solution, return a MEDIUM reward
+		if (graphPattern.getPredicate().isVariable() && dataLayer.isValid(Triple.create(subject, Node.ANY, object)))
+			return MEDIUM_REWARD;
+
+		return NULL_REWARD;
 	}
 
+	/**
+	 * @param solution
+	 * @return
+	 */
+	public Triple getInstanciatedTriple(Solution solution) {
+		Node subject = graphPattern.getSubject();
+		if (subject.isVariable())
+			subject = solution.getBinding((Node_Variable) subject).getValue();
+		Node predicate = graphPattern.getPredicate();
+		if (predicate.isVariable())
+			predicate = solution.getBinding((Node_Variable) predicate).getValue();
+		Node object = graphPattern.getObject();
+		if (object.isVariable())
+			object = solution.getBinding((Node_Variable) object).getValue();
+
+		return Triple.create(subject, predicate, object);
+	}
 }

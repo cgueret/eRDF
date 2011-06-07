@@ -38,7 +38,7 @@ public class Test implements Observer {
 	public Test() throws FileNotFoundException, IOException {
 		// Create a directory
 		directory = new Directory();
-		directory.add("DBPedia", "http://dbpedia.org/sparql");
+		directory.add("DBPedia", "http://lod.openlinksw.com/sparql");
 
 		// Create a data layer
 		SPARQLDataLayer datalayer = new SPARQLDataLayer(directory);

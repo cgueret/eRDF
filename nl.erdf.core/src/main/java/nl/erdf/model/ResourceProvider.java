@@ -22,14 +22,6 @@ public interface ResourceProvider {
 	abstract public QueryPattern getQuery(Node_Variable variable, Solution solution);
 
 	/**
-	 * @param request
-	 * @param variable
-	 * @param solution
-	 * @return
-	 */
-	abstract public double getExpectedReward(Request request, Node_Variable variable, Solution solution);
-
-	/**
 	 * @return
 	 */
 	abstract public Set<Node_Variable> getVariables();

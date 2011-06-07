@@ -32,7 +32,7 @@ public class Optimizer extends Observable implements Runnable {
 	private static final int POPULATION_SIZE = 6;
 
 	/** Population size */
-	private static final int OFFSPRING_SIZE = 12;
+	private static final int OFFSPRING_SIZE = POPULATION_SIZE*3;
 
 	/** Maximum generation to wait before finding an optima */
 	private static final int MAXIMUM_GENERATION = POPULATION_SIZE*4;

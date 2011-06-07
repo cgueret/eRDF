@@ -87,7 +87,7 @@ public class Generate {
 				rouletteVariable.prepare();
 				binding = ((Binding) rouletteVariable.nextElement());
 			}
-			logger.info("Mutate " + binding.getVariable());
+			//logger.info("Mutate " + binding.getVariable());
 
 			// Pick up one of the providers able to mutate that variable
 			// then, get a resource from the datalayer and assign it
@@ -95,12 +95,12 @@ public class Generate {
 			ResourceProvider provider = getProvider(variable, solution);
 			if (provider != null) {
 				QueryPattern query = provider.getQuery(variable, solution);
-				logger.info("Use provider " + query);
+				// logger.info("Use provider " + query);
 				Node resource = datalayer.getRandomResource(twister, query);
 				binding.setValue(resource);
-				logger.info("New value " + resource);
+				// logger.info("New value " + resource);
 			} else {
-				logger.info("No provider");
+				// logger.info("No provider");
 			}
 
 			// Add to the target population
@@ -108,8 +108,9 @@ public class Generate {
 				target.add(solution);
 		}
 
-		logger.info("Created " + target.size() + " new individuals (maximum " + (offspringSize + population.size())
-				+ ")");
+		// logger.info("Created " + target.size() + " new individuals (maximum "
+		// + (offspringSize + population.size())
+		// + ")");
 	}
 
 	private ResourceProvider getProvider(Node_Variable variable, Solution solution) {
@@ -133,7 +134,9 @@ public class Generate {
 				long selectivity = datalayer.getNumberOfResources(query);
 
 				// Initial expectation depends on the reward
-				double expectation = provider.getExpectedReward(request, variable, solution);
+				// double expectation = provider.getExpectedReward(request,
+				// variable, solution);
+				double expectation = 1;
 
 				// Adjust with the selectivity
 				double minProb = 0.1;

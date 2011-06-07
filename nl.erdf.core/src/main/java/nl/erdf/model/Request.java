@@ -10,10 +10,10 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Node_Variable;
 import com.hp.hpl.jena.graph.Triple;
 
+import nl.erdf.constraints.TripleBlockConstraint;
 import nl.erdf.constraints.TripleConstraint;
 import nl.erdf.datalayer.DataLayer;
 
@@ -74,25 +74,22 @@ public abstract class Request {
 	 * @return the fitness value of that candidate solution
 	 */
 	public double evaluate(Solution solution) {
-		// Clear the flags
+		// Clear and initialise the flags and value
+		double fitness = 0;
 		solution.setOptimal(false);
-
-		// Check the relations to assign the individual rewards to the variables
 		for (Binding binding : solution.bindings())
 			binding.resetReward();
-		for (Constraint cstr : constraints)
-			cstr.assignRewards(solution, dataLayer);
 
-		// Compute the fitness value
-		double fitness = 0;
-		double maximumReward = 0;
-		for (Binding binding : solution.bindings()) {
-			fitness += binding.getReward();
-			maximumReward += this.getMaximumReward(binding.getVariable());
+		// Check the constraints and dispatch rewards
+		for (Constraint constraint : constraints) {
+			double reward = constraint.getReward(solution, dataLayer);
+			fitness += reward;
+			for (Node_Variable variable : constraint.getVariables())
+				solution.getBinding(variable).incrementReward(reward);
 		}
-		fitness = fitness / maximumReward;
 
-		return fitness;
+		// Return the fitness value
+		return fitness / constraints.size();
 	}
 
 	/**
@@ -166,21 +163,14 @@ public abstract class Request {
 
 		for (Constraint constraint : constraints()) {
 			if (constraint instanceof TripleConstraint) {
-				Node s = constraint.getPart(0);
-				if (s.isVariable())
-					s = solution.getBinding((Node_Variable) s).getValue();
-
-				Node p = constraint.getPart(1);
-				if (p.isVariable())
-					p = solution.getBinding((Node_Variable) p).getValue();
-
-				Node o = constraint.getPart(2);
-				if (o.isVariable())
-					o = solution.getBinding((Node_Variable) o).getValue();
-
-				Triple triple = Triple.create(s, p, o);
+				Triple triple = ((TripleConstraint) constraint).getInstanciatedTriple(solution);
 				if (!filter || dataLayer.isValid(triple))
 					triples.add(triple);
+			}
+			if (constraint instanceof TripleBlockConstraint) {
+				for (Triple triple : ((TripleBlockConstraint) constraint).getInstanciatedTriples(solution))
+					if (!filter || dataLayer.isValid(triple))
+						triples.add(triple);
 			}
 		}
 
