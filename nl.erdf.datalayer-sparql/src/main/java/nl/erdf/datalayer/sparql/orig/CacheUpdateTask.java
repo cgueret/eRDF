@@ -1,7 +1,7 @@
 /**
  * 
  */
-package nl.erdf.datalayer.sparql;
+package nl.erdf.datalayer.sparql.orig;
 
 import java.io.InputStream;
 import java.net.URLEncoder;
@@ -11,8 +11,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-
-import nl.erdf.datalayer.QueryPattern;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -211,31 +209,31 @@ public class CacheUpdateTask implements Runnable {
 			if (isCanceled || !endpoint.isEnabled())
 				return;
 
-			// Get the query pattern
-			QueryPattern pattern = resourceSet.getPattern();
+			// Get the triple
+			Triple pattern = resourceSet.getPattern();
 
 			// Don't query if a blank node not issued by that peer is in use
 			String srcid = Integer.toString(endpoint.hashCode());
-			Triple triple = pattern.getPattern();
-			if (triple.getSubject() instanceof Node_Blank)
-				if (!triple.getSubject().getBlankNodeLabel().split(BNODE_SRC_MARKER)[1].equals(srcid))
+			if (pattern.getSubject() instanceof Node_Blank)
+				if (!pattern.getSubject().getBlankNodeLabel().split(BNODE_SRC_MARKER)[1].equals(srcid))
 					return;
-			if (triple.getPredicate() instanceof Node_Blank)
-				if (!triple.getPredicate().getBlankNodeLabel().split(BNODE_SRC_MARKER)[1].equals(srcid))
+			if (pattern.getPredicate() instanceof Node_Blank)
+				if (!pattern.getPredicate().getBlankNodeLabel().split(BNODE_SRC_MARKER)[1].equals(srcid))
 					return;
-			if (triple.getObject() instanceof Node_Blank)
-				if (!triple.getObject().getBlankNodeLabel().split(BNODE_SRC_MARKER)[1].equals(srcid))
+			if (pattern.getObject() instanceof Node_Blank)
+				if (!pattern.getObject().getBlankNodeLabel().split(BNODE_SRC_MARKER)[1].equals(srcid))
 					return;
 
 			HttpGet httpget = null;
 			HttpEntity entity = null;
 			String uri = null;
-			String queryStr = queryPatternToSPARQLSelect(pattern);
+			String queryStr = triplePatternToSPARQLSelect(pattern);
 			try {
 				// Get the query
 				String query = URLEncoder.encode(queryStr, "UTF-8");
 				uri = endpoint.getURI() + "?query=" + query;
-
+				//logger.info(queryStr);
+				
 				// Record the request
 				endpoint.setRequestsCounter(endpoint.getRequestsCounter() + 1);
 
@@ -248,7 +246,7 @@ public class CacheUpdateTask implements Runnable {
 
 				// Execute the request
 				if (!endpoint.isEnabled())
-					return; 
+					return;
 				HttpResponse response = endpoint.getHttpClient().execute(httpget);
 				entity = response.getEntity();
 
@@ -283,7 +281,8 @@ public class CacheUpdateTask implements Runnable {
 			} catch (Exception e) {
 				// There was an error when asking the provider
 				endpoint.setErrorsCounter(endpoint.getErrorsCounter() + 1);
-				//logger.error("Failed to query " + endpoint.getURI() + " for " + queryStr);
+				// logger.error("Failed to query " + endpoint.getURI() + " for "
+				// + queryStr);
 				if (httpget != null)
 					httpget.abort();
 			}
@@ -297,12 +296,11 @@ public class CacheUpdateTask implements Runnable {
 	 * @param pattern
 	 * @return
 	 */
-	private String queryPatternToSPARQLSelect(QueryPattern queryPattern) {
+	private String triplePatternToSPARQLSelect(Triple pattern) {
 		StringBuffer buffer = new StringBuffer();
-		Triple pattern = queryPattern.getPattern();
 
 		// Open
-		buffer.append("SELECT ").append(QueryPattern.RETURN).append(" WHERE {");
+		buffer.append("SELECT ").append(SPARQLDataLayer.RETURN).append(" WHERE {");
 
 		// Convert
 		String s = nodeToString(pattern.getSubject());

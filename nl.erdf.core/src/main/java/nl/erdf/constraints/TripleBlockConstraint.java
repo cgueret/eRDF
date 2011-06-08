@@ -29,7 +29,7 @@ public class TripleBlockConstraint implements Constraint {
 	 */
 	@Override
 	public double getReward(Solution solution, DataLayer dataLayer) {
-		double max = Double.MIN_VALUE;
+		double max = 0;
 		for (TripleConstraint cstr : tripleConstraints) {
 			double reward = cstr.getReward(solution, dataLayer);
 			if (reward > max)
@@ -60,7 +60,7 @@ public class TripleBlockConstraint implements Constraint {
 	
 	/**
 	 * @param solution
-	 * @return
+	 * @return the instanciated triples
 	 */
 	public Set<Triple> getInstanciatedTriples(Solution solution) {
 		Set<Triple> triples = new HashSet<Triple>();

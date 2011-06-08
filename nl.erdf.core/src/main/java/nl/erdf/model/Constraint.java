@@ -20,6 +20,7 @@ public interface Constraint {
 	/**
 	 * @param solution
 	 * @param dataLayer
+	 * @return the reward for that constraint
 	 */
 	abstract double getReward(Solution solution, DataLayer dataLayer);
 

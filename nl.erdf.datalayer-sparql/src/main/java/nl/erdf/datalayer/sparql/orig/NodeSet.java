@@ -1,7 +1,7 @@
 /**
  * 
  */
-package nl.erdf.datalayer.sparql;
+package nl.erdf.datalayer.sparql.orig;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -10,12 +10,11 @@ import java.util.Set;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-import nl.erdf.datalayer.QueryPattern;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.Triple;
 
 /**
  * @author cgueret
@@ -33,7 +32,7 @@ public class NodeSet {
 			.synchronizedSet(new HashSet<Node>());
 
 	// The query pattern this set of resources correspond to
-	private final QueryPattern pattern;
+	private final Triple pattern;
 
 	// Locking system to wait for first result to arrive or completion of update
 	// process
@@ -50,7 +49,7 @@ public class NodeSet {
 	 * 
 	 * @param p
 	 */
-	public NodeSet(QueryPattern p) {
+	public NodeSet(Triple p) {
 		this.pattern = p;
 	}
 
@@ -59,7 +58,7 @@ public class NodeSet {
 	 * 
 	 * @return the QueryPattern of the set
 	 */
-	public QueryPattern getPattern() {
+	public Triple getPattern() {
 		return pattern;
 	}
 
@@ -308,5 +307,12 @@ public class NodeSet {
 			contentLock.unlock();
 		}
 
+	}
+
+	/**
+	 * @return
+	 */
+	public Set<Node> content() {
+		return content;
 	}
 }

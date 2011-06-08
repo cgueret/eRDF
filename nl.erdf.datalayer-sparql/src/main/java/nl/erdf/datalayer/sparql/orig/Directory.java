@@ -1,7 +1,7 @@
 /**
  * 
  */
-package nl.erdf.datalayer.sparql;
+package nl.erdf.datalayer.sparql.orig;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -12,6 +12,7 @@ import java.io.OutputStreamWriter;
 import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.LinkedList;
+
 
 import org.apache.http.HttpVersion;
 import org.apache.http.conn.ClientConnectionManager;

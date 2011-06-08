@@ -10,6 +10,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Node_Variable;
 import com.hp.hpl.jena.graph.Triple;
 
@@ -85,7 +86,8 @@ public abstract class Request {
 			double reward = constraint.getReward(solution, dataLayer);
 			fitness += reward;
 			for (Node_Variable variable : constraint.getVariables())
-				solution.getBinding(variable).incrementReward(reward);
+				if (!solution.getBinding(variable).getValue().equals(Node.NULL))
+					solution.getBinding(variable).incrementReward(reward);
 		}
 
 		// Return the fitness value
@@ -218,7 +220,7 @@ public abstract class Request {
 
 	/**
 	 * @param variable
-	 * @return
+	 * @return a set of providers
 	 */
 	public Set<ResourceProvider> getProvidersFor(Node_Variable variable) {
 		return providersMap.get(variable);

@@ -3,8 +3,11 @@
  */
 package nl.erdf.datalayer.sparql.ng;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Observable;
-import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +16,8 @@ import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
 
 import nl.erdf.datalayer.DataLayer;
-import nl.erdf.datalayer.QueryPattern;
+import nl.erdf.main.DataSource;
+
 
 /**
  * @author Christophe Guéret <christophe.gueret@gmail.com>
@@ -26,30 +30,12 @@ public class SPARQLDataLayerNG extends Observable implements DataLayer {
 	// Triple store for the cache
 	final TripleStore triplesCache = new JenaTDBStore();
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see nl.erdf.datalayer.DataLayer#getNumberOfResources(nl.erdf.datalayer.
-	 * QueryPattern)
-	 */
-	@Override
-	public long getNumberOfResources(QueryPattern queryPattern) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see nl.erdf.datalayer.DataLayer#getRandomResource(java.util.Random,
-	 * nl.erdf.datalayer.QueryPattern)
-	 */
-	@Override
-	public Node getRandomResource(Random random, QueryPattern queryPattern) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
+	// List of data sources to query for new triples
+	final List<DataSource> dataSources = new ArrayList<DataSource>();
+	
+	// Lock
+	final ReentrantLock lock = new ReentrantLock();
+	
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -90,6 +76,31 @@ public class SPARQLDataLayerNG extends Observable implements DataLayer {
 	public void waitForLatencyBuffer() {
 		// TODO Auto-generated method stub
 
+	}
+
+	/* (non-Javadoc)
+	 * @see nl.erdf.datalayer.DataLayer#getNumberOfResources(com.hp.hpl.jena.graph.Triple)
+	 */
+	@Override
+	public long getNumberOfResources(Triple triple) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	/* (non-Javadoc)
+	 * @see nl.erdf.datalayer.DataLayer#getResources(com.hp.hpl.jena.graph.Triple)
+	 */
+	@Override
+	public Set<Node> getResources(Triple triple) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/**
+	 * @param dataSource
+	 */
+	public void addDataSource(DataSource dataSource) {
+		dataSources.add(dataSource);
 	}
 
 }

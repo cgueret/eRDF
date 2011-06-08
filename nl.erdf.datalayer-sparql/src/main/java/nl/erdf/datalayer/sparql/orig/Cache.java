@@ -1,4 +1,4 @@
-package nl.erdf.datalayer.sparql;
+package nl.erdf.datalayer.sparql.orig;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -6,10 +6,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
-import nl.erdf.datalayer.QueryPattern;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.hp.hpl.jena.graph.Triple;
 
 /**
  * MTF-HashTables based implementation of a cache
@@ -58,7 +58,7 @@ public class Cache {
 	 * @param hashCode
 	 * @return the bucket associated to the hash code
 	 */
-	private Bucket getBucket(QueryPattern pattern) {
+	private Bucket getBucket(Triple pattern) {
 		return cache.get(Math.abs(pattern.hashCode()) % NB_BUCKETS);
 	}
 
@@ -66,7 +66,7 @@ public class Cache {
 	 * @param pattern
 	 * @return the object associated to the hasCode
 	 */
-	public NodeSet get(QueryPattern pattern) {
+	public NodeSet get(Triple pattern) {
 		// Get the bucket
 		Bucket bucket = getBucket(pattern);
 

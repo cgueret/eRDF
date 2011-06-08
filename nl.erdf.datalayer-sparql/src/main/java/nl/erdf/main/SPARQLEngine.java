@@ -14,11 +14,10 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import nl.erdf.datalayer.DataLayer;
-import nl.erdf.datalayer.sparql.Directory;
-import nl.erdf.datalayer.sparql.EndPoint;
-import nl.erdf.datalayer.sparql.SPARQLDataLayer;
 import nl.erdf.datalayer.sparql.SPARQLParser;
 import nl.erdf.datalayer.sparql.SPARQLRequest;
+import nl.erdf.datalayer.sparql.orig.Directory;
+import nl.erdf.datalayer.sparql.orig.EndPoint;
 import nl.erdf.model.Solution;
 import nl.erdf.optimizer.Optimizer;
 import nl.erdf.util.FileToText;
@@ -70,7 +69,7 @@ public class SPARQLEngine {
 			directory.loadFrom(new FileInputStream(endPoints));
 
 			// Create a data layer
-			DataLayer datalayer = new SPARQLDataLayer(directory);
+			DataLayer datalayer = null;//new SPARQLDataLayer(directory);
 
 			// Create a model for Jena, load the query
 			model = ModelFactory.createMemModelMaker().createDefaultModel();

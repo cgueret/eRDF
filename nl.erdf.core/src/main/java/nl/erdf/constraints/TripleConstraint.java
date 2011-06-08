@@ -8,10 +8,10 @@ import com.hp.hpl.jena.graph.Node_Variable;
 import com.hp.hpl.jena.graph.Triple;
 
 import nl.erdf.datalayer.DataLayer;
-import nl.erdf.datalayer.QueryPattern;
 import nl.erdf.model.Constraint;
 import nl.erdf.model.ResourceProvider;
 import nl.erdf.model.Solution;
+import nl.erdf.util.RandomNumber;
 
 /**
  * @author cgueret
@@ -86,7 +86,9 @@ public class TripleConstraint implements Constraint, ResourceProvider {
 	 */
 	@Override
 	public boolean equals(Object other) {
-		return graphPattern.equals(other);
+		if (!(other instanceof TripleConstraint))
+			return false;
+		return graphPattern.equals(((TripleConstraint) other).graphPattern);
 	}
 
 	/*
@@ -104,39 +106,6 @@ public class TripleConstraint implements Constraint, ResourceProvider {
 		if (graphPattern.getObject().isVariable())
 			vars.add((Node_Variable) graphPattern.getObject());
 		return vars;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * nl.erdf.model.ResourceProvider#getQuery(com.hp.hpl.jena.graph.Node_Variable
-	 * , nl.erdf.model.Solution)
-	 */
-	@Override
-	public QueryPattern getQuery(Node_Variable variable, Solution solution) {
-		// Instantiate the pattern into a full triple
-		Node subject = graphPattern.getSubject();
-		if (graphPattern.getSubject().isVariable())
-			subject = solution.getBinding((Node_Variable) graphPattern.getSubject()).getValue();
-		Node predicate = graphPattern.getPredicate();
-		if (graphPattern.getPredicate().isVariable())
-			predicate = solution.getBinding((Node_Variable) graphPattern.getPredicate()).getValue();
-		Node object = graphPattern.getObject();
-		if (graphPattern.getObject().isVariable())
-			object = solution.getBinding((Node_Variable) graphPattern.getObject()).getValue();
-
-		// Replace the target variable by a return and create a query
-		QueryPattern query = null;
-		if ((graphPattern.getSubject().isVariable()) && (variable.equals(graphPattern.getSubject())))
-			query = new QueryPattern(QueryPattern.RETURN, predicate, object);
-		if ((graphPattern.getPredicate().isVariable()) && (variable.equals(graphPattern.getPredicate())))
-			query = new QueryPattern(subject, QueryPattern.RETURN, object);
-		if ((graphPattern.getObject().isVariable()) && (variable.equals(graphPattern.getObject())))
-			query = new QueryPattern(subject, predicate, QueryPattern.RETURN);
-
-		return query;
-
 	}
 
 	/*
@@ -183,7 +152,7 @@ public class TripleConstraint implements Constraint, ResourceProvider {
 
 	/**
 	 * @param solution
-	 * @return
+	 * @return the instanciated triple
 	 */
 	public Triple getInstanciatedTriple(Solution solution) {
 		Node subject = graphPattern.getSubject();
@@ -198,4 +167,52 @@ public class TripleConstraint implements Constraint, ResourceProvider {
 
 		return Triple.create(subject, predicate, object);
 	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see nl.erdf.model.ResourceProvider#getResource(com.hp.hpl.jena.graph.
+	 * Node_Variable, nl.erdf.model.Solution, nl.erdf.datalayer.DataLayer)
+	 */
+	@Override
+	public Node getResource(Node_Variable variable, Solution solution, DataLayer dataLayer) {
+		// Instantiate the pattern but keep the sought variable
+		Node subject = graphPattern.getSubject();
+		if (graphPattern.getSubject().isVariable() && !graphPattern.getSubject().equals(variable))
+			subject = solution.getBinding((Node_Variable) graphPattern.getSubject()).getValue();
+		Node predicate = graphPattern.getPredicate();
+		if (graphPattern.getPredicate().isVariable() && !graphPattern.getPredicate().equals(variable))
+			predicate = solution.getBinding((Node_Variable) graphPattern.getPredicate()).getValue();
+		Node object = graphPattern.getObject();
+		if (graphPattern.getObject().isVariable() && !graphPattern.getObject().equals(variable))
+			object = solution.getBinding((Node_Variable) graphPattern.getObject()).getValue();
+
+		// Pick one of the possible node at random
+		Node node = Node.NULL;
+		Set<Node> nodes = dataLayer.getResources(Triple.create(subject, predicate, object));
+		if (nodes.size() > 0) {
+			int index = RandomNumber.nextInt(nodes.size());
+			node = (Node) nodes.toArray()[index];
+		} else {
+			// logger.info("bad! " + Triple.create(subject, predicate, object));
+			if (blackListedTriples != null)
+				blackListedTriples.add(Triple.create(subject, predicate, object));
+		}
+
+		return node;
+	}
 }
+
+// Replace the target variable by a return and create a query
+/*
+ * QueryPattern query = null; if ((graphPattern.getSubject().isVariable()) &&
+ * (variable.equals(graphPattern.getSubject()))) query = new
+ * QueryPattern(QueryPattern.RETURN, predicate, object); if
+ * ((graphPattern.getPredicate().isVariable()) &&
+ * (variable.equals(graphPattern.getPredicate()))) query = new
+ * QueryPattern(subject, QueryPattern.RETURN, object); if
+ * ((graphPattern.getObject().isVariable()) &&
+ * (variable.equals(graphPattern.getObject()))) query = new
+ * QueryPattern(subject, predicate, QueryPattern.RETURN);
+ */
+

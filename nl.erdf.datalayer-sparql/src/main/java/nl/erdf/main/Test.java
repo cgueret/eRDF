@@ -14,9 +14,9 @@ import org.slf4j.LoggerFactory;
 
 import nl.erdf.constraints.TripleBlockConstraint;
 import nl.erdf.constraints.TripleConstraint;
-import nl.erdf.datalayer.sparql.Directory;
-import nl.erdf.datalayer.sparql.SPARQLDataLayer;
 import nl.erdf.datalayer.sparql.SPARQLRequest;
+import nl.erdf.datalayer.sparql.orig.Directory;
+import nl.erdf.datalayer.sparql.orig.SPARQLDataLayer;
 import nl.erdf.model.Solution;
 import nl.erdf.optimizer.Optimizer;
 
@@ -36,13 +36,17 @@ public class Test implements Observer {
 	private final Directory directory;
 
 	public Test() throws FileNotFoundException, IOException {
+		// Create a data layer
+		//SPARQLDataLayerNG datalayer = new SPARQLDataLayerNG();
+		//datalayer.addDataSource(new SPARQLEndPoint("DBPedia", "http://lod.openlinksw.com/sparql"));
+
 		// Create a directory
 		directory = new Directory();
 		directory.add("DBPedia", "http://lod.openlinksw.com/sparql");
 
 		// Create a data layer
 		SPARQLDataLayer datalayer = new SPARQLDataLayer(directory);
-
+		
 		// Create the request
 		request = new SPARQLRequest(datalayer);
 

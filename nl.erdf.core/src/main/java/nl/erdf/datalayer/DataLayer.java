@@ -1,6 +1,6 @@
 package nl.erdf.datalayer;
 
-import java.util.Random;
+import java.util.Set;
 
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Triple;
@@ -15,21 +15,16 @@ public interface DataLayer {
 	/**
 	 * Indicates the number of resources available for a given queryPattern
 	 * 
-	 * @param queryPattern
+	 * @param triple
 	 * @return the number of resources available for that query
 	 */
-	public abstract long getNumberOfResources(final QueryPattern queryPattern);
+	abstract long getNumberOfResources(Triple triple);
 
 	/**
-	 * Only the list of the nodes is cached. The node actually returned is
-	 * randomly selected from this list
-	 * 
-	 * @param random
-	 * @param queryPattern
-	 * @return a random term (URI/Literal/BNode)
+	 * @param triple
+	 * @return a set of resources matching the triple
 	 */
-	public abstract Node getRandomResource(Random random,
-			QueryPattern queryPattern);
+	abstract Set<Node> getResources(Triple triple);
 
 	/**
 	 * Check is the combination of S,P and O is valid according to one of the

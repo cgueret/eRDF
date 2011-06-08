@@ -146,6 +146,9 @@ public class Optimizer extends Observable implements Runnable {
 			 * buffer += s.getFitness() + " "; logger.info(buffer);
 			 */
 
+			// Provide feed back to the generation operator
+			generateOp.updateProviderRewards(newPopulation);
+			
 			//
 			// Get rid of the previous population and insert the kids
 			//
