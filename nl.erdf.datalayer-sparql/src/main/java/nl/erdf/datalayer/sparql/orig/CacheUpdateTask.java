@@ -22,14 +22,12 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import com.hp.hpl.jena.datatypes.TypeMapper;
 import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Node_ANY;
 import com.hp.hpl.jena.graph.Node_Blank;
-import com.hp.hpl.jena.graph.Node_Literal;
-import com.hp.hpl.jena.graph.Node_NULL;
-import com.hp.hpl.jena.graph.Node_URI;
-import com.hp.hpl.jena.graph.Node_Variable;
 import com.hp.hpl.jena.graph.Triple;
+import com.hp.hpl.jena.query.Query;
+import com.hp.hpl.jena.query.QueryFactory;
 import com.hp.hpl.jena.rdf.model.AnonId;
+import com.hp.hpl.jena.sparql.syntax.ElementGroup;
 
 /**
  * @author tolgam
@@ -205,7 +203,7 @@ public class CacheUpdateTask implements Runnable {
 	@Override
 	public void run() {
 		try {
-			// If canceled, return right away
+			// If cancelled, return right away
 			if (isCanceled || !endpoint.isEnabled())
 				return;
 
@@ -227,56 +225,78 @@ public class CacheUpdateTask implements Runnable {
 			HttpGet httpget = null;
 			HttpEntity entity = null;
 			String uri = null;
-			String queryStr = triplePatternToSPARQLSelect(pattern);
-			try {
-				// Get the query
-				String query = URLEncoder.encode(queryStr, "UTF-8");
-				uri = endpoint.getURI() + "?query=" + query;
-				//logger.info(queryStr);
-				
-				// Record the request
-				endpoint.setRequestsCounter(endpoint.getRequestsCounter() + 1);
 
-				// Open the connection
-				httpget = new HttpGet(uri);
-				httpget.addHeader("Accept", "application/sparql-results+xml");
+			// Prepare the query
+			ElementGroup elg = new ElementGroup();
+			elg.addTriplePattern(pattern);
+			Query query = QueryFactory.make();
+			query.setQuerySelectType();
+			query.setQueryPattern(elg);
+			query.addResultVar(SPARQLDataLayer.RETURN);
+			query.setLimit(1000);
+			query.setDistinct(true);
+			query.setOffset(0);
+
+			try {
+				boolean getNextPage = true;
+				int totalResults = 0;
 
 				// Get current time
 				long start = System.nanoTime();
 
-				// Execute the request
-				if (!endpoint.isEnabled())
-					return;
-				HttpResponse response = endpoint.getHttpClient().execute(httpget);
-				entity = response.getEntity();
+				while (getNextPage) {
+					// Assume it will be the last page
+					getNextPage = false;
 
-				if (entity != null) {
-					// Get the results
-					InputStream instream = entity.getContent();
-					Handler handler = new Handler(endpoint, resourceSet);
+					// Get the query
+					uri = endpoint.getURI() + "?query=" + URLEncoder.encode(query.serialize(), "UTF-8");
 
-					// Get a parser for the results
-					SAXParserFactory factory = SAXParserFactory.newInstance();
-					SAXParser saxParser = factory.newSAXParser();
-					saxParser.parse(instream, handler);
+					// Record the request
+					endpoint.setRequestsCounter(endpoint.getRequestsCounter() + 1);
 
-					// Wait for completion
-					int total = handler.waitForCompletion();
-					entity.consumeContent();
+					// Open the connection
+					httpget = new HttpGet(uri);
+					httpget.addHeader("Accept", "application/sparql-results+xml");
 
-					// Update statistics
-					long latency = TimeUnit.MILLISECONDS.convert(System.nanoTime() - start, TimeUnit.NANOSECONDS);
-					endpoint.setTotalLatency(endpoint.getTotalLatency() + latency);
-					if (total > 0) {
-						endpoint.setInformativeCounter(endpoint.getInformativeCounter() + 1);
-						// logger.info(endpoint.getName());
+					// Execute the request
+					if (!endpoint.isEnabled())
+						return;
+					HttpResponse response = endpoint.getHttpClient().execute(httpget);
+					entity = response.getEntity();
+
+					if (entity != null) {
+						// Get the results
+						InputStream instream = entity.getContent();
+						Handler handler = new Handler(endpoint, resourceSet);
+
+						// Get a parser for the results
+						SAXParserFactory factory = SAXParserFactory.newInstance();
+						SAXParser saxParser = factory.newSAXParser();
+						saxParser.parse(instream, handler);
+
+						// Wait for completion
+						int total = handler.waitForCompletion();
+						if (total == 1000) {
+							getNextPage = true;
+							query.setOffset(query.getOffset() + 1000);
+						}
+						totalResults += total;
+						// entity.consumeContent();
+
+					} else {
+						if (httpget != null)
+							httpget.abort();
 					}
-				} else {
-					if (httpget != null)
-						httpget.abort();
+					// httpClient.getConnectionManager().releaseConnection(conn,
+					// -1,
+					// null);
 				}
-				// httpClient.getConnectionManager().releaseConnection(conn, -1,
-				// null);
+
+				// Update statistics
+				long latency = TimeUnit.MILLISECONDS.convert(System.nanoTime() - start, TimeUnit.NANOSECONDS);
+				endpoint.setTotalLatency(endpoint.getTotalLatency() + latency);
+				if (totalResults > 0)
+					endpoint.setInformativeCounter(endpoint.getInformativeCounter() + 1);
 
 			} catch (Exception e) {
 				// There was an error when asking the provider
@@ -293,68 +313,17 @@ public class CacheUpdateTask implements Runnable {
 	}
 
 	/**
-	 * @param pattern
-	 * @return
-	 */
-	private String triplePatternToSPARQLSelect(Triple pattern) {
-		StringBuffer buffer = new StringBuffer();
-
-		// Open
-		buffer.append("SELECT ").append(SPARQLDataLayer.RETURN).append(" WHERE {");
-
-		// Convert
-		String s = nodeToString(pattern.getSubject());
-		buffer.append((s.equals("") ? "?s" : s)).append(" ");
-		String p = nodeToString(pattern.getPredicate());
-		buffer.append((p.equals("") ? "?p" : p)).append(" ");
-		String o = nodeToString(pattern.getObject());
-		buffer.append((o.equals("") ? "?o" : o)).append(".");
-
-		// Close
-		buffer.append("} LIMIT 1000");
-
-		return buffer.toString();
-	}
-
-	/**
-	 * @param node
-	 */
-	private String nodeToString(Node node) {
-		// Handle URIs
-		if (node instanceof Node_URI)
-			return "<" + node.getURI() + ">";
-
-		// Handle Variables
-		if (node instanceof Node_Variable)
-			return node.toString();
-
-		// Handle Literals
-		if (node instanceof Node_Literal) {
-			if (!node.getLiteralLanguage().equals(""))
-				return "\"" + node.getLiteralValue() + "\"" + node.getLiteralLanguage();
-			if (node.getLiteralDatatypeURI() != null)
-				return "\"" + node.getLiteralLexicalForm() + "\"^^<" + node.getLiteralDatatypeURI() + ">";
-			return node.toString();
-		}
-
-		// Handle Blanks
-		if (node instanceof Node_Blank) {
-			String[] blocks = node.getBlankNodeLabel().split(BNODE_SRC_MARKER);
-			return "<" + blocks[0] + ">";
-		}
-
-		// Handle wild cards
-		if (node instanceof Node_NULL || node instanceof Node_ANY)
-			return "";
-
-		logger.info(node.getClass().toString());
-		return null;
-	}
-
-	/**
 	 * 
 	 */
 	public synchronized void cancel() {
 		isCanceled = true;
 	}
 }
+
+// @see
+// https://jena.svn.sourceforge.net/svnroot/jena/ARQ/trunk/src-examples/arq/examples/ExProg1.java
+// TODO Handle Blanks in query
+// if (node instanceof Node_Blank) {
+// String[] blocks = node.getBlankNodeLabel().split(BNODE_SRC_MARKER);
+// return "<" + blocks[0] + ">";
+// }

@@ -135,18 +135,20 @@ public class TripleConstraint implements Constraint, ResourceProvider {
 		if (dataLayer.isValid(Triple.create(subject, predicate, object)))
 			return HIGH_REWARD;
 
-		// If we could change O to get a solution, return a MEDIUM reward
-		if (graphPattern.getObject().isVariable() && dataLayer.isValid(Triple.create(subject, predicate, Node.ANY)))
-			return MEDIUM_REWARD;
+		// If we could change either S or O to get a solution, return a MEDIUM
+		// reward
+		if (graphPattern.getSubject().isVariable() && graphPattern.getObject().isVariable())
+			if (dataLayer.isValid(Triple.create(subject, predicate, Node.ANY))
+					|| dataLayer.isValid(Triple.create(Node.ANY, predicate, object)))
+				return MEDIUM_REWARD;
 
-		// If we could change S to get a solution, return a MEDIUM reward
-		if (graphPattern.getSubject().isVariable() && dataLayer.isValid(Triple.create(Node.ANY, predicate, object)))
-			return MEDIUM_REWARD;
+		// Same if we could change P
+		if (graphPattern.getPredicate().isVariable())
+			if (dataLayer.isValid(Triple.create(subject, Node.ANY, object)))
+				return MEDIUM_REWARD;
 
-		// If we could change P to get a solution, return a MEDIUM reward
-		if (graphPattern.getPredicate().isVariable() && dataLayer.isValid(Triple.create(subject, Node.ANY, object)))
-			return MEDIUM_REWARD;
-
+		// FIXME misses some combinations like ??O or S??
+		// TODO Return double[]{REWARD,REWARD,REWARD} for fine-grained rewarding
 		return NULL_REWARD;
 	}
 

@@ -13,13 +13,15 @@ import java.util.concurrent.TimeUnit;
 import nl.erdf.datalayer.sparql.LIFOQueue;
 import nl.erdf.datalayer.sparql.RetryHandler;
 
+import org.apache.http.HttpVersion;
 import org.apache.http.client.HttpClient;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
+import org.apache.http.params.HttpProtocolParams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 /**
  * @author tolgam
@@ -114,7 +116,6 @@ public class EndPoint {
 		} catch (InterruptedException ie) {
 		}
 
-		
 		// Stop the data executor
 		executor.shutdown();
 		try {
@@ -134,12 +135,21 @@ public class EndPoint {
 	/**
 	 * 
 	 */
-	public void start(ClientConnectionManager connManager, HttpParams httpParams) {
+	public void start(ClientConnectionManager connManager) {
 		// Create an HTTP client, disable cookies and don't retry requests
-		httpClient = new DefaultHttpClient(connManager, httpParams);
-		((DefaultHttpClient) httpClient).setCookieStore(null);
-		((DefaultHttpClient) httpClient).setCookieSpecs(null);
-		((DefaultHttpClient) httpClient).setHttpRequestRetryHandler(new RetryHandler());
+		httpClient = new DefaultHttpClient(connManager);
+		httpClient.setCookieStore(null);
+		httpClient.setCookieSpecs(null);
+		httpClient.setHttpRequestRetryHandler(new RetryHandler());
+		
+		// Set connectivity params
+		HttpParams params = httpClient.getParams();
+		HttpConnectionParams.setConnectionTimeout(params, 2000);
+		HttpConnectionParams.setSoTimeout(params, 1000);
+		HttpConnectionParams.setTcpNoDelay(params, true);
+		HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
+		HttpProtocolParams.setContentCharset(params, "UTF-8");
+		HttpProtocolParams.setUseExpectContinue(params, true);
 
 		// Create an other executor for the data service
 		// executor = Executors.newFixedThreadPool(5);

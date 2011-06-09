@@ -19,20 +19,20 @@ import com.hp.hpl.jena.graph.Triple;
  * 
  */
 public class SPARQLDataLayer extends Observable implements DataLayer {
-	// Logger instance
-	protected final Logger logger = LoggerFactory.getLogger(SPARQLDataLayer.class);
-
-	// The directory
-	private final Directory directory;
-
-	// Query cache for gets
-	private final Cache cache;
-
 	// If BLOCKING is set to true, no MAYBE answer will be allowed
 	// every function will block until the final results are known
 	private static final boolean BLOCKING = true;
 
 	public static final Node RETURN = new Node_Variable("erdf");
+
+	// Query cache for gets
+	private final Cache cache;
+
+	// The directory
+	private final Directory directory;
+
+	// Logger instance
+	protected final Logger logger = LoggerFactory.getLogger(SPARQLDataLayer.class);
 
 	/**
 	 * @param directory
@@ -42,6 +42,16 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 	public SPARQLDataLayer(Directory directory) throws FileNotFoundException, IOException {
 		this.directory = directory;
 		cache = new Cache(directory);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see nl.erdf.main.datalayer.DataLayer#clear()
+	 */
+	@Override
+	public void clear() {
+		cache.clear();
 	}
 
 	/**
@@ -56,63 +66,81 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see nl.erdf.datalayer.DataLayer#isValid(com.hp.hpl.jena.graph.Triple)
+	 * @see java.lang.Object#finalize()
 	 */
 	@Override
-	public boolean isValid(Triple triple) {
-		// Create a query pattern
-		// QueryPattern query = new QueryPattern(triple);
-		//logger.info("[VALID] " + triple);
-
-		// Deal with obvious answers... if there is NULL in the pattern it is
-		// sure the answer is no
-		if (contains(triple, null) || contains(triple, Node.NULL))
-			return false;
-
-		// Now, the normal cases
-		Node s = triple.getSubject();
-		Node p = triple.getPredicate();
-		Node o = triple.getObject();
-		if (contains(triple, Node.ANY)) {
-			return isPartiallyValid(s, p, o);
-		} else {
-			// logger.info("Valid? " + query.getPattern());
-			return isFullyValid(s, p, o);
-		}
+	protected void finalize() throws Throwable {
+		shutdown();
 	}
 
-	/**
-	 * @param s
-	 * @param p
-	 * @param o
-	 * @return
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see datalayer.DataLayer#getNumberOfResources(datalayer.wod.QueryPattern)
 	 */
-	private boolean isPartiallyValid(Node s, Node p, Node o) {
-		// Create the relevant partial query pattern
-		Node s2 = (s.equals(Node.ANY) ? RETURN : s);
-		Node p2 = (p.equals(Node.ANY) ? RETURN : p);
-		Node o2 = (o.equals(Node.ANY) ? RETURN : o);
-		Triple partialQueryPattern = Triple.create(s2, p2, o2);
-		//logger.info("[P-VALID] " + partialQueryPattern);
+	@Override
+	public long getNumberOfResources(Triple pattern) {
+		// Try to get the result from the cache
+		NodeSet resources = cache.get(pattern);
 
-		// If the set is not empty, we are sure the triple is partially valid
-		NodeSet resources = cache.get(partialQueryPattern);
-		if (!resources.isEmpty())
-			return true;
+		// If blocking, wait until the result set is finished
+		if (BLOCKING)
+			resources.waitForFinalContent();
 
-		// If the content of the set is final, we are sure the pattern is not
-		// valid
-		if (resources.isFinal())
-			return false;
+		// If there is nothing in it but we are still updating, then the size
+		// is unknown
+		if ((!resources.isFinal()) && (resources.size() == 0))
+			return -1;
 
-		// If blocking, wait until the result has some result in it
-		if (BLOCKING) {
+		return resources.size();
+	}
+
+	/*
+	 * public Node getRandomResource(Random rand, QueryPattern queryPattern) {
+	 * 
+	 * // Default resourceSet to use NodeSet resources = NodeSet.EMPTY_SET;
+	 * 
+	 * // Get a set of resources from the cache resources =
+	 * cache.get(queryPattern);
+	 * 
+	 * // If blocking, wait until the result set has something in it if
+	 * (BLOCKING) resources.waitForSomeContent();
+	 * 
+	 * //logger.info(queryPattern.toString());
+	 * //logger.info(""+resources.size());
+	 * 
+	 * // Return a random resource from the set return resources.get(rand); }
+	 */
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * nl.erdf.datalayer.DataLayer#getResources(com.hp.hpl.jena.graph.Triple)
+	 */
+	@Override
+	public Set<Node> getResources(Triple t) {
+		//logger.info("[GET] " + t);
+
+		// Scan the pattern to replace the variable with the return var
+		Node s = (t.getSubject().isVariable() ? RETURN : t.getSubject());
+		Node p = (t.getPredicate().isVariable() ? RETURN : t.getPredicate());
+		Node o = (t.getObject().isVariable() ? RETURN : t.getObject());
+		Triple triplePattern = Triple.create(s, p, o);
+
+		// Default resourceSet to use
+		NodeSet resources = NodeSet.EMPTY_SET;
+
+		// Get a set of resources from the cache
+		resources = cache.get(triplePattern);
+
+		// If blocking, wait until the result set has something in it
+		if (BLOCKING)
 			resources.waitForSomeContent();
-			return (!resources.isEmpty());
-		}
 
-		// Not sure yet, something may be added in the future
-		return false;
+		// logger.info(queryPattern.toString());
+		// logger.info(""+resources.size());
+		return resources.content();
 	}
 
 	/**
@@ -175,64 +203,67 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 		return false;
 	}
 
-	/*
-	 * public Node getRandomResource(Random rand, QueryPattern queryPattern) {
-	 * 
-	 * // Default resourceSet to use NodeSet resources = NodeSet.EMPTY_SET;
-	 * 
-	 * // Get a set of resources from the cache resources =
-	 * cache.get(queryPattern);
-	 * 
-	 * // If blocking, wait until the result set has something in it if
-	 * (BLOCKING) resources.waitForSomeContent();
-	 * 
-	 * //logger.info(queryPattern.toString());
-	 * //logger.info(""+resources.size());
-	 * 
-	 * // Return a random resource from the set return resources.get(rand); }
+	/**
+	 * @param s
+	 * @param p
+	 * @param o
+	 * @return
 	 */
+	private boolean isPartiallyValid(Node s, Node p, Node o) {
+		// Create the relevant partial query pattern
+		Node s2 = (s.equals(Node.ANY) ? RETURN : s);
+		Node p2 = (p.equals(Node.ANY) ? RETURN : p);
+		Node o2 = (o.equals(Node.ANY) ? RETURN : o);
+		Triple partialQueryPattern = Triple.create(s2, p2, o2);
+		//logger.info("[P-VALID] " + partialQueryPattern);
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see datalayer.DataLayer#getNumberOfResources(datalayer.wod.QueryPattern)
-	 */
-	@Override
-	public long getNumberOfResources(Triple pattern) {
-		// Try to get the result from the cache
-		NodeSet resources = cache.get(pattern);
+		// If the set is not empty, we are sure the triple is partially valid
+		NodeSet resources = cache.get(partialQueryPattern);
+		if (!resources.isEmpty())
+			return true;
 
-		// If blocking, wait until the result set is finished
-		if (BLOCKING)
-			resources.waitForFinalContent();
+		// If the content of the set is final, we are sure the pattern is not
+		// valid
+		if (resources.isFinal())
+			return false;
 
-		// If there is nothing in it but we are still updating, then the size
-		// is unknown
-		if ((!resources.isFinal()) && (resources.size() == 0))
-			return -1;
+		// If blocking, wait until the result has some result in it
+		if (BLOCKING) {
+			resources.waitForSomeContent();
+			return (!resources.isEmpty());
+		}
 
-		return resources.size();
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see nl.erdf.main.datalayer.DataLayer#clear()
-	 */
-	@Override
-	public void clear() {
-		cache.clear();
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#finalize()
-	 */
-	@Override
-	protected void finalize() throws Throwable {
-		shutdown();
+		// Not sure yet, something may be added in the future
+		return false;
 	};
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see nl.erdf.datalayer.DataLayer#isValid(com.hp.hpl.jena.graph.Triple)
+	 */
+	@Override
+	public boolean isValid(Triple triple) {
+		// Create a query pattern
+		// QueryPattern query = new QueryPattern(triple);
+		//logger.info("[VALID] " + triple);
+
+		// Deal with obvious answers... if there is NULL in the pattern it is
+		// sure the answer is no
+		if (contains(triple, null) || contains(triple, Node.NULL))
+			return false;
+
+		// Now, the normal cases
+		Node s = triple.getSubject();
+		Node p = triple.getPredicate();
+		Node o = triple.getObject();
+		if (contains(triple, Node.ANY)) {
+			return isPartiallyValid(s, p, o);
+		} else {
+			// logger.info("Valid? " + query.getPattern());
+			return isFullyValid(s, p, o);
+		}
+	}
 
 	/*
 	 * (non-Javadoc)
@@ -267,36 +298,5 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 				e.printStackTrace();
 			}
 		}
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * nl.erdf.datalayer.DataLayer#getResources(com.hp.hpl.jena.graph.Triple)
-	 */
-	@Override
-	public Set<Node> getResources(Triple t) {
-		//logger.info("[GET] " + t);
-
-		// Scan the pattern to replace the variable with the return var
-		Node s = (t.getSubject().isVariable() ? RETURN : t.getSubject());
-		Node p = (t.getPredicate().isVariable() ? RETURN : t.getPredicate());
-		Node o = (t.getObject().isVariable() ? RETURN : t.getObject());
-		Triple triplePattern = Triple.create(s, p, o);
-
-		// Default resourceSet to use
-		NodeSet resources = NodeSet.EMPTY_SET;
-
-		// Get a set of resources from the cache
-		resources = cache.get(triplePattern);
-
-		// If blocking, wait until the result set has something in it
-		if (BLOCKING)
-			resources.waitForSomeContent();
-
-		// logger.info(queryPattern.toString());
-		// logger.info(""+resources.size());
-		return resources.content();
 	}
 }
