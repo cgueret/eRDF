@@ -1,5 +1,6 @@
 package nl.erdf.optimizer;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -21,9 +22,9 @@ import com.hp.hpl.jena.graph.Node_Variable;
  * @author tolgam
  * 
  */
-public class Generate {
+public class CopyOfGenerate {
 	/** Logger */
-	final Logger logger = LoggerFactory.getLogger(Generate.class);
+	final Logger logger = LoggerFactory.getLogger(CopyOfGenerate.class);
 
 	private class Pair {
 		final Node_Variable variable;
@@ -79,8 +80,8 @@ public class Generate {
 			return true;
 		}
 
-		private Generate getOuterType() {
-			return Generate.this;
+		private CopyOfGenerate getOuterType() {
+			return CopyOfGenerate.this;
 		}
 
 		/*
@@ -108,7 +109,7 @@ public class Generate {
 	 * @param request
 	 *            the request to solve
 	 */
-	public Generate(DataLayer datalayer, Request request) {
+	public CopyOfGenerate(DataLayer datalayer, Request request) {
 		this.datalayer = datalayer;
 		this.request = request;
 
@@ -128,64 +129,29 @@ public class Generate {
 	 * 
 	 * @param population
 	 * @param target
+	 * @param offspringSize
 	 * 
 	 */
-	public void createPopulation(SortedSet<Solution> population, Set<Solution> target) {
+	public void createPopulation(SortedSet<Solution> population, Collection<Solution> target, int offspringSize) {
 		// Clear the usage stats for the providers
 		providerUsage.clear();
 
 		// Generate offspringSize new solution per parent
-		mutate(population, target);
+		mutate(population, target, offspringSize);
 
 		// Do crossover among the population
 		crossover(population, target);
-
-		// Enforce the values of some variable using the value of some others
-		enforce(population, target);
-
-		// logger.info("Created " + target.size() + " new individuals from " +
-		// population.size() + " parents");
+		
+		// Try to enforce the values of some variable using the value of some others
+		
+		logger.info("Created " + target.size() + " new individuals from " + population.size() + " parents");
 	}
 
 	/**
 	 * @param population
 	 * @param target
 	 */
-	private void enforce(SortedSet<Solution> population, Set<Solution> target) {
-		for (Solution parent : population) {
-			// logger.info("Enforce " + parent);
-
-			for (Binding b : parent.bindings()) {
-				Node_Variable variable = b.getVariable();
-				Solution solution = (Solution) parent.clone();
-				Binding binding = solution.getBinding(variable);
-				ResourceProvider provider = getProvider(variable, parent, 2);
-
-				if (provider != null) {
-					// Get a new binding
-					Node resource = provider.getResource(variable, solution, datalayer);
-					if (!resource.equals(Node.NULL) && !binding.getValue().equals(resource)) {
-						binding.setValue(resource);
-
-						// Add to the target population
-						if (!target.contains(solution)) {
-							providerUsage.put(solution, new Pair(variable, provider));
-							target.add(solution);
-						}
-					}
-					// logger.info(binding.getVariable().getName() + "=" +
-					// resource + " (" + provider.toString() + ")");
-				}
-			}
-		}
-
-	}
-
-	/**
-	 * @param population
-	 * @param target
-	 */
-	private void crossover(SortedSet<Solution> population, Set<Solution> target) {
+	private void crossover(SortedSet<Solution> population, Collection<Solution> target) {
 		// Prepare an array version of the source population for easy rotate
 		Solution[] sources = new Solution[population.size()];
 		int i = 0;
@@ -194,17 +160,17 @@ public class Generate {
 
 		// Take all parents by pair
 		for (int first = 0; first != population.size() - 1; first++) {
-			Solution firstSol = sources[first];
 			for (int second = first + 1; second != population.size(); second++) {
-				Solution secondSol = sources[second];
+				Solution firstSolution = sources[first];
+				Solution secondSolution = sources[second];
 
-				Solution solution = (Solution) firstSol.clone();
+				Solution solution = (Solution) firstSolution.clone();
 				for (Binding b : solution.bindings()) {
-					if (secondSol.getBinding(b.getVariable()).getReward() > firstSol.getBinding(b.getVariable())
-							.getReward())
-						b.setValue(secondSol.getValue(b.getVariable()));
-					else if (b.getValue().equals(Node.NULL) && !secondSol.getValue(b.getVariable()).equals(Node.NULL))
-						b.setValue(secondSol.getBinding(b.getVariable()).getValue());
+					if (firstSolution.getBinding(b.getVariable()).getReward() > secondSolution.getBinding(
+							b.getVariable()).getReward())
+						b.setValue(firstSolution.getBinding(b.getVariable()).getValue());
+					else
+						b.setValue(secondSolution.getBinding(b.getVariable()).getValue());
 				}
 
 				if (!target.contains(solution))
@@ -218,35 +184,59 @@ public class Generate {
 	 * @param target
 	 * @param offspringSize
 	 */
-	private void mutate(SortedSet<Solution> population, Set<Solution> target) {
+	private void mutate(SortedSet<Solution> population, Collection<Solution> target, int offspringSize) {
+		// Generate offspringSize new solution per parent
 		for (Solution parent : population) {
-			// logger.info("Mutate " + parent);
-
-			for (Binding b : parent.bindings()) {
-				Node_Variable variable = b.getVariable();
+			for (int i = 0; i < offspringSize; i++) {
+				// Get the next parent source and duplicate it
+				// logger.info("Clone source " + sourceIndex);
 				Solution solution = (Solution) parent.clone();
-				Binding binding = solution.getBinding(variable);
-				ResourceProvider provider = getProvider(variable, solution, 1);
-				if (provider != null) {
-					// Get a new binding
-					Node resource = provider.getResource(variable, solution, datalayer);
-					if (!resource.equals(Node.NULL) && !binding.getValue().equals(resource)) {
-						binding.setValue(resource);
 
-						// Add to the target population
-						if (!target.contains(solution)) {
-							providerUsage.put(solution, new Pair(variable, provider));
-							target.add(solution);
-						}
+				// By default, mutate the first binding or if > 1 select a
+				// variable to mutate
+				Binding binding = (Binding) solution.bindings().toArray()[0];
+				if (solution.bindings().size() > 1) {
+					double max = 0;
+					Roulette rouletteVariable = new Roulette();
+					for (Binding b : solution.bindings()) {
+						double val = request.getMaximumReward(b.getVariable()) - b.getReward();
+						rouletteVariable.add(b, val);
+						if (val > max)
+							max = val;
 					}
-					// logger.info(binding.getVariable().getName() + "=" +
-					// resource + " (" + provider.toString() + ")");
+
+					// Gives blank bindings more importance
+					// for (Entry entry : rouletteVariable.content())
+					// if (((Binding)
+					// entry.object).getValue().equals(Node.NULL))
+					// entry.value = max / 2;
+					rouletteVariable.prepare();
+					binding = ((Binding) rouletteVariable.nextElement());
+				}
+				//logger.info("Mutate " + binding.getVariable());
+
+				// Pick up one of the providers able to mutate that variable
+				// then, get a resource from the datalayer and assign it
+				Node_Variable variable = binding.getVariable();
+				ResourceProvider provider = getProvider(variable, solution);
+				if (provider != null) {
+					// logger.info("Use provider " + provider);
+					Node resource = provider.getResource(variable, solution, datalayer);
+					if (!resource.equals(Node.NULL))
+						binding.setValue(resource);
+					// logger.info("New value " + resource);
+
+					// Add to the target population
+					if (!target.contains(solution)) {
+						providerUsage.put(solution, new Pair(variable, provider));
+						target.add(solution);
+					}
 				}
 			}
 		}
 	}
 
-	private ResourceProvider getProvider(Node_Variable variable, Solution solution, int nbvars) {
+	private ResourceProvider getProvider(Node_Variable variable, Solution solution) {
 		// logger.info("Find provider for " + variable);
 
 		// Find the highest selectivity
@@ -263,7 +253,7 @@ public class Generate {
 
 		double max = 0;
 		for (ResourceProvider provider : request.getProvidersFor(variable)) {
-			if (provider.getVariables().size() == 1 && providerRewards.get(new Pair(variable, provider)) > max) {
+			if (providerRewards.get(new Pair(variable, provider)) > max) {
 				max = providerRewards.get(new Pair(variable, provider));
 			}
 		}
@@ -271,18 +261,6 @@ public class Generate {
 		// Build a roulette
 		Roulette rouletteProvider = new Roulette();
 		for (ResourceProvider provider : request.getProvidersFor(variable)) {
-			// Don't use a provider that doesn't use the requested number of var
-			if (provider.getVariables().size() != nbvars)
-				continue;
-
-			// Don't use a provider that would have a NULL in its query
-			boolean skip = false;
-			for (Node_Variable v : provider.getVariables())
-				if (!v.equals(variable) && solution.getBinding(v).getValue().equals(Node.NULL))
-					skip = true;
-			if (skip)
-				continue;
-
 			// QueryPattern query = provider.getQuery(variable, solution);
 			// if (!query.contains(Node.NULL)) {
 			// long selectivity = datalayer.getNumberOfResources(query);

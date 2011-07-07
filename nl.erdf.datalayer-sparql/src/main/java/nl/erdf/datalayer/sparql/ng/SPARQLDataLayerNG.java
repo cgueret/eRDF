@@ -41,9 +41,7 @@ public class SPARQLDataLayerNG extends Observable implements DataLayer {
 	 * 
 	 * @see nl.erdf.datalayer.DataLayer#isValid(com.hp.hpl.jena.graph.Triple)
 	 */
-	@Override
 	public boolean isValid(Triple triple) {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
@@ -52,7 +50,6 @@ public class SPARQLDataLayerNG extends Observable implements DataLayer {
 	 * 
 	 * @see nl.erdf.datalayer.DataLayer#clear()
 	 */
-	@Override
 	public void clear() {
 		triplesCache.clear();
 	}
@@ -62,7 +59,6 @@ public class SPARQLDataLayerNG extends Observable implements DataLayer {
 	 * 
 	 * @see nl.erdf.datalayer.DataLayer#shutdown()
 	 */
-	@Override
 	public void shutdown() {
 		triplesCache.shutdown();
 	}
@@ -72,27 +68,20 @@ public class SPARQLDataLayerNG extends Observable implements DataLayer {
 	 * 
 	 * @see nl.erdf.datalayer.DataLayer#waitForLatencyBuffer()
 	 */
-	@Override
 	public void waitForLatencyBuffer() {
-		// TODO Auto-generated method stub
-
 	}
 
 	/* (non-Javadoc)
 	 * @see nl.erdf.datalayer.DataLayer#getNumberOfResources(com.hp.hpl.jena.graph.Triple)
 	 */
-	@Override
 	public long getNumberOfResources(Triple triple) {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 
 	/* (non-Javadoc)
 	 * @see nl.erdf.datalayer.DataLayer#getResources(com.hp.hpl.jena.graph.Triple)
 	 */
-	@Override
 	public Set<Node> getResources(Triple triple) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 

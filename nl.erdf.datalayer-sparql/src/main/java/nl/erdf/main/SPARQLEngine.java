@@ -90,7 +90,6 @@ public class SPARQLEngine {
 		 * @see java.util.Observer#update(java.util.Observable,
 		 * java.lang.Object)
 		 */
-		@Override
 		public void update(Observable source, Object arg) {
 			// Check source
 			if (!(source instanceof Optimizer))

@@ -3,6 +3,7 @@ package nl.erdf.main;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URI;
 
 import nl.erdf.datalayer.sparql.orig.Directory;
 
@@ -65,10 +66,10 @@ public class GetEndPointsFromCKAN {
 		for (JsonValue entry : results) {
 			// Get some basic information
 			String id = entry.getAsObject().get("package_id").getAsString().value();
-			String URI = entry.getAsObject().get("url").getAsString().value();
+			String uri = entry.getAsObject().get("url").getAsString().value();
 
 			// Test if the end point is alive
-			EndPointTester t = new EndPointTester(URI);
+			EndPointTester t = new EndPointTester(uri);
 			t.setDaemon(true);
 			long start = System.currentTimeMillis();
 			t.start();
@@ -87,10 +88,10 @@ public class GetEndPointsFromCKAN {
 				String label = title + " (" + name + ")";
 
 				// Print status and save end point
-				logger.info("Validated " + URI + " as \"" + label + "\" [" + delay + " ms]");
-				d.add(label, URI);
+				logger.info("Validated " + uri + " as \"" + label + "\" [" + delay + " ms]");
+				d.add(label, URI.create(uri));
 			} else {
-				logger.warn("Failed on " + URI + " [" + t.getError() + "]");
+				logger.warn("Failed on " + uri + " [" + t.getError() + "]");
 			}
 		}
 

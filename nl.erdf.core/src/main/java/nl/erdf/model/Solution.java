@@ -1,8 +1,11 @@
 package nl.erdf.model;
 
-import java.util.ArrayList;
+import java.text.DecimalFormat;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
+import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Node_Variable;
 
 /**
@@ -12,60 +15,29 @@ import com.hp.hpl.jena.graph.Node_Variable;
  * 
  */
 public class Solution implements Comparable<Solution> {
+	// Format
+	static final DecimalFormat format = new DecimalFormat("0.00");
 	// Bindings
-	private final ArrayList<Binding> bindings = new ArrayList<Binding>();
-
-	// Relevance with respect to the query
-	private double fitness = 0;
-
+	private final Map<Node_Variable, Binding> bindings = new HashMap<Node_Variable, Binding>();
 	// The age of that solution
 	private int age = 0;
-
+	// Relevance with respect to the query
+	private double fitness = 0;
 	// Is that an optimal solution?
 	private boolean isOptimal = false;
 
 	/**
-	 * @param variable
-	 * @return the binding for that variable
+	 * @param binding
 	 */
-	public Binding getBinding(Node_Variable variable) {
-		for (int i = 0; i < size(); i++)
-			if (bindings.get(i).getVariable().equals(variable))
-				return bindings.get(i);
-
-		return null;
+	public void add(Binding binding) {
+		bindings.put(binding.getVariable(), binding);
 	}
 
 	/**
-	 * @return the number of bindings
+	 * @return The collection of bindings defined by this solution
 	 */
-	public int size() {
-		return bindings.size();
-	}
-
-	/*
-	 * public boolean containsVariable(Node_Variable variable) { for (int i = 0;
-	 * i < size(); i++) if (get(i).getVariable().equals(variable)) return true;
-	 * 
-	 * return false; }
-	 */
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.util.AbstractCollection#toString()
-	 */
-	@Override
-	public String toString() {
-		String str = " (rel=" + fitness + "|opt=" + isOptimal + "|age=" + age + ")\n";
-
-		for (Binding b : bindings) {
-			str += b.getReward() + " ";
-			str += b.getVariable() + " = ";
-			str += (b.getValue() != null ? b.getValue() : "null") + "\n";
-		}
-
-		return str;
+	public Collection<Binding> bindings() {
+		return bindings.values();
 	}
 
 	/*
@@ -78,7 +50,7 @@ public class Solution implements Comparable<Solution> {
 		Solution solution = new Solution();
 
 		// Copy the bindings
-		for (Binding binding : bindings)
+		for (Binding binding : bindings.values())
 			solution.add((Binding) binding.clone());
 
 		// Reset everything else
@@ -89,18 +61,59 @@ public class Solution implements Comparable<Solution> {
 		return solution;
 	}
 
-	/**
-	 * @param binding
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Comparable#compareTo(java.lang.Object)
 	 */
-	public void add(Binding binding) {
-		bindings.add(binding);
+	public int compareTo(Solution o) {
+		if (o.getFitness() < this.getFitness())
+			return 1;
+
+		if (this.equals(o)) {
+			return 0;
+		}
+
+		return -1;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		// Easy cases
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (!(obj instanceof Solution))
+			return false;
+
+		// Compare each binding
+		Solution other = (Solution) obj;
+		for (Binding binding : bindings.values())
+			if (!other.getBinding(binding.getVariable()).getValue().equals(binding.getValue()))
+				return false;
+
+		return true;
 	}
 
 	/**
-	 * @param fitness
+	 * @return age
 	 */
-	public void setFitness(double fitness) {
-		this.fitness = fitness;
+	public int getAge() {
+		return age;
+	}
+
+	/**
+	 * @param variable
+	 * @return the binding for that variable
+	 */
+	public Binding getBinding(Node_Variable variable) {
+		return bindings.get(variable);
 	}
 
 	/**
@@ -119,65 +132,16 @@ public class Solution implements Comparable<Solution> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		for (Binding binding : bindings)
+		for (Binding binding : bindings.values())
 			result = prime * result + ((binding == null) ? 0 : binding.hashCode());
 		return result;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-
-		if (!(obj instanceof Solution))
-			return false;
-		Solution other = (Solution) obj;
-		for (Binding binding : bindings) {
-			if (!other.getBinding(binding.getVariable()).getValue().equals(binding.getValue())) {
-				return false;
-			}
-		}
-
-		return true;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Comparable#compareTo(java.lang.Object)
-	 */
-	@Override
-	public int compareTo(Solution o) {
-		if (o.getFitness() < this.getFitness())
-			return 1;
-
-		if (this.equals(o)) {
-			return 0;
-		}
-
-		return -1;
-	}
-
 	/**
-	 * @return The collection of bindings defined by this solution
+	 * 
 	 */
-	public Collection<Binding> bindings() {
-		return bindings;
-	}
-
-	/**
-	 * @param isOptimal
-	 *            the isOptimal to set
-	 */
-	public void setOptimal(boolean isOptimal) {
-		this.isOptimal = isOptimal;
+	public void incrementAge() {
+		age++;
 	}
 
 	/**
@@ -190,21 +154,54 @@ public class Solution implements Comparable<Solution> {
 	/**
 	 * 
 	 */
-	public void incrementAge() {
-		age++;
-	}
-
-	/**
-	 * @return age
-	 */
-	public int getAge() {
-		return age;
-	}
-
-	/**
-	 * 
-	 */
 	public void resetAge() {
 		age = 0;
+	}
+
+	/**
+	 * @param fitness
+	 */
+	public void setFitness(double fitness) {
+		this.fitness = fitness;
+	}
+
+	/**
+	 * @param isOptimal
+	 *            the isOptimal to set
+	 */
+	public void setOptimal(boolean isOptimal) {
+		this.isOptimal = isOptimal;
+	}
+
+	/**
+	 * @return the number of bindings
+	 */
+	public int size() {
+		return bindings.size();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.util.AbstractCollection#toString()
+	 */
+	@Override
+	public String toString() {
+		StringBuffer buffer = new StringBuffer();
+		buffer.append(format.format(fitness)).append(" ").append(" [");
+		for (Binding b : bindings.values())
+			buffer.append(b.getVariable().getName()).append("=").append(b.getValue()).append(",");
+		buffer.setCharAt(buffer.length() - 1, ']');
+		return buffer.append(" age=").append(age).toString();
+	}
+
+	/**
+	 * Shortcut for getBinding.getValue
+	 * 
+	 * @param variable
+	 * @return the value bound to the variable
+	 */
+	public Node getValue(Node_Variable variable) {
+		return bindings.get(variable).getValue();
 	}
 }

@@ -49,7 +49,6 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 	 * 
 	 * @see nl.erdf.main.datalayer.DataLayer#clear()
 	 */
-	@Override
 	public void clear() {
 		cache.clear();
 	}
@@ -78,7 +77,6 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 	 * 
 	 * @see datalayer.DataLayer#getNumberOfResources(datalayer.wod.QueryPattern)
 	 */
-	@Override
 	public long getNumberOfResources(Triple pattern) {
 		// Try to get the result from the cache
 		NodeSet resources = cache.get(pattern);
@@ -118,7 +116,6 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 	 * @see
 	 * nl.erdf.datalayer.DataLayer#getResources(com.hp.hpl.jena.graph.Triple)
 	 */
-	@Override
 	public Set<Node> getResources(Triple t) {
 		//logger.info("[GET] " + t);
 
@@ -159,6 +156,7 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 	 *            The object
 	 * @return True if this triple exists, false otherwise
 	 */
+	@SuppressWarnings("unused")
 	private boolean isFullyValid(Node s, Node p, Node o) {
 		//logger.info("[F-VALID] " + s + " " + p + " " + o);
 
@@ -209,6 +207,7 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 	 * @param o
 	 * @return
 	 */
+	@SuppressWarnings("unused")
 	private boolean isPartiallyValid(Node s, Node p, Node o) {
 		// Create the relevant partial query pattern
 		Node s2 = (s.equals(Node.ANY) ? RETURN : s);
@@ -242,7 +241,6 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 	 * 
 	 * @see nl.erdf.datalayer.DataLayer#isValid(com.hp.hpl.jena.graph.Triple)
 	 */
-	@Override
 	public boolean isValid(Triple triple) {
 		// Create a query pattern
 		// QueryPattern query = new QueryPattern(triple);
@@ -270,7 +268,6 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 	 * 
 	 * @see nl.erdf.main.datalayer.DataLayer#shutdown()
 	 */
-	@Override
 	public void shutdown() {
 		for (EndPoint endpoint : directory.endPoints())
 			endpoint.shutdown();
@@ -281,7 +278,6 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 	 * 
 	 * @see nl.erdf.main.datalayer.DataLayer#waitForData()
 	 */
-	@Override
 	public void waitForLatencyBuffer() {
 		// This function blocks until there is on average less that 4
 		// jobs per end point queuing to be executed

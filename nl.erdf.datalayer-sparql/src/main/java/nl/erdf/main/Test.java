@@ -5,6 +5,7 @@ package nl.erdf.main;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
 import java.util.Collection;
 import java.util.Observable;
 import java.util.Observer;
@@ -42,7 +43,7 @@ public class Test implements Observer {
 
 		// Create a directory
 		directory = new Directory();
-		directory.add("DBPedia", "http://lod.openlinksw.com/sparql");
+		directory.add("DBPedia", URI.create("http://lod.openlinksw.com/sparql"));
 
 		// Create a data layer
 		SPARQLDataLayer datalayer = new SPARQLDataLayer(directory);

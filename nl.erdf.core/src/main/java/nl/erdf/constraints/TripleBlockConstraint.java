@@ -27,7 +27,6 @@ public class TripleBlockConstraint implements Constraint {
 	 * @see nl.erdf.model.Constraint#getReward(nl.erdf.model.Solution,
 	 * nl.erdf.datalayer.DataLayer)
 	 */
-	@Override
 	public double getReward(Solution solution, DataLayer dataLayer) {
 		double max = 0;
 		for (TripleConstraint cstr : tripleConstraints) {
@@ -43,7 +42,6 @@ public class TripleBlockConstraint implements Constraint {
 	 * 
 	 * @see nl.erdf.model.Constraint#getVariables()
 	 */
-	@Override
 	public Set<Node_Variable> getVariables() {
 		Set<Node_Variable> vars = new HashSet<Node_Variable>();
 		for (TripleConstraint cstr : tripleConstraints)

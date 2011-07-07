@@ -6,9 +6,7 @@
 		<groupId>nl.erdf</groupId>
 		<version>0.1-SNAPSHOT</version>
 	</parent>
-	<groupId>nl.erdf</groupId>
 	<artifactId>datalayer-sparql</artifactId>
-	<version>0.1-SNAPSHOT</version>
 	<name>eRDF SPARQL DataLayer</name>
 	<build>
 		<finalName>${groupId}.${artifactId}-${version}</finalName>
@@ -27,26 +25,12 @@
 					</archive>
 				</configuration>
 			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<version>2.1</version>
-				<executions>
-					<execution>
-						<id>copy-dependencies</id>
-						<phase>prepare-package</phase>
-						<goals>
-							<goal>copy-dependencies</goal>
-						</goals>
-						<configuration>
-							<outputDirectory>${project.build.directory}/lib</outputDirectory>
-							<overWriteReleases>false</overWriteReleases>
-							<overWriteSnapshots>false</overWriteSnapshots>
-							<overWriteIfNewer>true</overWriteIfNewer>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
+			<!-- <plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-dependency-plugin</artifactId> 
+				<executions> <execution> <id>copy-dependencies</id> <phase>prepare-package</phase> 
+				<goals> <goal>copy-dependencies</goal> </goals> <configuration> <outputDirectory>${project.build.directory}/lib</outputDirectory> 
+				<overWriteReleases>false</overWriteReleases> <overWriteSnapshots>false</overWriteSnapshots> 
+				<overWriteIfNewer>true</overWriteIfNewer> </configuration> </execution> </executions> 
+				</plugin> -->
 		</plugins>
 		<!-- <resources> <resource> <directory>${basedir}/target/dependency</directory> 
 			</resource> </resources> -->

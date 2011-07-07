@@ -96,7 +96,6 @@ public class TripleConstraint implements Constraint, ResourceProvider {
 	 * 
 	 * @see nl.erdf.model.Constraint#getVariables()
 	 */
-	@Override
 	public Set<Node_Variable> getVariables() {
 		Set<Node_Variable> vars = new HashSet<Node_Variable>();
 		if (graphPattern.getSubject().isVariable())
@@ -114,7 +113,6 @@ public class TripleConstraint implements Constraint, ResourceProvider {
 	 * @see nl.erdf.model.Constraint#getReward(nl.erdf.model.Solution,
 	 * nl.erdf.datalayer.DataLayer)
 	 */
-	@Override
 	public double getReward(Solution solution, DataLayer dataLayer) {
 		// Instantiate the triple based on the given solution
 		Node subject = graphPattern.getSubject();
@@ -176,7 +174,6 @@ public class TripleConstraint implements Constraint, ResourceProvider {
 	 * @see nl.erdf.model.ResourceProvider#getResource(com.hp.hpl.jena.graph.
 	 * Node_Variable, nl.erdf.model.Solution, nl.erdf.datalayer.DataLayer)
 	 */
-	@Override
 	public Node getResource(Node_Variable variable, Solution solution, DataLayer dataLayer) {
 		// Instantiate the pattern but keep the sought variable
 		Node subject = graphPattern.getSubject();

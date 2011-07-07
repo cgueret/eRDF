@@ -566,7 +566,7 @@ public class LIFOQueue<E> extends AbstractQueue<E> implements BlockingQueue<E>, 
 	 * @throws NullPointerException
 	 *             if the specified array is null
 	 */
-	// @SuppressWarnings("unchecked")
+	@SuppressWarnings("unchecked")
 	public <T> T[] toArray(T[] a) {
 		fullyLock();
 		try {
@@ -724,7 +724,7 @@ public class LIFOQueue<E> extends AbstractQueue<E> implements BlockingQueue<E>, 
 		 */
 		private Node<E> nextNode(Node<E> p) {
 			for (;;) {
-				Node s = p.next;
+				Node<E> s = p.next;
 				if (s == p)
 					return head.next;
 				if (s == null || s.item != null)

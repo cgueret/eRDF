@@ -72,7 +72,6 @@ public class Evaluate {
 			List<Future<?>> list = new ArrayList<Future<?>>();
 			for (final Solution solution : population) {
 				Future<?> job = executor.submit(new Runnable() {
-					@Override
 					public void run() {
 						double relevancy = request.evaluate(solution);
 						solution.setFitness(relevancy);

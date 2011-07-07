@@ -78,7 +78,6 @@ public class Roulette implements Enumeration<Object> {
 	 * 
 	 * @see java.util.Enumeration#hasMoreElements()
 	 */
-	@Override
 	public boolean hasMoreElements() {
 		return (!content.isEmpty());
 	}
@@ -88,7 +87,6 @@ public class Roulette implements Enumeration<Object> {
 	 * 
 	 * @see java.util.Enumeration#nextElement()
 	 */
-	@Override
 	public Object nextElement() {
 		if (!hasMoreElements())
 			throw new NoSuchElementException();

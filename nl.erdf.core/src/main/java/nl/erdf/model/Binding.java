@@ -1,5 +1,8 @@
 package nl.erdf.model;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.hp.hpl.jena.graph.Node;
 import com.hp.hpl.jena.graph.Node_Variable;
 
@@ -8,6 +11,8 @@ import com.hp.hpl.jena.graph.Node_Variable;
  *
  */
 public class Binding {
+	final static Logger logger = LoggerFactory.getLogger(Binding.class);
+	
 	/** The variable part of the binding */
 	private Node_Variable variable;
 
@@ -53,7 +58,6 @@ public class Binding {
 	@Override
 	public Object clone() {
 		Binding newBinding = new Binding(variable, value);
-		newBinding.reward = reward;
 		return newBinding;
 	}
 

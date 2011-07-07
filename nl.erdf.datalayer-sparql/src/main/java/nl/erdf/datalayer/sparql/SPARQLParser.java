@@ -119,7 +119,6 @@ public class SPARQLParser implements ElementVisitor {
 	 * com.hp.hpl.jena.sparql.syntax.ElementVisitor#visit(com.hp.hpl.jena.sparql
 	 * .syntax.ElementTriplesBlock)
 	 */
-	@Override
 	public void visit(ElementTriplesBlock el) {
 		// Parse all the triples of that bloc
 		for (Triple triple : el.getPattern()) {
@@ -134,7 +133,6 @@ public class SPARQLParser implements ElementVisitor {
 	 * com.hp.hpl.jena.sparql.syntax.ElementVisitor#visit(com.hp.hpl.jena.sparql
 	 * .syntax.ElementGroup)
 	 */
-	@Override
 	public void visit(ElementGroup el) {
 		// Visit all the sub elements
 		for (Element subElement : el.getElements()) {
@@ -149,7 +147,6 @@ public class SPARQLParser implements ElementVisitor {
 	 * com.hp.hpl.jena.sparql.syntax.ElementVisitor#visit(com.hp.hpl.jena.sparql
 	 * .syntax.ElementOptional)
 	 */
-	@Override
 	public void visit(ElementOptional optional) {
 		// Visit the content of the optional element
 		optional.getOptionalElement().visit(this);
@@ -162,7 +159,6 @@ public class SPARQLParser implements ElementVisitor {
 	 * com.hp.hpl.jena.sparql.syntax.ElementVisitor#visit(com.hp.hpl.jena.sparql
 	 * .syntax.ElementPathBlock)
 	 */
-	@Override
 	public void visit(ElementPathBlock pathBlock) {
 		// Call the handler for all the triples in the path block
 		for (TriplePath triplePath : pathBlock.getPattern()) {
@@ -170,63 +166,51 @@ public class SPARQLParser implements ElementVisitor {
 		}
 	}
 
-	@Override
 	public void visit(ElementFilter arg0) {
 		// Filters are ignored. That's something eRDF can't deal with directly
 		// during the optimisation process
 	}
 
-	@Override
 	public void visit(ElementAssign arg0) {
 		logger.warn("Element not handled :" + arg0.getClass());
 	}
 
-	@Override
 	public void visit(ElementDataset arg0) {
 		logger.warn("Element not handled :" + arg0.getClass());
 	}
 
-	@Override
 	public void visit(ElementFetch arg0) {
 		logger.warn("Element not handled :" + arg0.getClass());
 	}
 
-	@Override
 	public void visit(ElementNamedGraph arg0) {
 		logger.warn("Element not handled :" + arg0.getClass());
 	}
 
-	@Override
 	public void visit(ElementService arg0) {
 		logger.warn("Element not handled :" + arg0.getClass());
 	}
 
-	@Override
 	public void visit(ElementSubQuery arg0) {
 		logger.warn("Element not handled :" + arg0.getClass());
 	}
 
-	@Override
 	public void visit(ElementUnion arg0) {
 		logger.warn("Element not handled :" + arg0.getClass());
 	}
 
-	@Override
 	public void visit(ElementExists arg0) {
 		logger.warn("Element not handled :" + arg0.getClass());
 	}
 
-	@Override
 	public void visit(ElementNotExists arg0) {
 		logger.warn("Element not handled :" + arg0.getClass());
 	}
 
-	@Override
 	public void visit(ElementBind arg0) {
 		logger.warn("Element not handled :" + arg0.getClass());
 	}
 
-	@Override
 	public void visit(ElementMinus arg0) {
 		logger.warn("Element not handled :" + arg0.getClass());
 	}

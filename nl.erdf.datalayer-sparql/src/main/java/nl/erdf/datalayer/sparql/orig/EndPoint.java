@@ -64,9 +64,9 @@ public class EndPoint {
 	 * @param address
 	 * @throws URISyntaxException
 	 */
-	public EndPoint(final String name, final String address) throws URISyntaxException {
+	public EndPoint(String name, URI address) {
 		this.name = name;
-		this.URI = new URI(address);
+		this.URI = address;
 
 	}
 
@@ -141,7 +141,7 @@ public class EndPoint {
 		httpClient.setCookieStore(null);
 		httpClient.setCookieSpecs(null);
 		httpClient.setHttpRequestRetryHandler(new RetryHandler());
-		
+
 		// Set connectivity params
 		HttpParams params = httpClient.getParams();
 		HttpConnectionParams.setConnectionTimeout(params, 2000);

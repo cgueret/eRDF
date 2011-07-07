@@ -32,7 +32,6 @@ public class JenaTDBStore implements TripleStore {
 	 * nl.erdf.datalayer.sparql.TripleStore#getResources(com.hp.hpl.jena.graph
 	 * .Triple)
 	 */
-	@Override
 	public Set<Triple> getTriples(Triple triple) {
 		Set<Triple> triples = new HashSet<Triple>();
 
@@ -56,7 +55,6 @@ public class JenaTDBStore implements TripleStore {
 	 * nl.erdf.datalayer.sparql.TripleStore#addTriple(com.hp.hpl.jena.graph.
 	 * Triple)
 	 */
-	@Override
 	public void addTriple(Triple triple) {
 		model.add(model.asStatement(triple));
 	}
@@ -66,7 +64,6 @@ public class JenaTDBStore implements TripleStore {
 	 * 
 	 * @see nl.erdf.datalayer.sparql.ng.TripleStore#shutdown()
 	 */
-	@Override
 	public void shutdown() {
 		model.commit();
 		model.close();
@@ -77,7 +74,6 @@ public class JenaTDBStore implements TripleStore {
 	 * 
 	 * @see nl.erdf.datalayer.sparql.ng.TripleStore#clear()
 	 */
-	@Override
 	public void clear() {
 		model.removeAll();
 		model.commit();

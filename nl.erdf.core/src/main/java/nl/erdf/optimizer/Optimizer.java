@@ -29,13 +29,10 @@ import com.hp.hpl.jena.graph.Triple;
  */
 public class Optimizer extends Observable implements Runnable {
 	/** Population size */
-	private static final int POPULATION_SIZE = 20;
-
-	/** Population size */
-	private static final int OFFSPRING_SIZE = POPULATION_SIZE*2;
+	private static final int POPULATION_SIZE = 10;
 
 	/** Maximum generation to wait before finding an optima */
-	private static final int MAXIMUM_GENERATION = POPULATION_SIZE+1;
+	private static final int MAXIMUM_GENERATION = POPULATION_SIZE * 4;
 
 	/** Logger */
 	protected final Logger logger = LoggerFactory.getLogger(Optimizer.class);
@@ -91,14 +88,14 @@ public class Optimizer extends Observable implements Runnable {
 	 * 
 	 * @see java.lang.Runnable#run()
 	 */
-	@Override
 	public void run() {
 		// Do not run something terminated
-		if (isTerminated)
+		if (isTerminated())
 			return;
 
 		logger.info("Run optimizer");
-		while (true) {
+		generation = 0;
+		while (!isTerminated()) {
 			pauseLock.lock();
 			try {
 				while (isPaused)
@@ -132,7 +129,7 @@ public class Optimizer extends Observable implements Runnable {
 			// logger.info("Generate");
 			Set<Solution> newPopulation = new HashSet<Solution>();
 			newPopulation.addAll(population);// Add the parents
-			generateOp.createPopulation(population, newPopulation, OFFSPRING_SIZE);
+			generateOp.createPopulation(population, newPopulation);
 
 			//
 			// Evaluate all of them
@@ -141,6 +138,7 @@ public class Optimizer extends Observable implements Runnable {
 			// Counts the number of different solutions
 			evaluationsCounter += newPopulation.size() - population.size();
 			evaluateOp.evaluatePopulation(newPopulation);
+
 			/*
 			 * String buffer = "Fitnesses "; for (Solution s : newPopulation)
 			 * buffer += s.getFitness() + " "; logger.info(buffer);
@@ -148,7 +146,7 @@ public class Optimizer extends Observable implements Runnable {
 
 			// Provide feed back to the generation operator
 			generateOp.updateProviderRewards(newPopulation);
-			
+
 			//
 			// Get rid of the previous population and insert the kids
 			//
@@ -169,12 +167,16 @@ public class Optimizer extends Observable implements Runnable {
 				s.incrementAge();
 
 				// Check optimality
-				boolean isOptimal = ((s.getAge() >= MAXIMUM_GENERATION && s.getFitness() > 0) || (s.getFitness() == 1));
-				s.setOptimal(isOptimal);
+				s.setOptimal(false);
+				if (s.getAge() >= MAXIMUM_GENERATION && s.getFitness() > 0)
+					s.setOptimal(true);
+				if (s.getFitness() == 1.0d)
+					s.setOptimal(true);
 
-				// If the solution is optimal add its (valid!) triples to the black
+				// If the solution is optimal add its (valid!) triples to the
+				// black
 				// list
-				if (isOptimal) {
+				if (s.isOptimal()) {
 					synchronized (blackListedTriples) {
 						blackListedTriples.addAll(request.getTripleSet(s));
 					}
@@ -185,6 +187,8 @@ public class Optimizer extends Observable implements Runnable {
 			}
 
 			logger.info("Generation " + generation + ", best fitness=" + topFitness);
+			for (Solution s : population)
+				logger.info(s.toString());
 
 			//
 			// Notify observers that a loop has been done
@@ -192,6 +196,10 @@ public class Optimizer extends Observable implements Runnable {
 			setChanged();
 			notifyObservers(population);
 
+			//for (Solution s : population)
+			//	if (s.isOptimal())
+			//		this.terminate();
+			
 			//
 			// Wait a bit for the data layer
 			//

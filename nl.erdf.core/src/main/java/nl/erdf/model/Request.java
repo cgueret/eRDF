@@ -111,7 +111,7 @@ public abstract class Request {
 	 */
 	public Constraint addConstraint(Constraint constraint) {
 		// Add the constraint
-		logger.info("Add constraint " + constraint);
+		//logger.info("Add constraint " + constraint);
 		constraints.add(constraint);
 
 		// Find the variables and map them they are now part of that constraint
@@ -135,7 +135,7 @@ public abstract class Request {
 	 * @return the newly added constraint
 	 */
 	public ResourceProvider addResourceProvider(ResourceProvider provider) {
-		logger.info("Add provider " + provider);
+		//logger.info("Add provider " + provider);
 
 		// Find the variables and map them they are now part of that constraint
 		for (Node_Variable v : provider.getVariables()) {
