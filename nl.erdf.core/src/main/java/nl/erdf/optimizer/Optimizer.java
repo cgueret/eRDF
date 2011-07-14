@@ -29,10 +29,10 @@ import com.hp.hpl.jena.graph.Triple;
  */
 public class Optimizer extends Observable implements Runnable {
 	/** Population size */
-	private static final int POPULATION_SIZE = 10;
+	private static final int POPULATION_SIZE = 5;
 
 	/** Maximum generation to wait before finding an optima */
-	private static final int MAXIMUM_GENERATION = POPULATION_SIZE * 4;
+	private static final int MAXIMUM_GENERATION = 40;
 
 	/** Logger */
 	protected final Logger logger = LoggerFactory.getLogger(Optimizer.class);
