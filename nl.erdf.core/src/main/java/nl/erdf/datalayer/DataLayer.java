@@ -16,6 +16,7 @@ public interface DataLayer {
 	 * Indicates the number of resources available for a given queryPattern
 	 * 
 	 * @param triple
+	 * @precondition There is only one and only one WILDCARD value
 	 * @return the number of resources available for that query
 	 */
 	abstract long getNumberOfResources(Triple triple);

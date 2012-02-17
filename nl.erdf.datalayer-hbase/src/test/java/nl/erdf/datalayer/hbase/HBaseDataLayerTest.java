@@ -9,9 +9,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.hp.hpl.jena.graph.Node;
+import com.hp.hpl.jena.graph.Triple;
 import com.hp.hpl.jena.rdf.model.AnonId;
-
-import nl.erdf.datalayer.QueryPattern;
 
 /**
  * Test. Takes as single argument the number of triples to check. IT WILL DELETE
@@ -53,8 +52,7 @@ public class HBaseDataLayerTest {
 		// Write values
 		for (int i = 0; i < count; i++) {
 			Node s = Node.createURI("http://" + r1.nextLong());
-			Node p = Node
-					.createAnon(AnonId.create(Long.toString(r1.nextLong())));
+			Node p = Node.createAnon(AnonId.create(Long.toString(r1.nextLong())));
 			Node o = Node.createLiteral(r1.nextLong() + "", "no", null);
 			Node o2 = Node.createLiteral(r1.nextLong() + "", "no", null);
 
@@ -62,24 +60,19 @@ public class HBaseDataLayerTest {
 			dl.insert(s, p, o2);
 		}
 
-		Random r2 = new Random();
 		r1 = new Random(0); // Use the same seed to get the same values
 
 		// Read values
 		for (int i = 0; i < count; i++) {
 			Node s = Node.createURI("http://" + r1.nextLong());
-			Node p = Node
-					.createAnon(AnonId.create(Long.toString(r1.nextLong())));
+			Node p = Node.createAnon(AnonId.create(Long.toString(r1.nextLong())));
 			Node o = Node.createLiteral(r1.nextLong() + "", "no", null);
 
-			Assert.assertTrue(dl.getRandomResource(r2,
-					new QueryPattern(s, p, QueryPattern.WILDCARD)).equals(o));
+			Assert.assertTrue(dl.getResources(new Triple(s, p, Node.ANY)).equals(o));
 
-			Assert.assertTrue(dl.getRandomResource(r2,
-					new QueryPattern(QueryPattern.WILDCARD, p, o)).equals(s));
+			Assert.assertTrue(dl.getResources(new Triple(Node.ANY, p, o)).equals(s));
 
-			Assert.assertTrue(dl.getRandomResource(r2,
-					new QueryPattern(s, QueryPattern.WILDCARD, o)).equals(p));
+			Assert.assertTrue(dl.getResources(new Triple(s, Node.ANY, o)).equals(p));
 		}
 
 	}
