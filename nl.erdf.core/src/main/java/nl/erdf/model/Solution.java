@@ -5,11 +5,13 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Node_Variable;
+import org.openrdf.model.Value;
+import org.openrdf.query.algebra.Var;
+
 
 /**
  * A solution to a request is a set of bindings
+ * TODO: Make this a set of StatementPattern. Move scoring outside of class
  * 
  * @author tolgam
  * 
@@ -18,7 +20,7 @@ public class Solution implements Comparable<Solution> {
 	// Format
 	static final DecimalFormat format = new DecimalFormat("0.00");
 	// Bindings
-	private final Map<Node_Variable, Binding> bindings = new HashMap<Node_Variable, Binding>();
+	private final Map<Var, Binding> bindings = new HashMap<Var, Binding>();
 	// The age of that solution
 	private int age = 0;
 	// Relevance with respect to the query
@@ -112,7 +114,7 @@ public class Solution implements Comparable<Solution> {
 	 * @param variable
 	 * @return the binding for that variable
 	 */
-	public Binding getBinding(Node_Variable variable) {
+	public Binding getBinding(Var variable) {
 		return bindings.get(variable);
 	}
 
@@ -201,7 +203,7 @@ public class Solution implements Comparable<Solution> {
 	 * @param variable
 	 * @return the value bound to the variable
 	 */
-	public Node getValue(Node_Variable variable) {
+	public Value getValue(Var variable) {
 		return bindings.get(variable).getValue();
 	}
 }

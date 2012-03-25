@@ -11,11 +11,9 @@ import nl.erdf.model.Request;
 import nl.erdf.model.ResourceProvider;
 import nl.erdf.model.Solution;
 
+import org.openrdf.query.algebra.Var;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Node_Variable;
 
 /**
  * @author tolgam
@@ -26,10 +24,10 @@ public class Generate {
 	final Logger logger = LoggerFactory.getLogger(Generate.class);
 
 	private class Pair {
-		final Node_Variable variable;
+		final Var variable;
 		final ResourceProvider provider;
 
-		Pair(Node_Variable variable, ResourceProvider provider) {
+		Pair(Var variable, ResourceProvider provider) {
 			this.variable = variable;
 			this.provider = provider;
 		}

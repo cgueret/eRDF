@@ -6,8 +6,8 @@ package nl.erdf.constraints;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.hp.hpl.jena.graph.Node_Variable;
-import com.hp.hpl.jena.graph.Triple;
+import org.openrdf.model.Statement;
+import org.openrdf.query.algebra.Var;
 
 import nl.erdf.datalayer.DataLayer;
 import nl.erdf.model.Constraint;
@@ -42,8 +42,8 @@ public class TripleBlockConstraint implements Constraint {
 	 * 
 	 * @see nl.erdf.model.Constraint#getVariables()
 	 */
-	public Set<Node_Variable> getVariables() {
-		Set<Node_Variable> vars = new HashSet<Node_Variable>();
+	public Set<Var> getVariables() {
+		Set<Var> vars = new HashSet<Var>();
 		for (TripleConstraint cstr : tripleConstraints)
 			vars.addAll(cstr.getVariables());
 		return vars;
@@ -60,8 +60,8 @@ public class TripleBlockConstraint implements Constraint {
 	 * @param solution
 	 * @return the instanciated triples
 	 */
-	public Set<Triple> getInstanciatedTriples(Solution solution) {
-		Set<Triple> triples = new HashSet<Triple>();
+	public Set<Statement> getInstanciatedTriples(Solution solution) {
+		Set<Statement> triples = new HashSet<Statement>();
 		for (TripleConstraint cstr : tripleConstraints)
 			triples.add(cstr.getInstanciatedTriple(solution));
 		return triples;

@@ -16,6 +16,7 @@ import nl.erdf.model.Binding;
 import nl.erdf.model.Request;
 import nl.erdf.model.Solution;
 
+import org.openrdf.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +42,7 @@ public class Optimizer extends Observable implements Runnable {
 	protected final SortedSet<Solution> population = new TreeSet<Solution>();
 
 	/** Hall of fame to put all the results found */
-	private final Set<Triple> blackListedTriples = new HashSet<Triple>();
+	private final Set<Statement> blackListedTriples = new HashSet<Statement>();
 
 	/** Mutation operator used to generate new populations */
 	private final Generate generateOp;
@@ -114,7 +115,7 @@ public class Optimizer extends Observable implements Runnable {
 			//
 			if (population.isEmpty()) {
 				Solution solution = new Solution();
-				for (Node_Variable variable : request.variables())
+				for (Var variable : request.variables())
 					solution.add(new Binding(variable, Node.NULL));
 				population.add(solution);
 			}

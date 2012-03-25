@@ -1,9 +1,8 @@
 package nl.erdf.datalayer;
 
-import java.util.Set;
+import org.openrdf.model.Value;
+import org.openrdf.query.algebra.StatementPattern;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
 
 /**
  * A data layer is an abstraction over a given number of data sources it is used
@@ -15,17 +14,17 @@ public interface DataLayer {
 	/**
 	 * Indicates the number of resources available for a given queryPattern
 	 * 
-	 * @param triple
+	 * @param pattern
 	 * @precondition There is only one and only one WILDCARD value
 	 * @return the number of resources available for that query
 	 */
-	abstract long getNumberOfResources(Triple triple);
+	abstract long getNumberOfResources(StatementPattern pattern);
 
 	/**
-	 * @param triple
+	 * @param pattern
 	 * @return a set of resources matching the triple
 	 */
-	abstract Set<Node> getResources(Triple triple);
+	abstract Value getResource(StatementPattern pattern);
 
 	/**
 	 * Check is the combination of S,P and O is valid according to one of the
@@ -36,7 +35,7 @@ public interface DataLayer {
 	 *            the Triple to check
 	 * @return true if the triple is valid
 	 */
-	public abstract boolean isValid(Triple triple);
+	public abstract boolean isValid(StatementPattern pattern);
 
 	/**
 	 * Clear the content of the data layer, relevant in particular if a cache is

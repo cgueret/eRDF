@@ -7,12 +7,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.openrdf.query.algebra.Var;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Node_Variable;
-import com.hp.hpl.jena.graph.Triple;
 
 import nl.erdf.constraints.TripleBlockConstraint;
 import nl.erdf.constraints.TripleConstraint;
@@ -29,10 +26,10 @@ public abstract class Request {
 	protected final List<Constraint> constraints = new ArrayList<Constraint>();
 
 	/** Mapping of variable -> constraints */
-	protected final Map<Node_Variable, Set<Constraint>> constraintsMap = new HashMap<Node_Variable, Set<Constraint>>();
+	protected final Map<Var, Set<Constraint>> constraintsMap = new HashMap<Var, Set<Constraint>>();
 
 	/** Mapping of variable -> resource providers */
-	protected final Map<Node_Variable, Set<ResourceProvider>> providersMap = new HashMap<Node_Variable, Set<ResourceProvider>>();
+	protected final Map<Var, Set<ResourceProvider>> providersMap = new HashMap<Var, Set<ResourceProvider>>();
 
 	/** The model on top of which this request is expressed */
 	protected final DataLayer dataLayer;
@@ -63,7 +60,7 @@ public abstract class Request {
 	/**
 	 * @return the variables
 	 */
-	public Iterable<Node_Variable> variables() {
+	public Iterable<Var> variables() {
 		return constraintsMap.keySet();
 	}
 
@@ -85,7 +82,7 @@ public abstract class Request {
 		for (Constraint constraint : constraints) {
 			double reward = constraint.getReward(solution, dataLayer);
 			fitness += reward;
-			for (Node_Variable variable : constraint.getVariables())
+			for (Var variable : constraint.getVariables())
 				if (!solution.getBinding(variable).getValue().equals(Node.NULL))
 					solution.getBinding(variable).incrementReward(reward);
 		}
@@ -115,7 +112,7 @@ public abstract class Request {
 		constraints.add(constraint);
 
 		// Find the variables and map them they are now part of that constraint
-		for (Node_Variable v : constraint.getVariables()) {
+		for (Var v : constraint.getVariables()) {
 			Set<Constraint> set = constraintsMap.get(v);
 			if (set == null) {
 				set = new HashSet<Constraint>();
@@ -138,7 +135,7 @@ public abstract class Request {
 		//logger.info("Add provider " + provider);
 
 		// Find the variables and map them they are now part of that constraint
-		for (Node_Variable v : provider.getVariables()) {
+		for (Var v : provider.getVariables()) {
 			Set<ResourceProvider> set = providersMap.get(v);
 			if (set == null) {
 				set = new HashSet<ResourceProvider>();

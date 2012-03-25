@@ -1,10 +1,11 @@
 package nl.erdf.model;
 
+import org.openrdf.model.Value;
+import org.openrdf.query.algebra.Var;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Node_Variable;
+// http://www.openrdf.org/doc/sesame2/api/
 
 /**
  * @author Christophe Guéret <christophe.gueret@gmail.com>
@@ -14,10 +15,10 @@ public class Binding {
 	final static Logger logger = LoggerFactory.getLogger(Binding.class);
 	
 	/** The variable part of the binding */
-	private Node_Variable variable;
+	private Var variable;
 
 	/** The node the variable is bound to */
-	private Node value;
+	private Value value;
 
 	/** The reward assigned for this binding */
 	private double reward;
@@ -36,7 +37,7 @@ public class Binding {
 	 * @param variable
 	 * 
 	 */
-	public Binding(Node_Variable variable) {
+	public Binding(Var variable) {
 		this(variable, null);
 	}
 
@@ -44,7 +45,7 @@ public class Binding {
 	 * @param variable
 	 * @param value
 	 */
-	public Binding(Node_Variable variable, Node value) {
+	public Binding(Var variable, Value value) {
 		this.variable = variable;
 		this.value = value;
 		reward = 0;
@@ -91,7 +92,7 @@ public class Binding {
 	/**
 	 * @return the current value associated to that variable
 	 */
-	public Node getValue() {
+	public Value getValue() {
 		return value;
 	}
 
@@ -112,7 +113,7 @@ public class Binding {
 	/**
 	 * @return the variable
 	 */
-	public Node_Variable getVariable() {
+	public Var getVariable() {
 		return variable;
 	}
 
@@ -121,7 +122,7 @@ public class Binding {
 	 * 
 	 * @param value
 	 */
-	public void setValue(Node value) {
+	public void setValue(Value value) {
 		this.value = value;
 	}
 

@@ -3,9 +3,11 @@ package nl.erdf.constraints;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Node_Variable;
-import com.hp.hpl.jena.graph.Triple;
+import org.openrdf.model.Statement;
+import org.openrdf.model.Value;
+import org.openrdf.query.algebra.StatementPattern;
+import org.openrdf.query.algebra.Var;
+
 
 import nl.erdf.datalayer.DataLayer;
 import nl.erdf.model.Constraint;
@@ -19,10 +21,10 @@ import nl.erdf.util.RandomNumber;
  */
 public class TripleConstraint implements Constraint, ResourceProvider {
 	// The graph pattern is a triple with variables in it
-	protected final Triple graphPattern;
+	protected final StatementPattern graphPattern;
 
 	// The set of blacklisted triples
-	protected Set<Triple> blackListedTriples = null;
+	protected Set<Statement> blackListedTriples = null;
 
 	/** Low reward given to false bindings */
 	public final static double NULL_REWARD = 0;
@@ -41,21 +43,21 @@ public class TripleConstraint implements Constraint, ResourceProvider {
 	 * @param p
 	 * @param o
 	 */
-	public TripleConstraint(Node s, Node p, Node o) {
-		this.graphPattern = Triple.create(s, p, o);
+	public TripleConstraint(Value s, Value p, Value o) {
+		this.graphPattern = new StatementPattern(s, p, o);
 	}
 
 	/**
 	 * @param triple
 	 */
-	public TripleConstraint(Triple triple) {
+	public TripleConstraint(StatementPattern triple) {
 		this.graphPattern = triple;
 	}
 
 	/**
 	 * @param blackListedTriples
 	 */
-	public void setBlackListedTriples(Set<Triple> blackListedTriples) {
+	public void setBlackListedTriples(Set<Statement> blackListedTriples) {
 		this.blackListedTriples = blackListedTriples;
 	}
 
@@ -96,14 +98,14 @@ public class TripleConstraint implements Constraint, ResourceProvider {
 	 * 
 	 * @see nl.erdf.model.Constraint#getVariables()
 	 */
-	public Set<Node_Variable> getVariables() {
-		Set<Node_Variable> vars = new HashSet<Node_Variable>();
+	public Set<Var> getVariables() {
+		Set<Var> vars = new HashSet<Var>();
 		if (graphPattern.getSubject().isVariable())
-			vars.add((Node_Variable) graphPattern.getSubject());
+			vars.add((Var) graphPattern.getSubject());
 		if (graphPattern.getPredicate().isVariable())
-			vars.add((Node_Variable) graphPattern.getPredicate());
+			vars.add((Var) graphPattern.getPredicate());
 		if (graphPattern.getObject().isVariable())
-			vars.add((Node_Variable) graphPattern.getObject());
+			vars.add((Var) graphPattern.getObject());
 		return vars;
 	}
 
@@ -115,15 +117,15 @@ public class TripleConstraint implements Constraint, ResourceProvider {
 	 */
 	public double getReward(Solution solution, DataLayer dataLayer) {
 		// Instantiate the triple based on the given solution
-		Node subject = graphPattern.getSubject();
+		Value subject = graphPattern.getSubject();
 		if (subject.isVariable())
-			subject = solution.getBinding((Node_Variable) subject).getValue();
-		Node predicate = graphPattern.getPredicate();
+			subject = solution.getBinding((Var) subject).getValue();
+		Value predicate = graphPattern.getPredicate();
 		if (predicate.isVariable())
-			predicate = solution.getBinding((Node_Variable) predicate).getValue();
-		Node object = graphPattern.getObject();
+			predicate = solution.getBinding((Var) predicate).getValue();
+		Value object = graphPattern.getObject();
 		if (object.isVariable())
-			object = solution.getBinding((Node_Variable) object).getValue();
+			object = solution.getBinding((Var) object).getValue();
 
 		// Check if it is a black listed triple and eventually return right away
 		if (blackListedTriples != null && blackListedTriples.contains(Triple.create(subject, predicate, object)))
@@ -154,16 +156,16 @@ public class TripleConstraint implements Constraint, ResourceProvider {
 	 * @param solution
 	 * @return the instanciated triple
 	 */
-	public Triple getInstanciatedTriple(Solution solution) {
-		Node subject = graphPattern.getSubject();
+	public Statement getInstanciatedTriple(Solution solution) {
+		Value subject = graphPattern.getSubject();
 		if (subject.isVariable())
-			subject = solution.getBinding((Node_Variable) subject).getValue();
-		Node predicate = graphPattern.getPredicate();
+			subject = solution.getBinding((Var) subject).getValue();
+		Value predicate = graphPattern.getPredicate();
 		if (predicate.isVariable())
-			predicate = solution.getBinding((Node_Variable) predicate).getValue();
-		Node object = graphPattern.getObject();
+			predicate = solution.getBinding((Var) predicate).getValue();
+		Value object = graphPattern.getObject();
 		if (object.isVariable())
-			object = solution.getBinding((Node_Variable) object).getValue();
+			object = solution.getBinding((Var) object).getValue();
 
 		return Triple.create(subject, predicate, object);
 	}
@@ -174,17 +176,17 @@ public class TripleConstraint implements Constraint, ResourceProvider {
 	 * @see nl.erdf.model.ResourceProvider#getResource(com.hp.hpl.jena.graph.
 	 * Node_Variable, nl.erdf.model.Solution, nl.erdf.datalayer.DataLayer)
 	 */
-	public Node getResource(Node_Variable variable, Solution solution, DataLayer dataLayer) {
+	public Node getResource(Var variable, Solution solution, DataLayer dataLayer) {
 		// Instantiate the pattern but keep the sought variable
 		Node subject = graphPattern.getSubject();
 		if (graphPattern.getSubject().isVariable() && !graphPattern.getSubject().equals(variable))
-			subject = solution.getBinding((Node_Variable) graphPattern.getSubject()).getValue();
+			subject = solution.getBinding((Var) graphPattern.getSubject()).getValue();
 		Node predicate = graphPattern.getPredicate();
 		if (graphPattern.getPredicate().isVariable() && !graphPattern.getPredicate().equals(variable))
-			predicate = solution.getBinding((Node_Variable) graphPattern.getPredicate()).getValue();
+			predicate = solution.getBinding((Var) graphPattern.getPredicate()).getValue();
 		Node object = graphPattern.getObject();
 		if (graphPattern.getObject().isVariable() && !graphPattern.getObject().equals(variable))
-			object = solution.getBinding((Node_Variable) graphPattern.getObject()).getValue();
+			object = solution.getBinding((Var) graphPattern.getObject()).getValue();
 
 		// Pick one of the possible node at random
 		Node node = Node.NULL;
