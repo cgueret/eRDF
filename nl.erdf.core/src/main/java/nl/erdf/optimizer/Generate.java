@@ -11,6 +11,7 @@ import nl.erdf.model.Request;
 import nl.erdf.model.ResourceProvider;
 import nl.erdf.model.Solution;
 
+import org.openrdf.model.Value;
 import org.openrdf.query.algebra.Var;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,9 +112,9 @@ public class Generate {
 		this.request = request;
 
 		// Init the rewards
-		for (Node_Variable variable : request.variables())
+		for (Var variable : request.variables())
 			for (ResourceProvider provider : request.getProvidersFor(variable))
-				for (Node_Variable prodvar : provider.getVariables())
+				for (Var prodvar : provider.getVariables())
 					providerRewards.put(new Pair(prodvar, provider), 1.0d);
 
 		// for (Entry<Pair, Double> a : providerRewards.entrySet())
@@ -154,14 +155,14 @@ public class Generate {
 			// logger.info("Enforce " + parent);
 
 			for (Binding b : parent.bindings()) {
-				Node_Variable variable = b.getVariable();
+				Var variable = b.getVariable();
 				Solution solution = (Solution) parent.clone();
 				Binding binding = solution.getBinding(variable);
 				ResourceProvider provider = getProvider(variable, parent, 2);
 
 				if (provider != null) {
 					// Get a new binding
-					Node resource = provider.getResource(variable, solution, datalayer);
+					Value resource = provider.getResource(variable, solution, datalayer);
 					if (!resource.equals(Node.NULL) && !binding.getValue().equals(resource)) {
 						binding.setValue(resource);
 

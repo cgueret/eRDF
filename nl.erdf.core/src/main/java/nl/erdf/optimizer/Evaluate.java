@@ -8,14 +8,14 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
-import nl.erdf.constraints.TripleConstraint;
-import nl.erdf.model.Constraint;
+import nl.erdf.constraints.Constraint;
+import nl.erdf.constraints.StatementPatternConstraint;
 import nl.erdf.model.Request;
 import nl.erdf.model.Solution;
 
+import org.openrdf.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 /**
  * @author tolgam
@@ -36,7 +36,7 @@ public class Evaluate {
 	 * @param blackListedTriples
 	 * @param executor
 	 */
-	public Evaluate(Request request, Set<Triple> blackListedTriples, ExecutorService executor) {
+	public Evaluate(Request request, Set<Statement> blackListedTriples, ExecutorService executor) {
 		// Save the request
 		this.request = request;
 
@@ -45,8 +45,8 @@ public class Evaluate {
 
 		// Set the blacklisted triples reference to all the TripleConstraints
 		for (final Constraint cstr : request.constraints()) {
-			if (cstr instanceof TripleConstraint) {
-				((TripleConstraint) cstr).setBlackListedTriples(blackListedTriples);
+			if (cstr instanceof StatementPatternConstraint) {
+				((StatementPatternConstraint) cstr).setBlackListedTriples(blackListedTriples);
 			}
 		}
 	}
@@ -71,6 +71,7 @@ public class Evaluate {
 			List<Future<?>> list = new ArrayList<Future<?>>();
 			for (final Solution solution : population) {
 				Future<?> job = executor.submit(new Runnable() {
+					@Override
 					public void run() {
 						double relevancy = request.evaluate(solution);
 						solution.setFitness(relevancy);

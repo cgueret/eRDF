@@ -7,19 +7,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import nl.erdf.constraints.Constraint;
+import nl.erdf.constraints.StatementPatternSetConstraint;
+import nl.erdf.constraints.StatementPatternConstraint;
+import nl.erdf.datalayer.DataLayer;
+
+import org.openrdf.model.Statement;
 import org.openrdf.query.algebra.Var;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import nl.erdf.constraints.TripleBlockConstraint;
-import nl.erdf.constraints.TripleConstraint;
-import nl.erdf.datalayer.DataLayer;
 
 /**
  * @author Christophe Guéret <cgueret@few.vu.nl>
  * 
  */
 public abstract class Request {
+	// Logger
 	static final Logger logger = LoggerFactory.getLogger(Request.class);
 
 	/** List of constraints that compose the request */
@@ -95,7 +98,7 @@ public abstract class Request {
 	 * @param variable
 	 * @return the maximum reward this variable can get
 	 */
-	public double getMaximumReward(Node_Variable variable) {
+	public double getMaximumReward(Var variable) {
 		return constraintsMap.get(variable).size();
 	}
 
@@ -108,7 +111,7 @@ public abstract class Request {
 	 */
 	public Constraint addConstraint(Constraint constraint) {
 		// Add the constraint
-		//logger.info("Add constraint " + constraint);
+		// logger.info("Add constraint " + constraint);
 		constraints.add(constraint);
 
 		// Find the variables and map them they are now part of that constraint
@@ -132,7 +135,7 @@ public abstract class Request {
 	 * @return the newly added constraint
 	 */
 	public ResourceProvider addResourceProvider(ResourceProvider provider) {
-		//logger.info("Add provider " + provider);
+		// logger.info("Add provider " + provider);
 
 		// Find the variables and map them they are now part of that constraint
 		for (Var v : provider.getVariables()) {
@@ -157,17 +160,17 @@ public abstract class Request {
 	 *            if true, only valid triples are returned
 	 * @return a {Set<Triple>} containing valid triples
 	 */
-	public Set<Triple> getTripleSet(Solution solution, boolean filter) {
-		Set<Triple> triples = new HashSet<Triple>();
+	public Set<Statement> getTripleSet(Solution solution, boolean filter) {
+		Set<Statement> triples = new HashSet<Statement>();
 
 		for (Constraint constraint : constraints()) {
-			if (constraint instanceof TripleConstraint) {
-				Triple triple = ((TripleConstraint) constraint).getInstanciatedTriple(solution);
+			if (constraint instanceof StatementPatternConstraint) {
+				Statement triple = ((StatementPatternConstraint) constraint).getInstanciatedTriple(solution);
 				if (!filter || dataLayer.isValid(triple))
 					triples.add(triple);
 			}
-			if (constraint instanceof TripleBlockConstraint) {
-				for (Triple triple : ((TripleBlockConstraint) constraint).getInstanciatedTriples(solution))
+			if (constraint instanceof StatementPatternSetConstraint) {
+				for (Statement triple : ((StatementPatternSetConstraint) constraint).getInstanciatedTriples(solution))
 					if (!filter || dataLayer.isValid(triple))
 						triples.add(triple);
 			}
@@ -184,7 +187,7 @@ public abstract class Request {
 	 *            the solution to use to instantiate the request
 	 * @return a {TripleSet} containing valid triples
 	 */
-	public Set<Triple> getTripleSet(Solution solution) {
+	public Set<Statement> getTripleSet(Solution solution) {
 		return getTripleSet(solution, true);
 	}
 
@@ -219,7 +222,7 @@ public abstract class Request {
 	 * @param variable
 	 * @return a set of providers
 	 */
-	public Set<ResourceProvider> getProvidersFor(Node_Variable variable) {
+	public Set<ResourceProvider> getProvidersFor(Var variable) {
 		return providersMap.get(variable);
 	}
 

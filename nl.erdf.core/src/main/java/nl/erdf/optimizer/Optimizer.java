@@ -17,12 +17,9 @@ import nl.erdf.model.Request;
 import nl.erdf.model.Solution;
 
 import org.openrdf.model.Statement;
+import org.openrdf.query.algebra.Var;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Node_Variable;
-import com.hp.hpl.jena.graph.Triple;
 
 /**
  * @author tolgam
@@ -89,6 +86,7 @@ public class Optimizer extends Observable implements Runnable {
 	 * 
 	 * @see java.lang.Runnable#run()
 	 */
+	@Override
 	public void run() {
 		// Do not run something terminated
 		if (isTerminated())
@@ -197,10 +195,10 @@ public class Optimizer extends Observable implements Runnable {
 			setChanged();
 			notifyObservers(population);
 
-			//for (Solution s : population)
-			//	if (s.isOptimal())
-			//		this.terminate();
-			
+			// for (Solution s : population)
+			// if (s.isOptimal())
+			// this.terminate();
+
 			//
 			// Wait a bit for the data layer
 			//

@@ -1,45 +1,33 @@
 package nl.erdf.model;
 
-import java.text.DecimalFormat;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.openrdf.model.Value;
-import org.openrdf.query.algebra.Var;
+import nl.erdf.util.Format;
 
+import org.openrdf.model.Value;
 
 /**
  * A solution to a request is a set of bindings
- * TODO: Make this a set of StatementPattern. Move scoring outside of class
  * 
- * @author tolgam
+ * @author Christophe Guéret <christophe.gueret@gmail.com>
  * 
  */
 public class Solution implements Comparable<Solution> {
-	// Format
-	static final DecimalFormat format = new DecimalFormat("0.00");
-	// Bindings
-	private final Map<Var, Binding> bindings = new HashMap<Var, Binding>();
 	// The age of that solution
 	private int age = 0;
-	// Relevance with respect to the query
-	private double fitness = 0;
+
 	// Is that an optimal solution?
 	private boolean isOptimal = false;
 
-	/**
-	 * @param binding
-	 */
-	public void add(Binding binding) {
-		bindings.put(binding.getVariable(), binding);
-	}
+	// Index the variables by name
+	private final Map<String, Variable> variables = new HashMap<String, Variable>();
 
 	/**
-	 * @return The collection of bindings defined by this solution
+	 * @param variable
 	 */
-	public Collection<Binding> bindings() {
-		return bindings.values();
+	public void add(Variable variable) {
+		variables.put(variable.getName(), variable);
 	}
 
 	/*
@@ -51,14 +39,9 @@ public class Solution implements Comparable<Solution> {
 	public Object clone() {
 		Solution solution = new Solution();
 
-		// Copy the bindings
-		for (Binding binding : bindings.values())
-			solution.add((Binding) binding.clone());
-
-		// Reset everything else
-		solution.fitness = 0;
-		solution.isOptimal = false;
-		solution.age = 0;
+		// Perform a deep copy of the variables
+		for (Variable variable : this.variables.values())
+			solution.add(variable.clone());
 
 		return solution;
 	}
@@ -68,11 +51,12 @@ public class Solution implements Comparable<Solution> {
 	 * 
 	 * @see java.lang.Comparable#compareTo(java.lang.Object)
 	 */
-	public int compareTo(Solution o) {
-		if (o.getFitness() < this.getFitness())
+	@Override
+	public int compareTo(Solution other) {
+		if (other.getTotalReward() < this.getTotalReward())
 			return 1;
 
-		if (this.equals(o)) {
+		if (this.equals(other)) {
 			return 0;
 		}
 
@@ -86,43 +70,54 @@ public class Solution implements Comparable<Solution> {
 	 */
 	@Override
 	public boolean equals(Object obj) {
-		// Easy cases
 		if (this == obj)
 			return true;
 		if (obj == null)
 			return false;
-		if (!(obj instanceof Solution))
+		if (getClass() != obj.getClass())
 			return false;
-
-		// Compare each binding
 		Solution other = (Solution) obj;
-		for (Binding binding : bindings.values())
-			if (!other.getBinding(binding.getVariable()).getValue().equals(binding.getValue()))
+		if (variables == null) {
+			if (other.variables != null)
 				return false;
-
+		} else if (!variables.equals(other.variables))
+			return false;
 		return true;
 	}
 
 	/**
-	 * @return age
+	 * @return the age
 	 */
 	public int getAge() {
 		return age;
 	}
 
 	/**
-	 * @param variable
-	 * @return the binding for that variable
+	 * @return the total reward of the variables
 	 */
-	public Binding getBinding(Var variable) {
-		return bindings.get(variable);
+	public double getTotalReward() {
+		double sum = 0;
+		for (Variable variable : this.variables.values())
+			sum += variable.getReward();
+		return sum;
 	}
 
 	/**
-	 * @return the fitness of this solution
+	 * Shortcut for getVariable(variableName).getValue()
+	 * 
+	 * @param variableName
+	 * @return the value bound to the variable
 	 */
-	public double getFitness() {
-		return fitness;
+	public Value getValue(String variableName) {
+		return variables.get(variableName).getValue();
+	}
+
+	/**
+	 * @param variableName
+	 * @return the variable
+	 */
+	public Variable getVariable(String variableName) {
+		return variables.get(variableName);
 	}
 
 	/*
@@ -134,16 +129,8 @@ public class Solution implements Comparable<Solution> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		for (Binding binding : bindings.values())
-			result = prime * result + ((binding == null) ? 0 : binding.hashCode());
+		result = prime * result + ((variables == null) ? 0 : variables.hashCode());
 		return result;
-	}
-
-	/**
-	 * 
-	 */
-	public void incrementAge() {
-		age++;
 	}
 
 	/**
@@ -154,17 +141,10 @@ public class Solution implements Comparable<Solution> {
 	}
 
 	/**
-	 * 
+	 * @param age the age to set
 	 */
-	public void resetAge() {
-		age = 0;
-	}
-
-	/**
-	 * @param fitness
-	 */
-	public void setFitness(double fitness) {
-		this.fitness = fitness;
+	public void setAge(int age) {
+		this.age = age;
 	}
 
 	/**
@@ -176,10 +156,10 @@ public class Solution implements Comparable<Solution> {
 	}
 
 	/**
-	 * @return the number of bindings
+	 * @return the number of variables
 	 */
 	public int size() {
-		return bindings.size();
+		return variables.size();
 	}
 
 	/*
@@ -190,20 +170,10 @@ public class Solution implements Comparable<Solution> {
 	@Override
 	public String toString() {
 		StringBuffer buffer = new StringBuffer();
-		buffer.append(format.format(fitness)).append(" ").append(" [");
-		for (Binding b : bindings.values())
-			buffer.append(b.getVariable().getName()).append("=").append(b.getValue()).append(",");
+		buffer.append(Format.format.format(getTotalReward())).append(" ").append(" [");
+		for (Variable variable : this.variables.values())
+			buffer.append(variable.getName()).append("=").append(variable.getValue()).append(",");
 		buffer.setCharAt(buffer.length() - 1, ']');
-		return buffer.append(" age=").append(age).toString();
-	}
-
-	/**
-	 * Shortcut for getBinding.getValue
-	 * 
-	 * @param variable
-	 * @return the value bound to the variable
-	 */
-	public Value getValue(Var variable) {
-		return bindings.get(variable).getValue();
+		return buffer.append(" age=").append(getAge()).toString();
 	}
 }
