@@ -5,10 +5,9 @@ package nl.erdf.model;
 
 import java.util.Set;
 
-import org.openrdf.model.Value;
-import org.openrdf.query.algebra.Var;
-
 import nl.erdf.datalayer.DataLayer;
+
+import org.openrdf.model.Value;
 
 /**
  * @author Christophe Guéret <christophe.gueret@gmail.com>
@@ -18,13 +17,13 @@ public interface ResourceProvider {
 	/**
 	 * @param variable
 	 * @param solution
-	 * @param dataLayer 
+	 * @param dataLayer
 	 * @return a resource
 	 */
-	abstract public Value getResource(Var variable, Solution solution, DataLayer dataLayer);
+	abstract public Value getResource(String variable, Solution solution, DataLayer dataLayer);
 
 	/**
 	 * @return the set of variables used by the provider
 	 */
-	abstract public Set<Var> getVariables();
+	abstract public Set<String> getVariables();
 }

@@ -1,5 +1,6 @@
 package nl.erdf.model;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,6 +17,9 @@ import org.openrdf.model.Value;
 public class Solution implements Comparable<Solution> {
 	// The age of that solution
 	private int age = 0;
+
+	// The fitness of the solution
+	private double fitness = 0;
 
 	// Is that an optimal solution?
 	private boolean isOptimal = false;
@@ -36,7 +40,7 @@ public class Solution implements Comparable<Solution> {
 	 * @see java.lang.Object#clone()
 	 */
 	@Override
-	public Object clone() {
+	public Solution clone() {
 		Solution solution = new Solution();
 
 		// Perform a deep copy of the variables
@@ -51,7 +55,6 @@ public class Solution implements Comparable<Solution> {
 	 * 
 	 * @see java.lang.Comparable#compareTo(java.lang.Object)
 	 */
-	@Override
 	public int compareTo(Solution other) {
 		if (other.getTotalReward() < this.getTotalReward())
 			return 1;
@@ -77,11 +80,22 @@ public class Solution implements Comparable<Solution> {
 		if (getClass() != obj.getClass())
 			return false;
 		Solution other = (Solution) obj;
-		if (variables == null) {
-			if (other.variables != null)
-				return false;
-		} else if (!variables.equals(other.variables))
+
+		// Compare the set of variables
+		if (!this.variables.keySet().equals(other.variables.keySet()))
 			return false;
+
+		// Compare the assignments
+		for (String var : variables.keySet()) {
+			if (this.getValue(var) == null) {
+				if (other.getValue(var) != null)
+					return false;
+			} else {
+				if (!this.getValue(var).equals(other.getValue(var)))
+					return false;
+			}
+		}
+
 		return true;
 	}
 
@@ -141,7 +155,8 @@ public class Solution implements Comparable<Solution> {
 	}
 
 	/**
-	 * @param age the age to set
+	 * @param age
+	 *            the age to set
 	 */
 	public void setAge(int age) {
 		this.age = age;
@@ -170,10 +185,41 @@ public class Solution implements Comparable<Solution> {
 	@Override
 	public String toString() {
 		StringBuffer buffer = new StringBuffer();
-		buffer.append(Format.format.format(getTotalReward())).append(" ").append(" [");
+		buffer.append(Format.format.format(getFitness())).append(" ").append(" [");
 		for (Variable variable : this.variables.values())
 			buffer.append(variable.getName()).append("=").append(variable.getValue()).append(",");
 		buffer.setCharAt(buffer.length() - 1, ']');
 		return buffer.append(" age=").append(getAge()).toString();
+	}
+
+	/**
+	 * 
+	 */
+	public void resetScores() {
+		setOptimal(false);
+		fitness = 0;
+		for (Variable variable : this.variables.values())
+			variable.setReward(0.0);
+	}
+
+	/**
+	 * @param fitness
+	 */
+	public void setFitness(double fitness) {
+		this.fitness = fitness;
+	}
+
+	/**
+	 * @return the fitness value
+	 */
+	public double getFitness() {
+		return fitness;
+	}
+
+	/**
+	 * @return the list of variables
+	 */
+	public Collection<Variable> getVariables() {
+		return variables.values();
 	}
 }

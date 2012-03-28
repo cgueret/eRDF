@@ -1,6 +1,7 @@
 package nl.erdf.model;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -8,12 +9,12 @@ import java.util.Map;
 import java.util.Set;
 
 import nl.erdf.constraints.Constraint;
-import nl.erdf.constraints.StatementPatternSetConstraint;
-import nl.erdf.constraints.StatementPatternConstraint;
+import nl.erdf.constraints.Reward;
 import nl.erdf.datalayer.DataLayer;
+import nl.erdf.model.impl.Triple;
+import nl.erdf.util.Convert;
 
-import org.openrdf.model.Statement;
-import org.openrdf.query.algebra.Var;
+import org.openrdf.query.algebra.StatementPattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,27 +22,38 @@ import org.slf4j.LoggerFactory;
  * @author Christophe Guéret <cgueret@few.vu.nl>
  * 
  */
-public abstract class Request {
+public class Request {
 	// Logger
-	static final Logger logger = LoggerFactory.getLogger(Request.class);
+	private static final Logger logger = LoggerFactory.getLogger(Request.class);
 
-	/** List of constraints that compose the request */
-	protected final List<Constraint> constraints = new ArrayList<Constraint>();
+	// Collection of statement patterns associated with that request
+	private final Set<StatementPattern> statementPatterns = new HashSet<StatementPattern>();
 
-	/** Mapping of variable -> constraints */
-	protected final Map<Var, Set<Constraint>> constraintsMap = new HashMap<Var, Set<Constraint>>();
+	// Constraints indexed by the variables they contain
+	private final Map<String, List<Constraint>> constraints = new HashMap<String, List<Constraint>>();
 
-	/** Mapping of variable -> resource providers */
-	protected final Map<Var, Set<ResourceProvider>> providersMap = new HashMap<Var, Set<ResourceProvider>>();
+	// Resource providers indexed by the variables they contain
+	private final Map<String, List<ResourceProvider>> providers = new HashMap<String, List<ResourceProvider>>();
 
-	/** The model on top of which this request is expressed */
-	protected final DataLayer dataLayer;
+	// Data layer
+	private final DataLayer dataLayer;
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "Request [statementPatterns=" + statementPatterns + ", constraints=" + constraints + ", providers="
+				+ providers + ", dataLayer=" + dataLayer + "]";
+	}
 
 	/**
 	 * @param datalayer
 	 * 
 	 */
-	public Request(final DataLayer datalayer) {
+	public Request(DataLayer datalayer) {
 		this.dataLayer = datalayer;
 	}
 
@@ -51,55 +63,46 @@ public abstract class Request {
 	 * 
 	 * @return the solution prototype
 	 */
-	abstract public Solution getSolutionPrototype();
+	public Solution getSolutionPrototype() {
+		Solution solution = new Solution();
+		for (String variable : constraints.keySet())
+			solution.add(new Variable(variable));
+		return solution;
+	}
 
 	/**
 	 * @return the constraints
 	 */
-	public Iterable<Constraint> constraints() {
-		return constraints;
+	public Collection<Constraint> constraints() {
+		Set<Constraint> res = new HashSet<Constraint>();
+		for (Collection<Constraint> c : constraints.values())
+			res.addAll(c);
+		return res;
 	}
 
 	/**
 	 * @return the variables
 	 */
-	public Iterable<Var> variables() {
-		return constraintsMap.keySet();
-	}
-
-	/**
-	 * The fitness of that candidate solution is defined as the average of the
-	 * individual rewards each binding received.
-	 * 
-	 * @param solution
-	 * @return the fitness value of that candidate solution
-	 */
-	public double evaluate(Solution solution) {
-		// Clear and initialise the flags and value
-		double fitness = 0;
-		solution.setOptimal(false);
-		for (Binding binding : solution.bindings())
-			binding.resetReward();
-
-		// Check the constraints and dispatch rewards
-		for (Constraint constraint : constraints) {
-			double reward = constraint.getReward(solution, dataLayer);
-			fitness += reward;
-			for (Var variable : constraint.getVariables())
-				if (!solution.getBinding(variable).getValue().equals(Node.NULL))
-					solution.getBinding(variable).incrementReward(reward);
-		}
-
-		// Return the fitness value
-		return fitness / constraints.size();
+	public Set<String> constraintsVariables() {
+		return constraints.keySet();
 	}
 
 	/**
 	 * @param variable
 	 * @return the maximum reward this variable can get
 	 */
-	public double getMaximumReward(Var variable) {
-		return constraintsMap.get(variable).size();
+	public double getMaximumReward(String variable) {
+		return constraints.get(variable).size() * Reward.HIGH;
+	}
+
+	/**
+	 * @return the maximum reward this query can get
+	 */
+	public double getMaximumReward() {
+		double total = 0;
+		for (String variable : constraints.keySet())
+			total += getMaximumReward(variable);
+		return total;
 	}
 
 	/**
@@ -107,24 +110,19 @@ public abstract class Request {
 	 * variable concerned by the constraint to that constraint.
 	 * 
 	 * @param constraint
-	 * @return the newly added constraint
 	 */
-	public Constraint addConstraint(Constraint constraint) {
-		// Add the constraint
-		// logger.info("Add constraint " + constraint);
-		constraints.add(constraint);
-
-		// Find the variables and map them they are now part of that constraint
-		for (Var v : constraint.getVariables()) {
-			Set<Constraint> set = constraintsMap.get(v);
-			if (set == null) {
-				set = new HashSet<Constraint>();
-				constraintsMap.put(v, set);
+	public void addConstraint(Constraint constraint) {
+		logger.info("Add constraint " + constraint);
+		for (String var : constraint.getVariables()) {
+			List<Constraint> cstrs = null;
+			if (!constraints.containsKey(var)) {
+				cstrs = new ArrayList<Constraint>();
+				constraints.put(var, cstrs);
+			} else {
+				cstrs = constraints.get(var);
 			}
-			set.add(constraint);
+			cstrs.add(constraint);
 		}
-
-		return constraint;
 	}
 
 	/**
@@ -132,22 +130,27 @@ public abstract class Request {
 	 * the variable concerned by the provider to that provider.
 	 * 
 	 * @param provider
-	 * @return the newly added constraint
 	 */
-	public ResourceProvider addResourceProvider(ResourceProvider provider) {
-		// logger.info("Add provider " + provider);
+	public void addResourceProvider(ResourceProvider provider) {
+		logger.info("Add provider " + provider);
 
-		// Find the variables and map them they are now part of that constraint
-		for (Var v : provider.getVariables()) {
-			Set<ResourceProvider> set = providersMap.get(v);
-			if (set == null) {
-				set = new HashSet<ResourceProvider>();
-				providersMap.put(v, set);
+		for (String var : provider.getVariables()) {
+			List<ResourceProvider> prov = null;
+			if (!providers.containsKey(var)) {
+				prov = new ArrayList<ResourceProvider>();
+				providers.put(var, prov);
+			} else {
+				prov = providers.get(var);
 			}
-			set.add(provider);
+			prov.add(provider);
 		}
+	}
 
-		return provider;
+	/**
+	 * @param statementPattern
+	 */
+	public void addStatementPattern(StatementPattern statementPattern) {
+		statementPatterns.add(statementPattern);
 	}
 
 	/**
@@ -160,20 +163,13 @@ public abstract class Request {
 	 *            if true, only valid triples are returned
 	 * @return a {Set<Triple>} containing valid triples
 	 */
-	public Set<Statement> getTripleSet(Solution solution, boolean filter) {
-		Set<Statement> triples = new HashSet<Statement>();
+	public Set<Triple> getTripleSet(Solution solution, boolean filter) {
+		Set<Triple> triples = new HashSet<Triple>();
 
-		for (Constraint constraint : constraints()) {
-			if (constraint instanceof StatementPatternConstraint) {
-				Statement triple = ((StatementPatternConstraint) constraint).getInstanciatedTriple(solution);
-				if (!filter || dataLayer.isValid(triple))
-					triples.add(triple);
-			}
-			if (constraint instanceof StatementPatternSetConstraint) {
-				for (Statement triple : ((StatementPatternSetConstraint) constraint).getInstanciatedTriples(solution))
-					if (!filter || dataLayer.isValid(triple))
-						triples.add(triple);
-			}
+		for (StatementPattern pattern : statementPatterns) {
+			Triple triple = Convert.toTriple(pattern, solution);
+			if (!filter || dataLayer.isValid(triple))
+				triples.add(triple);
 		}
 
 		return triples;
@@ -187,43 +183,15 @@ public abstract class Request {
 	 *            the solution to use to instantiate the request
 	 * @return a {TripleSet} containing valid triples
 	 */
-	public Set<Statement> getTripleSet(Solution solution) {
+	public Set<Triple> getTripleSet(Solution solution) {
 		return getTripleSet(solution, true);
-	}
-
-	/*
-	 * public Variable add(Variable variable) { logger.info("Add variable " +
-	 * variable);
-	 * 
-	 * // If that variable is already known, return it if
-	 * (variables.contains(variable)) return
-	 * variables.get(variables.indexOf(variable));
-	 * 
-	 * // Add the variable variables.addConstraint(variable);
-	 * 
-	 * return variable; }
-	 */
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#toString()
-	 */
-	@Override
-	public String toString() {
-		String buffer = "Variables : " + constraintsMap.keySet().size() + "\n";
-		buffer += "Constraints :\n";
-		for (Constraint cstr : constraints)
-			buffer += cstr.toString() + "\n";
-		return buffer;
 	}
 
 	/**
 	 * @param variable
-	 * @return a set of providers
+	 * @return a list of providers
 	 */
-	public Set<ResourceProvider> getProvidersFor(Var variable) {
-		return providersMap.get(variable);
+	public List<ResourceProvider> getResourceProvidersFor(String variable) {
+		return providers.get(variable);
 	}
-
 }

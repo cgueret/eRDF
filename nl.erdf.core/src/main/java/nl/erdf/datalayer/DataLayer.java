@@ -1,8 +1,8 @@
 package nl.erdf.datalayer;
 
-import org.openrdf.model.Statement;
+import nl.erdf.model.impl.Triple;
+
 import org.openrdf.model.Value;
-import org.openrdf.query.algebra.StatementPattern;
 
 /**
  * A data layer is an abstraction over a given number of data sources it is used
@@ -18,38 +18,43 @@ public interface DataLayer {
 	 * @precondition There is only one and only one WILDCARD value
 	 * @return the number of resources available for that query
 	 */
-	abstract long getNumberOfResources(StatementPattern pattern);
+	abstract long getNumberOfResources(Triple pattern);
 
 	/**
 	 * @param pattern
 	 * @return a set of resources matching the triple
 	 */
-	abstract Value getResource(StatementPattern pattern);
+	abstract Value getResource(Triple pattern);
 
 	/**
 	 * Check is the combination of S,P and O is valid. This combination may
 	 * contain at most one null value
 	 * 
-	 * @param statement
-	 *            the statement to check
+	 * @param pattern
+	 *            the pattern to check
 	 * @return true if the triple is valid
 	 */
-	public abstract boolean isValid(Statement statement);
+	public boolean isValid(Triple pattern);
+
+	/**
+	 * @param statement
+	 */
+	public void add(Triple statement);
 
 	/**
 	 * Clear the content of the data layer, relevant in particular if a cache is
 	 * involved
 	 */
-	public abstract void clear();
+	public void clear();
 
 	/**
 	 * Called when the data layer is not used anymore
 	 */
-	public abstract void shutdown();
+	public void shutdown();
 
 	/**
 	 * This method blocks until more data is available from the data layer
 	 */
-	public abstract void waitForLatencyBuffer();
+	public void waitForLatencyBuffer();
 
 }

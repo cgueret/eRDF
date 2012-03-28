@@ -12,7 +12,7 @@ import org.openrdf.model.Value;
  * @author Christophe Guéret <christophe.gueret@gmail.com>
  * 
  */
-public class PartialStatement implements Statement {
+public class Triple implements Statement {
 	// Serial
 	private static final long serialVersionUID = -3001476772317067797L;
 
@@ -36,16 +36,23 @@ public class PartialStatement implements Statement {
 	 * @param object
 	 *            The statement's object.
 	 */
-	public PartialStatement(Resource subject, URI predicate, Value object) {
-		int nulls = 0;
-		nulls += (subject == null ? 1 : 0);
-		nulls += (predicate == null ? 1 : 0);
-		nulls += (object == null ? 1 : 0);
-		assert (nulls < 2);
+	public Triple(Resource subject, URI predicate, Value object) {
+		assert (getNumberNulls() < 2);
 
 		this.subject = subject;
 		this.predicate = predicate;
 		this.object = object;
+	}
+
+	/**
+	 * @return the number of nulls in the triple
+	 */
+	public int getNumberNulls() {
+		int nulls = 0;
+		nulls += (subject == null ? 1 : 0);
+		nulls += (predicate == null ? 1 : 0);
+		nulls += (object == null ? 1 : 0);
+		return nulls;
 	}
 
 	/*
@@ -53,7 +60,6 @@ public class PartialStatement implements Statement {
 	 * 
 	 * @see org.openrdf.model.Statement#getSubject()
 	 */
-	@Override
 	public Resource getSubject() {
 		return subject;
 	}
@@ -86,7 +92,7 @@ public class PartialStatement implements Statement {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		PartialStatement other = (PartialStatement) obj;
+		Triple other = (Triple) obj;
 		if (object == null) {
 			if (other.object != null)
 				return false;
@@ -110,7 +116,6 @@ public class PartialStatement implements Statement {
 	 * 
 	 * @see org.openrdf.model.Statement#getPredicate()
 	 */
-	@Override
 	public URI getPredicate() {
 		return predicate;
 	}
@@ -120,7 +125,6 @@ public class PartialStatement implements Statement {
 	 * 
 	 * @see org.openrdf.model.Statement#getObject()
 	 */
-	@Override
 	public Value getObject() {
 		return object;
 	}
@@ -130,7 +134,6 @@ public class PartialStatement implements Statement {
 	 * 
 	 * @see org.openrdf.model.Statement#getContext()
 	 */
-	@Override
 	public Resource getContext() {
 		return null;
 	}
@@ -153,4 +156,5 @@ public class PartialStatement implements Statement {
 
 		return sb.toString();
 	}
+
 }

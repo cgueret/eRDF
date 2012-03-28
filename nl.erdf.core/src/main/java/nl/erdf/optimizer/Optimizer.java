@@ -12,12 +12,10 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 import nl.erdf.datalayer.DataLayer;
-import nl.erdf.model.Binding;
 import nl.erdf.model.Request;
 import nl.erdf.model.Solution;
+import nl.erdf.model.impl.TripleSet;
 
-import org.openrdf.model.Statement;
-import org.openrdf.query.algebra.Var;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,8 +36,8 @@ public class Optimizer extends Observable implements Runnable {
 	/** Population */
 	protected final SortedSet<Solution> population = new TreeSet<Solution>();
 
-	/** Hall of fame to put all the results found */
-	private final Set<Statement> blackListedTriples = new HashSet<Statement>();
+	// Black listed triples
+	private final TripleSet blackListedTriples = new TripleSet();
 
 	/** Mutation operator used to generate new populations */
 	private final Generate generateOp;
@@ -77,7 +75,7 @@ public class Optimizer extends Observable implements Runnable {
 
 		// Create the operators
 		this.generateOp = new Generate(datalayer, request);
-		this.evaluateOp = new Evaluate(request, blackListedTriples, executor);
+		this.evaluateOp = new Evaluate(request, datalayer, blackListedTriples, executor);
 
 	}
 
@@ -86,7 +84,6 @@ public class Optimizer extends Observable implements Runnable {
 	 * 
 	 * @see java.lang.Runnable#run()
 	 */
-	@Override
 	public void run() {
 		// Do not run something terminated
 		if (isTerminated())
@@ -111,12 +108,8 @@ public class Optimizer extends Observable implements Runnable {
 			//
 			// Initialise the population with a dummy individual
 			//
-			if (population.isEmpty()) {
-				Solution solution = new Solution();
-				for (Var variable : request.variables())
-					solution.add(new Binding(variable, Node.NULL));
-				population.add(solution);
-			}
+			if (population.isEmpty())
+				population.add(request.getSolutionPrototype());
 
 			// Increment the generation counter
 			++generation;
@@ -144,7 +137,7 @@ public class Optimizer extends Observable implements Runnable {
 			 */
 
 			// Provide feed back to the generation operator
-			generateOp.updateProviderRewards(newPopulation);
+			// generateOp.updateProviderRewards(newPopulation);
 
 			//
 			// Get rid of the previous population and insert the kids
@@ -162,8 +155,8 @@ public class Optimizer extends Observable implements Runnable {
 			for (Solution s : population) {
 				// Increment age
 				if (s.getFitness() != topFitness)
-					s.resetAge();
-				s.incrementAge();
+					s.setAge(0);
+				s.setAge(s.getAge() + 1);
 
 				// Check optimality
 				s.setOptimal(false);
@@ -186,8 +179,6 @@ public class Optimizer extends Observable implements Runnable {
 			}
 
 			logger.info("Generation " + generation + ", best fitness=" + topFitness);
-			for (Solution s : population)
-				logger.info(s.toString());
 
 			//
 			// Notify observers that a loop has been done

@@ -3,17 +3,19 @@ package nl.erdf.optimizer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 import nl.erdf.constraints.Constraint;
-import nl.erdf.constraints.StatementPatternConstraint;
+import nl.erdf.constraints.RewardsTable;
+import nl.erdf.datalayer.DataLayer;
 import nl.erdf.model.Request;
 import nl.erdf.model.Solution;
+import nl.erdf.model.Variable;
+import nl.erdf.model.impl.TripleSet;
 
-import org.openrdf.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,30 +27,29 @@ public class Evaluate {
 	// Logger instance
 	protected final Logger logger = LoggerFactory.getLogger(Evaluate.class);
 
-	// The request to work on
+	// Request to work on
 	private final Request request;
 
-	// The parallel executor to speed stuff up
+	// Parallel executor to speed stuff up
 	private ExecutorService executor;
+
+	// Set of black listed triples
+	private TripleSet blackListedTriples;
+
+	// Data layer
+	private DataLayer dataLayer;
 
 	/**
 	 * @param request
+	 * @param dataLayer
 	 * @param blackListedTriples
 	 * @param executor
 	 */
-	public Evaluate(Request request, Set<Statement> blackListedTriples, ExecutorService executor) {
-		// Save the request
+	public Evaluate(Request request, DataLayer dataLayer, TripleSet blackListedTriples, ExecutorService executor) {
 		this.request = request;
-
-		// Save the executor
+		this.dataLayer = dataLayer;
 		this.executor = executor;
-
-		// Set the blacklisted triples reference to all the TripleConstraints
-		for (final Constraint cstr : request.constraints()) {
-			if (cstr instanceof StatementPatternConstraint) {
-				((StatementPatternConstraint) cstr).setBlackListedTriples(blackListedTriples);
-			}
-		}
+		this.blackListedTriples = blackListedTriples;
 	}
 
 	/**
@@ -61,8 +62,7 @@ public class Evaluate {
 
 			// No executor, sequential code
 			for (final Solution solution : population) {
-				double relevancy = request.evaluate(solution);
-				solution.setFitness(relevancy);
+				solution.setFitness(evaluate(solution));
 			}
 
 		} else {
@@ -71,10 +71,8 @@ public class Evaluate {
 			List<Future<?>> list = new ArrayList<Future<?>>();
 			for (final Solution solution : population) {
 				Future<?> job = executor.submit(new Runnable() {
-					@Override
 					public void run() {
-						double relevancy = request.evaluate(solution);
-						solution.setFitness(relevancy);
+						solution.setFitness(evaluate(solution));
 					}
 				});
 				list.add(job);
@@ -92,5 +90,32 @@ public class Evaluate {
 			}
 
 		}
+	}
+
+	/**
+	 * The fitness of that candidate solution is defined as the average of the
+	 * individual rewards each binding received.
+	 * 
+	 * @param solution
+	 * @return the fitness value of that candidate solution
+	 */
+	public double evaluate(Solution solution) {
+		// Reset the rewards of that solution
+		solution.resetScores();
+
+		// Test all the constraints
+		for (Constraint cstr : request.constraints()) {
+			RewardsTable rewards = cstr.getRewards(solution, dataLayer, blackListedTriples);
+
+			// Increment the reward of the variables
+			for (Entry<String, Double> r : rewards.getRewards()) {
+				Variable variable = solution.getVariable(r.getKey());
+				double reward = variable.getReward();
+				variable.setReward(reward + r.getValue().doubleValue());
+			}
+		}
+
+		// Return the fitness value
+		return solution.getTotalReward() / request.getMaximumReward();
 	}
 }

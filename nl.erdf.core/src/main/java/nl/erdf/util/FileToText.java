@@ -7,7 +7,7 @@ import java.io.IOException;
 
 /**
  * @author Christophe Guéret <christophe.gueret@gmail.com>
- *
+ * 
  */
 public class FileToText {
 	/**
