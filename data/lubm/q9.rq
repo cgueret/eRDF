@@ -1,0 +1,8 @@
+SELECT ?x ?y ?z WHERE { 
+	?x a <http://example.org/onto#Student> . 
+	?y a <http://example.org/onto#Faculty> . 
+	?z a <http://example.org/onto#Course> .
+	?x <http://example.org/onto#advisor> ?y . 
+	?x <http://example.org/onto#takesCourse> ?z . 
+	?y <http://example.org/onto#teacherOf> ?z 
+}

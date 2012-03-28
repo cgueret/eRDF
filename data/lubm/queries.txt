@@ -1,0 +1,101 @@
+# from http://code.google.com/p/elaunira/downloads/detail?name=lubm-queries-sparql.txt
+
+# query 1
+SELECT ?x WHERE { 
+	?x a <http://example.org/onto#GraduateStudent> . 
+	?x <http://example.org/onto#takesCourse> <http://www.Department0.University0.edu/GraduateCourse0> 
+}
+
+# query 2
+SELECT ?x ?y ?z WHERE { 
+	?x a <http://example.org/onto#GraduateStudent> . 
+	?y a <http://example.org/onto#University> . 
+	?z a <http://example.org/onto#Department> . 
+	?x <http://example.org/onto#memberOf> ?z . 
+	?z <http://example.org/onto#subOrganizationOf> ?y . 
+	?x <http://example.org/onto#undergraduateDegreeFrom> ?y
+}
+
+# query 3
+SELECT ?x WHERE { 
+	?x a <http://example.org/onto#Publication> . 
+	?x <http://example.org/onto#publicationAuthor> <http://www.Department0.University0.edu/AssistantProfessor0> 
+}
+
+# query 4
+SELECT ?x ?y1 ?y2 ?y3 WHERE {
+	?x a <http://example.org/onto#Professor> . 
+	?x <http://example.org/onto#worksFor> <http://www.Department0.University0.edu> . 
+	?x <http://example.org/onto#name> ?y1 . 
+	?x <http://example.org/onto#emailAddress> ?y2 .
+	?x <http://example.org/onto#telephone> ?y3
+}
+
+# query 5
+SELECT ?x WHERE { 
+	?x a <http://example.org/onto#Person> . 
+	?x <http://example.org/onto#memberOf> <http://www.Department0.University0.edu> 
+}
+
+# query 6
+SELECT ?x WHERE { 
+	?x a <http://example.org/onto#Student> 
+}
+
+# query 7
+SELECT ?x ?y WHERE { 
+	?x a <http://example.org/onto#Student> . 
+	?y a <http://example.org/onto#Course> . 
+	<http://www.Department0.University0.edu/AssociateProfessor0> <http://example.org/onto#teacherOf> ?y . 
+	?x <http://example.org/onto#takesCourse> ?y 
+}
+
+# query 8
+SELECT ?x ?y ?z WHERE { 
+	?x a <http://example.org/onto#Student> .
+	?y a <http://example.org/onto#Department> .
+	?x <http://example.org/onto#memberOf> ?y .
+	?y <http://example.org/onto#subOrganizationOf> <http://www.University0.edu> .
+	?x <http://example.org/onto#emailAddress> ?z
+}
+
+# query 9
+SELECT ?x ?y ?z WHERE { 
+	?x a <http://example.org/onto#Student> . 
+	?y a <http://example.org/onto#Faculty> . 
+	?z a <http://example.org/onto#Course> .
+	?x <http://example.org/onto#advisor> ?y . 
+	?x <http://example.org/onto#takesCourse> ?z . 
+	?y <http://example.org/onto#teacherOf> ?z 
+}
+
+# query 10
+SELECT ?x WHERE { 
+	?x a <http://example.org/onto#Student> . 
+	?x <http://example.org/onto#takesCourse> <http://www.Department0.University0.edu/GraduateCourse0> 
+}
+
+# query 11
+SELECT ?x WHERE { 
+	a <http://example.org/onto#ResearchGroup> ?x . 
+	?x <http://example.org/onto#subOrganizationOf> <http://www.University0.edu> 
+}
+
+# query 12
+SELECT ?x ?y WHERE { 
+	?x a <http://example.org/onto#Chair> . 
+	?y a <http://example.org/onto#Department> . 
+	?x <http://example.org/onto#worksFor> ?y .
+	?y <http://example.org/onto#subOrganizationOf> <http://www.University0.edu> 
+}
+
+# query 13
+SELECT ?x WHERE {
+	?x a <http://example.org/onto#Person> .
+	<http://www.University0.edu> <http://example.org/onto#hasAlumnus> ?x 
+}
+
+# query 14
+SELECT ?x WHERE { 
+	?x a <http://example.org/onto#UndergraduateStudent> 
+}

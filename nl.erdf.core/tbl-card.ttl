@@ -1,0 +1,362 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix : <http://xmlns.com/foaf/0.1/> .
+@prefix cc: <http://creativecommons.org/ns#> .
+@prefix cert: <http://www.w3.org/ns/auth/cert#> .
+@prefix con: <http://www.w3.org/2000/10/swap/pim/contact#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix doap: <http://usefulinc.com/ns/doap#> .
+@prefix geo: <http://www.w3.org/2003/01/geo/wgs84_pos#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rsa: <http://www.w3.org/ns/auth/rsa#> .
+@prefix s: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<file:///home/cgueret/2002/01/tr-automation/tr.rdf>
+    dc:title "W3C Standards and Technical Reports" .
+
+<file:///home/cgueret/Documents/Divers/tbl-card.rdf>
+    cc:license <http://creativecommons.org/licenses/by-nc/3.0/> ;
+    dc:title "Tim Berners-Lee's FOAF file" ;
+    a :PersonalProfileDocument ;
+    :maker <http://www.w3.org/People/Berners-Lee/card#i> ;
+    :primaryTopic <http://www.w3.org/People/Berners-Lee/card#i> .
+
+<file:///home/cgueret/Documents/Divers/tbl-card.rdf#cm>
+    a :Person ;
+    s:seeAlso <http://www.koalie.net/foaf.rdf> ;
+    :mbox <mailto:coralie@w3.org> ;
+    :name "Coralie Mercier" .
+
+<file:///home/cgueret/Documents/Divers/tbl-card.rdf#dj>
+    a :Person ;
+    s:seeAlso <http://www.grorg.org/dean/foaf.rdf> ;
+    :homepage <http://www.grorg.org/dean/> ;
+    :mbox <mailto:dean@w3.org>, <mailto:dino@grorg.org> ;
+    :mbox_sha1sum "6de4ff27ef927b9ba21ccc88257e41a2d7e7d293" ;
+    :name "Dean Jackson" .
+
+<file:///home/cgueret/Documents/Divers/tbl-card.rdf#edd>
+    a :Person ;
+    s:seeAlso <http://heddley.com/edd/foaf.rdf> ;
+    :homepage <http://heddley.com/edd/> ;
+    :mbox <mailto:edd@usefulinc.com>, <mailto:edd@xml.com>, <mailto:edd@xmlhack.com> ;
+    :name "Edd Dumbill" ;
+    :nick "edd" .
+
+<http://bblfish.net/people/henry/card#me>
+    :name "Henry Story" .
+
+<http://dbpedia.org/resource/Eli_Lilly_and_Company>
+    :member _:b1 .
+
+<http://dbpedia.org/resource/James_Martin_%28author%29>
+    a :Person ;
+    :name "James Martin" .
+
+<http://dbpedia.org/resource/John_Gage>
+    a :Person ;
+    :img <http://upload.wikimedia.org/wikipedia/commons/d/de/John_Gage.jpg> ;
+    :name "John Gage" .
+
+<http://dbpedia.org/resource/John_Klensin>
+    a :Person ;
+    :name "John Klensin" .
+
+<http://dbpedia.org/resource/John_Markoff>
+    a :Person ;
+    :name "John Markoff" .
+
+<http://dbpedia.org/resource/John_Seely_Brown>
+    a :Person ;
+    owl:sameAs <http://www4.wiwiss.fu-berlin.de/bookmashup/persons/John+Seely+Brown> ;
+    :homepage <http://www.johnseelybrown.com/> ;
+    :img <http://transliteracies.english.ucsb.edu/images/participants/t/brown-john-seely-2.jpg> ;
+    :name "John Seely Brown" .
+
+<http://dbpedia.org/resource/Tim_Bray>
+    a :Person ;
+    :name "Tim Bray" .
+
+<http://dig.csail.mit.edu/2005/ajar/ajaw/data#Tabulator>
+    doap:developer <http://www.w3.org/People/Berners-Lee/card#i> .
+
+<http://dig.csail.mit.edu/2007/01/camp/data#course>
+    :maker <http://www.w3.org/People/Berners-Lee/card#i> .
+
+<http://dig.csail.mit.edu/2007/wiki/people/JoeLambda#JL>
+    :firstName "Joe" ;
+    :name "Joe Lambda" .
+
+<http://dig.csail.mit.edu/2007/wiki/people/RobertHoffmann#RMH>
+    a :Person ;
+    :name "Robert Hoffmann" .
+
+<http://dig.csail.mit.edu/2008/webdav/timbl/foaf.rdf>
+    cc:license <http://creativecommons.org/licenses/by-nc/3.0/> ;
+    dc:title "Tim Berners-Lee's editable FOAF file" ;
+    a :PersonalProfileDocument ;
+    :maker <http://www.w3.org/People/Berners-Lee/card#i> ;
+    :primaryTopic <http://www.w3.org/People/Berners-Lee/card#i> .
+
+<http://dig.csail.mit.edu/People/RRS>
+    :img <http://www.w3.org/2006/09/Ralph_Swick.jpg> ;
+    :name "Ralph R. Swick" .
+
+<http://dig.csail.mit.edu/People/yosi#YES>
+    :name "Yosi Scharf" .
+
+<http://dig.csail.mit.edu/breadcrumbs/blog/4>
+    dc:title "timbl's blog" ;
+    s:seeAlso <http://dig.csail.mit.edu/breadcrumbs/blog/feed/4> ;
+    :maker <http://www.w3.org/People/Berners-Lee/card#i> .
+
+<http://dig.csail.mit.edu/data#DIG>
+    :member <http://www.w3.org/People/Berners-Lee/card#i> .
+
+<http://eikeon.com/foaf.rdf#eikeon>
+    :name "Daniel Krech" .
+
+<http://hometown.aol.com/chbussler/foaf/chbussler.foaf#me>
+    :name "Christoph Bussler" .
+
+<http://id.ecs.soton.ac.uk/person/1269>
+    :name "Nicholas Gibbins" .
+
+<http://id.ecs.soton.ac.uk/person/1650>
+    :name "Wendy Hall" .
+
+<http://id.ecs.soton.ac.uk/person/2686>
+    :name "Nigel Shadbolt" .
+
+<http://id.ecs.soton.ac.uk/person/60>
+    :name "Les Carr" .
+
+<http://inamidst.com/sbp/foaf#Sean>
+    a :Person ;
+    :name "Sean Palmer" .
+
+<http://my.opera.com/chaals/xml/foaf#me>
+    :name "Charles McCathieNevile" .
+
+<http://my.opera.com/danbri/xml/foaf#me>
+    s:seeAlso <http://danbri.livejournal.com/data/foaf> ;
+    owl:sameAs <http://danbri.org/foaf.rdf#danbri>, <http://www4.wiwiss.fu-berlin.de/dblp/resource/person/336851> ;
+    :mbox_sha1sum "70c053d15de49ff03a1bcc374e4119b40798a66e" .
+
+<http://my.opera.com/howcome/xml/foaf#howcome>
+    :name "Håkon Wium Lie" .
+
+<http://myopenlink.net/dataspace/person/kidehen#this>
+    a :Person ;
+    :name "Kingsley Idehen" .
+
+<http://norman.walsh.name/knows/who#norman-walsh>
+    a :Person ;
+    :name "Norman Walsh" .
+
+<http://people.apache.org/~oshani/foaf.rdf#me>
+    :name "Oshani Seneviratne" .
+
+<http://people.csail.mit.edu/lkagal/foaf#me>
+    a :Person ;
+    :mbox <mailto:lalana@csail.mit.edu> ;
+    :name "Lalana Kagal" .
+
+<http://people.csail.mit.edu/psz/foaf.rdf#me>
+    :name "Peter Szolovits" .
+
+<http://people.w3.org/simon/foaf#i>
+    a :Person ;
+    :name "Simon J. Hernandez" .
+
+<http://qdos.com/people/tom.xrdf#me>
+    a :Person ;
+    :name "Tom Ilube" .
+
+<http://research.microsoft.com/~henrikn/foaf.xml#me>
+    :name "Henrik Nielsen" .
+
+<http://rit.mellon.org/Members/ihf/foaf.rdf#me>
+    a :Person ;
+    :homepage <http://www.mellon.org/about_foundation/staff/program-area-staff/irafuchs> ;
+    :img <http://www.sun.com/products-n-solutions/edu/images/jelc/fuchs.jpg> ;
+    :name "Ira Fuchs" .
+
+<http://sw-app.org/mic.xhtml#i>
+    :name "Michael Hausenblas" .
+
+<http://swordfish.rdfweb.org/people/libby/rdfweb/webwho.xrdf#me>
+    a :Person ;
+    :img <http://swordfish.rdfweb.org/~libby/libby.jpg> ;
+    :mbox <mailto:libby.miller@bristol.ac.uk> ;
+    :name "Libby Miller" .
+
+<http://teole.jfouffa.org/People/Teole/card.rdf#me>
+    :name "Philippe Le Hégaret" .
+
+<http://users.ecs.soton.ac.uk/mc/mcfoaf.rdf#me>
+    :name "mc schraefel" .
+
+<http://web.mit.edu/shinnyih/foaf.rdf#>
+    :name "Shinnyih Huang" .
+
+<http://wiki.ontoworld.org/index.php/_IRW2006>
+    dc:title "Identity, Reference and the Web workshop 2006" ;
+    con:participant <http://www.w3.org/People/Berners-Lee/card#i> .
+
+<http://www.aaronsw.com/about.xrdf#aaronsw>
+    a :Person ;
+    s:seeAlso <http://www.aaronsw.com/about.xrdf> ;
+    :mbox <mailto:me@aaronsw.com> ;
+    :name "Aaron Swartz" .
+
+<http://www.cambridgesemantics.com/people/lee>
+    :name "Lee Feigenbaum" .
+
+<http://www.cs.umd.edu/~hendler/2003/foaf.rdf#jhendler>
+    :name "Jim Hendler" .
+
+<http://www.dajobe.org/foaf.rdf#i>
+    a :Person ;
+    :mbox <mailto:dave@dajobe.org> ;
+    :name "Dave Beckett" .
+
+<http://www.ecs.soton.ac.uk/~dt2/dlstuff/www2006_data#panel-panelk01>
+    s:label "The Next Wave of the Web (Plenary Panel)" ;
+    con:participant <http://www.w3.org/People/Berners-Lee/card#i> .
+
+<http://www.isi.edu/~gil/foaf.rdf#me>
+    a :Person ;
+    :name "Yolanda Gill" .
+
+<http://www.ivan-herman.net/foaf.rdf#me>
+    :mbox_sha1sum "5ac8032d5f6012aa1775ea2f63e1676bafd5e80b", "c21b7ed00d78a35efcd8e567f8fd9cca71058c5", "eccd01ba8ce2391a439e9b052a9fbf37eae9f732" ;
+    :name "Ivan Herman" .
+
+<http://www.kjetil.kjernsmo.net/foaf#me>
+    :name "Kjetil Kjernsmo" .
+
+<http://www.lassila.org/ora.rdf#me>
+    :name "Ora Lassila" .
+
+<http://www.mindswap.org/2004/owl/mindswappers#Bijan.Parsia>
+    :name "Bijan Parsia" .
+
+<http://www.mindswap.org/2004/owl/mindswappers#Jennifer.Golbeck>
+    :name "Jennifer Golbeck" .
+
+<http://www.w3.org/2000/10/swap/data#Cwm>
+    doap:developer <http://www.w3.org/People/Berners-Lee/card#i> .
+
+<http://www.w3.org/People/Berners-Lee/card#amy>
+    a :Person ;
+    s:label "Amy van der Hiel" ;
+    s:seeAlso <http://people.w3.org/amy/foaf.rdf> ;
+    con:familyName "van der Hiel" ;
+    con:givenName "Amy" ;
+    :mbox <mailto:amy@w3.org> ;
+    :mbox_sha1sum "1839a1cc2e719a85ea7d9007f587b2899cd94064" ;
+    :name "Amy van der Hiel" .
+
+<http://www.w3.org/People/Berners-Lee/card#i>
+    a con:Male, :Person ;
+    s:label "Tim Berners-Lee" ;
+    s:seeAlso <http://dig.csail.mit.edu/2008/webdav/timbl/foaf.rdf>, <http://www.w3.org/2007/11/Talks/search/query?date=All+past+and+future+talks&event=None&activity=None&name=Tim+Berners-Lee&country=None&language=None&office=None&rdfOnly=yes&submit=Submit> ;
+    con:assistant <http://www.w3.org/People/Berners-Lee/card#amy> ;
+    con:homePage <file:///home/cgueret/Documents/Divers/> ;
+    con:office [
+        con:address [
+            con:city "Cambridge" ;
+            con:country "USA" ;
+            con:postalCode "02139" ;
+            con:street "32 Vassar Street" ;
+            con:street2 "MIT CSAIL Room 32-G524"
+        ] ;
+        con:phone <tel:+1-617-253-5702> ;
+        geo:location [
+            geo:lat "42.361860" ;
+            geo:long "-71.091840"
+        ]
+    ] ;
+    con:publicHomePage <file:///home/cgueret/Documents/Divers/> ;
+    owl:sameAs <http://identi.ca/user/45563>, <http://www.advogato.org/person/timbl/foaf.rdf#me>, <http://www4.wiwiss.fu-berlin.de/bookmashup/persons/Tim+Berners-Lee>, <http://www4.wiwiss.fu-berlin.de/dblp/resource/person/100007> ;
+    :account <http://identi.ca/timbl>, <http://twitter.com/timberners_lee> ;
+    :based_near [
+        geo:lat "42.361860" ;
+        geo:long "-71.091840"
+    ] ;
+    :family_name "Berners-Lee" ;
+    :givenname "Timothy" ;
+    :homepage <http://www.w3.org/People/Berners-Lee/> ;
+    :img <http://www.w3.org/Press/Stock/Berners-Lee/2001-europaeum-eighth.jpg> ;
+    :knows <file:///home/cgueret/Documents/Divers/tbl-card.rdf#cm>, <file:///home/cgueret/Documents/Divers/tbl-card.rdf#dj>, <file:///home/cgueret/Documents/Divers/tbl-card.rdf#edd>, <http://bblfish.net/people/henry/card#me>, <http://danbri.org/foaf.rdf#danbri>, <http://dbpedia.org/resource/James_Martin_%28author%29>, <http://dbpedia.org/resource/John_Gage>, <http://dbpedia.org/resource/John_Klensin>, <http://dbpedia.org/resource/John_Markoff>, <http://dbpedia.org/resource/John_Seely_Brown>, <http://dbpedia.org/resource/Tim_Bray>, <http://dig.csail.mit.edu/2007/wiki/people/JoeLambda#JL>, <http://dig.csail.mit.edu/2007/wiki/people/RobertHoffmann#RMH>, <http://dig.csail.mit.edu/People/RRS>, <http://dig.csail.mit.edu/People/yosi#YES>, <http://eikeon.com/foaf.rdf#eikeon>, <http://heddley.com/edd/foaf.rdf#edd>, <http://hometown.aol.com/chbussler/foaf/chbussler.foaf#me>, <http://id.ecs.soton.ac.uk/person/1269>, <http://id.ecs.soton.ac.uk/person/1650>, <http://id.ecs.soton.ac.uk/person/2686>, <http://id.ecs.soton.ac.uk/person/60>, <http://inamidst.com/sbp/foaf#Sean>, <http://my.opera.com/chaals/xml/foaf#me>, <http://my.opera.com/howcome/xml/foaf#howcome>, <http://myopenlink.net/dataspace/person/kidehen#this>, <http://norman.walsh.name/knows/who#norman-walsh>, <http://people.apache.org/~oshani/foaf.rdf#me>, <http://people.csail.mit.edu/crowell/foaf.rdf#crowell>, <http://people.csail.mit.edu/lkagal/foaf#me>, <http://people.csail.mit.edu/psz/foaf.rdf#me>, <http://people.csail.mit.edu/ryanlee/about#ryanlee>, <http://people.w3.org/simon/foaf#i>, <http://presbrey.mit.edu/foaf.rdf#presbrey>, <http://qdos.com/people/tom.xrdf#me>, <http://research.microsoft.com/~henrikn/foaf.xml#me>, <http://rit.mellon.org/Members/ihf/foaf.rdf#me>, <http://sw-app.org/mic.xhtml#i>, <http://swordfish.rdfweb.org/people/libby/rdfweb/webwho.xrdf#me>, <http://teole.jfouffa.org/People/Teole/card.rdf#me>, <http://users.ecs.soton.ac.uk/mc/mcfoaf.rdf#me>, <http://web.mit.edu/ruthdhan/www/foaf.rdf#ruthdhan>, <http://web.mit.edu/shinnyih/foaf.rdf#>, <http://www.aaronsw.com/about.xrdf#aaronsw>, <http://www.cambridgesemantics.com/people/lee>, <http://www.cs.umd.edu/~hendler/2003/foaf.rdf#jhendler>, <http://www.dajobe.org/foaf.rdf#i>, <http://www.isi.edu/~gil/foaf.rdf#me>, <http://www.ivan-herman.net/foaf.rdf#me>, <http://www.kjetil.kjernsmo.net/foaf#me>, <http://www.lassila.org/ora.rdf#me>, <http://www.mindswap.org/2004/owl/mindswappers#Bijan.Parsia>, <http://www.mindswap.org/2004/owl/mindswappers#Jennifer.Golbeck>, <http://www.w3.org/People/Berners-Lee/card#amy>, <http://www.w3.org/People/Connolly/#me>, <http://www.w3.org/People/EM/contact#me>, <http://www.w3.org/People/Jacobs/contact.rdf#IanJacobs>, <http://www.w3.org/People/djweitzner/foaf#DJW>, <http://www.w3.org/People/karl/karl-foaf.xrdf#me>, _:b1, [
+        a :Person ;
+        s:seeAlso <http://dannyayers.com/me.rdf> ;
+        :mbox_sha1sum "669fe353dbef63d12ba11f69ace8acbec1ac8b17" ;
+        :name "Danny Ayers"
+    ] ;
+    :mbox <mailto:timbl@w3.org> ;
+    :mbox_sha1sum "965c47c5a70db7407210cef6e4e6f5374a525c5c" ;
+    :name "Timothy Berners-Lee" ;
+    :nick "TimBL", "timbl" ;
+    :openid <http://www.w3.org/People/Berners-Lee/> ;
+    :phone <tel:+1-(617)-253-5702> ;
+    :preferredURI "http://www.w3.org/People/Berners-Lee/card#i" ;
+    :title "Sir" ;
+    :weblog <http://dig.csail.mit.edu/breadcrumbs/blog/4> ;
+    :workplaceHomepage <http://www.w3.org/> .
+
+<http://www.w3.org/People/Connolly/#me>
+    a :Person ;
+    s:seeAlso <http://www.w3.org/People/Connolly/home-smart.rdf> ;
+    :mbox <mailto:connolly@w3.org> ;
+    :name "Dan Connolly" ;
+    :nick "DanCon" .
+
+<http://www.w3.org/People/EM/contact#me>
+    a :Person ;
+    s:seeAlso <http://www.w3.org/People/EM/contact> ;
+    :homepage <http://purl.org/net/eric/> ;
+    :img <http://www.ilrt.bristol.ac.uk/people/cmdjb/events/dc7/orig/eric.png>, <http://www.oclc.org/~emiller/capture.jpg> ;
+    :mbox <mailto:em@w3.org> ;
+    :name "Eric Miller" .
+
+<http://www.w3.org/People/Jacobs/contact.rdf#IanJacobs>
+    :name "Ian Jacobs" .
+
+<http://www.w3.org/People/djweitzner/foaf#DJW>
+    a :Person ;
+    :mbox_sha1sum "032c319f439f63efba54f4fa51bfb3a3fafedfbe" ;
+    :name "Daniel J Weitzner" .
+
+<http://www.w3.org/People/karl/karl-foaf.xrdf#me>
+    s:seeAlso <http://www.w3.org/People/karl/karl-foaf.xrdf> ;
+    :mbox <mailto:karl@w3.org> ;
+    :name "Karl Dubost" .
+
+<http://www.w3.org/data#W3C>
+    s:label "W3C" ;
+    s:seeAlso <file:///home/cgueret/2002/01/tr-automation/tr.rdf> ;
+    con:publicHomePage <http://www.w3.org/> ;
+    :homepage <file:///home/cgueret/> ;
+    :logo <file:///home/cgueret/Icons/w3c_home> ;
+    :member <http://www.w3.org/People/Berners-Lee/card#i> ;
+    :name "World Wide Web Consortium" .
+
+<http://www4.wiwiss.fu-berlin.de/booksMeshup/books/006251587X>
+    dc:creator <http://www.w3.org/People/Berners-Lee/card#i> ;
+    dc:title "Weaving the Web: The Original Design and Ultimate Destiny of the World Wide Web" .
+
+_:b1
+    :mbox <mailto:susie.stephens@gmail.com> ;
+    :name "Susie Stephens" .
+
+[]
+    a rsa:RSAPublicKey ;
+    cert:identity <http://www.w3.org/People/Berners-Lee/card#i> ;
+    rsa:modulus [
+        cert:hex "84554e39b67f5e3912068773655d855d222fa2c05cd9784693f8919aa46a61be703069c5f3266eebc21d6bb429ee47fac347b012eb7da8b1e4b02f7680e39767b0086f1fd48b9a420de3e70df9c2504c87006e7722ab6df210dec768dae454e65b31752379d7032dd2269646562593d8b5c621860a0f929ad64b9dce1d6cb12f"
+    ] ;
+    rsa:public_exponent [
+        cert:decimal "65537"
+    ] .
+

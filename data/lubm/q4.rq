@@ -1,0 +1,7 @@
+SELECT ?x ?y1 ?y2 ?y3 WHERE {
+	?x a <http://example.org/onto#FullProfessor> . 
+	?x <http://example.org/onto#worksFor> <http://www.Department0.University0.edu> . 
+	?x <http://example.org/onto#name> ?y1 . 
+	?x <http://example.org/onto#emailAddress> ?y2 .
+	?x <http://example.org/onto#telephone> ?y3
+}
