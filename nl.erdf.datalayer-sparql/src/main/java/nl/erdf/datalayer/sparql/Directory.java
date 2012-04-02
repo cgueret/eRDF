@@ -1,7 +1,7 @@
 /**
  * 
  */
-package nl.erdf.datalayer.sparql.orig;
+package nl.erdf.datalayer.sparql;
 
 import java.io.BufferedReader;
 import java.io.IOException;

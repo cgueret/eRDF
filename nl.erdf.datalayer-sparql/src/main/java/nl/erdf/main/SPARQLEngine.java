@@ -13,14 +13,18 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import nl.erdf.constraints.impl.StatementPatternConstraint;
 import nl.erdf.datalayer.DataLayer;
-import nl.erdf.datalayer.sparql.SPARQLParser;
-import nl.erdf.datalayer.sparql.SPARQLRequest;
-import nl.erdf.datalayer.sparql.orig.Directory;
-import nl.erdf.datalayer.sparql.orig.EndPoint;
+import nl.erdf.datalayer.sparql.Directory;
+import nl.erdf.datalayer.sparql.EndPoint;
+import nl.erdf.datalayer.sparql.SPARQLDataLayer;
+import nl.erdf.model.Request;
 import nl.erdf.model.Solution;
+import nl.erdf.model.impl.StatementPatternProvider;
+import nl.erdf.model.impl.Triple;
 import nl.erdf.optimizer.Optimizer;
 import nl.erdf.util.FileToText;
+import nl.erdf.util.PatternsExtractor;
 
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
@@ -28,18 +32,18 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
+import org.openrdf.query.MalformedQueryException;
+import org.openrdf.query.QueryEvaluationException;
+import org.openrdf.query.QueryLanguage;
+import org.openrdf.query.TupleQuery;
+import org.openrdf.query.TupleQueryResult;
+import org.openrdf.query.algebra.StatementPattern;
+import org.openrdf.repository.RepositoryException;
+import org.openrdf.repository.sail.SailRepository;
+import org.openrdf.repository.sail.SailRepositoryConnection;
+import org.openrdf.sail.memory.MemoryStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.QueryExecutionFactory;
-import com.hp.hpl.jena.query.QueryFactory;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.query.ResultSetFormatter;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
 
 /**
  * @author Christophe Guéret <christophe.gueret@gmail.com>
@@ -56,29 +60,45 @@ public class SPARQLEngine {
 	static final int MAX_TIME = 5;
 
 	static class SearchProcess implements Observer {
-		final Model model;
-		final Query query;
+		final SailRepository repository;
+		final String sparqlQuery;
 		final Optimizer optimizer;
-		final SPARQLRequest request;
+		final Request request;
 		final Directory directory;
 		boolean stop = false;
 
-		public SearchProcess(File queryFile, File endPoints) throws IOException, URISyntaxException {
+		public SearchProcess(File queryFile, File endPoints) throws RepositoryException, FileNotFoundException,
+				IOException {
 			// Create a directory
 			directory = new Directory();
 			directory.loadFrom(new FileInputStream(endPoints));
 
 			// Create a data layer
-			DataLayer datalayer = null;//new SPARQLDataLayer(directory);
+			DataLayer datalayer = new SPARQLDataLayer(directory);
 
-			// Create a model for Jena, load the query
-			model = ModelFactory.createMemModelMaker().createDefaultModel();
-			query = QueryFactory.create(FileToText.convert(queryFile));
+			// Create an in-memory repository
+			repository = new SailRepository(new MemoryStore());
+			repository.initialize();
 
-			// Init eRDF
-			request = new SPARQLRequest(datalayer);
-			SPARQLParser parser = new SPARQLParser(request);
-			parser.parseFromFile(queryFile);
+			// Store the query
+			sparqlQuery = FileToText.convert(queryFile);
+
+			// Initialise the request for eRDF
+			request = new Request(datalayer);
+
+			// Get the patterns out of the SPARQL query
+			Set<StatementPattern> patterns = PatternsExtractor.fromSPARQL(sparqlQuery);
+			for (StatementPattern pattern : patterns) {
+				// Add the pattern to instantiate them in the solutions
+				request.addStatementPattern(pattern);
+
+				// Create a constraint
+				request.addConstraint(new StatementPatternConstraint(pattern));
+
+				// Use that pattern as a data source
+				request.addResourceProvider(new StatementPatternProvider(pattern));
+			}
+
 			logger.info("Running eRDF with the following parameters:\n" + request.toString());
 			optimizer = new Optimizer(datalayer, request, null);
 			optimizer.addObserver(this);
@@ -109,7 +129,21 @@ public class SPARQLEngine {
 				logger.info("Found " + triples.size() + " relevant triples");
 				for (Triple triple : triples) {
 					logger.info(triple.toString());
-					model.add(model.asStatement(triple));
+					SailRepositoryConnection con = null;
+					try {
+						con = repository.getConnection();
+						con.add(triple);
+						con.commit();
+					} catch (RepositoryException e) {
+						e.printStackTrace();
+					} finally {
+						try {
+							if (con != null)
+								con.close();
+						} catch (RepositoryException e) {
+							e.printStackTrace();
+						}
+					}
 				}
 			}
 
@@ -120,21 +154,26 @@ public class SPARQLEngine {
 
 				// Execute the query and display results
 				logger.info("Process query...");
-				QueryExecution qe = QueryExecutionFactory.create(query, model);
-				if (query.isSelectType()) {
-					ResultSet results = qe.execSelect();
-					ResultSetFormatter.out(System.out, results, query);
-				} else if (query.isAskType()) {
-					boolean result = qe.execAsk();
-					ResultSetFormatter.out(System.out, result);
-				} else if (query.isDescribeType()) {
-					Model result = qe.execDescribe();
-					result.write(System.out);
-				} else if (query.isConstructType()) {
-					Model result = qe.execConstruct();
-					result.write(System.out);
+				SailRepositoryConnection con = null;
+				try {
+					con = repository.getConnection();
+					TupleQuery tupleQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, sparqlQuery);
+					TupleQueryResult result = tupleQuery.evaluate();
+					logger.info(result.toString());
+				} catch (RepositoryException e) {
+					e.printStackTrace();
+				} catch (MalformedQueryException e) {
+					e.printStackTrace();
+				} catch (QueryEvaluationException e) {
+					e.printStackTrace();
+				} finally {
+					try {
+						if (con != null)
+							con.close();
+					} catch (RepositoryException e) {
+						e.printStackTrace();
+					}
 				}
-				qe.close();
 
 				// Print a list of informative sources
 				logger.info("List of end points that provided information");
@@ -226,8 +265,9 @@ public class SPARQLEngine {
 	 * @param cmd
 	 * @throws IOException
 	 * @throws URISyntaxException
+	 * @throws RepositoryException
 	 */
-	private static void run(CommandLine cmd) throws IOException, URISyntaxException {
+	private static void run(CommandLine cmd) throws IOException, URISyntaxException, RepositoryException {
 		// Check the query
 		File queryFile = new File(cmd.getOptionValue("q"));
 		if (!queryFile.exists())

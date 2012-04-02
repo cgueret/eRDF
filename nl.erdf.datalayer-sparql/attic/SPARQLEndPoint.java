@@ -5,8 +5,7 @@ package nl.erdf.main;
 
 import java.util.Set;
 
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.rdf.model.Statement;
+import nl.erdf.model.impl.Triple;
 
 /**
  * @author Christophe Guéret <christophe.gueret@gmail.com>
@@ -29,7 +28,7 @@ public class SPARQLEndPoint implements DataSource {
 	 * @param query
 	 * @return
 	 */
-	public Set<Statement> getStatements(Triple query) {
+	public Set<Triple> getStatements(Triple query) {
 		// Query query = QueryFactory.create(queryString);
 		// QueryExecution qexec = QueryExecutionFactory.sparqlService(URI,
 		// query);

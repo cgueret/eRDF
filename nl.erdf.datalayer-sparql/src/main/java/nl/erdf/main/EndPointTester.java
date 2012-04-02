@@ -3,25 +3,18 @@
  */
 package nl.erdf.main;
 
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.QueryExecutionFactory;
-import com.hp.hpl.jena.query.QueryFactory;
-import com.hp.hpl.jena.query.ResultSet;
-
+import org.openrdf.repository.RepositoryConnection;
+import org.openrdf.repository.RepositoryException;
+import org.openrdf.repository.sparql.SPARQLRepository;
 
 /**
  * @author Christophe Guéret <christophe.gueret@gmail.com>
  * 
  */
 public class EndPointTester extends Thread {
-	private final static Query query = QueryFactory.create("SELECT * WHERE {?s ?p ?o} LIMIT 1");
-	private final QueryExecution qexec;
-
+	private final SPARQLRepository repository;
 	private boolean intime = true;
-
 	private boolean valid = false;
-
 	private String error = "no information";
 
 	/**
@@ -29,7 +22,7 @@ public class EndPointTester extends Thread {
 	 */
 	public EndPointTester(String URI) {
 		super(URI);
-		this.qexec = QueryExecutionFactory.sparqlService(URI, query);
+		repository = new SPARQLRepository(URI);
 	}
 
 	/*
@@ -39,9 +32,10 @@ public class EndPointTester extends Thread {
 	 */
 	@Override
 	public void run() {
+		RepositoryConnection c = null;
 		try {
-			ResultSet results = qexec.execSelect();
-			if (inTime() && results.hasNext()) {
+			c = repository.getConnection();
+			if (c.isOpen() && inTime() && !c.isEmpty()) {
 				setValid(true);
 			} else {
 				error = "no result";
@@ -49,7 +43,12 @@ public class EndPointTester extends Thread {
 		} catch (Exception e) {
 			error = e.getMessage();
 		} finally {
-			qexec.close();
+			try {
+				if (c != null)
+					c.close();
+			} catch (RepositoryException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -79,7 +78,6 @@ public class EndPointTester extends Thread {
 	 */
 	public synchronized void stopQuery() {
 		intime = false;
-		qexec.abort();
 		error = "time out";
 	}
 

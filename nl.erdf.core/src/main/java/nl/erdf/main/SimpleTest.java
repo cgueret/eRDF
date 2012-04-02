@@ -18,11 +18,9 @@ import nl.erdf.model.Solution;
 import nl.erdf.model.impl.StatementPatternProvider;
 import nl.erdf.optimizer.Optimizer;
 import nl.erdf.util.FileToText;
+import nl.erdf.util.PatternsExtractor;
 
 import org.openrdf.query.algebra.StatementPattern;
-import org.openrdf.query.algebra.TupleExpr;
-import org.openrdf.query.parser.ParsedQuery;
-import org.openrdf.query.parser.sparql.SPARQLParser;
 import org.openrdf.rio.RDFParser;
 import org.openrdf.rio.turtle.TurtleParserFactory;
 import org.slf4j.Logger;
@@ -56,12 +54,7 @@ public class SimpleTest implements Observer {
 
 		// Get the patterns out of the SPARQL query
 		String queryStr = FileToText.convert(new File(queryFile));
-		SPARQLParser parser = new SPARQLParser();
-		ParsedQuery query = parser.parseQuery(queryStr, null);
-		TupleExpr t = query.getTupleExpr();
-		MyVisitor visitor = new MyVisitor();
-		t.visitChildren(visitor);
-		Set<StatementPattern> patterns = visitor.getPatterns();
+		Set<StatementPattern> patterns = PatternsExtractor.fromSPARQL(queryStr);
 
 		Request request = new Request(dataLayer);
 		for (StatementPattern pattern : patterns) {

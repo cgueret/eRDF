@@ -1,7 +1,7 @@
 /**
  * 
  */
-package nl.erdf.datalayer.sparql.orig;
+package nl.erdf.datalayer.sparql;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -10,8 +10,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import nl.erdf.datalayer.sparql.LIFOQueue;
-import nl.erdf.datalayer.sparql.RetryHandler;
+import nl.erdf.util.LIFOQueue;
+import nl.erdf.util.RetryHandler;
 
 import org.apache.http.HttpVersion;
 import org.apache.http.client.HttpClient;

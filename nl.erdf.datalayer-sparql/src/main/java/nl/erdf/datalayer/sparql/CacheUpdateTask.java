@@ -1,7 +1,7 @@
 /**
  * 
  */
-package nl.erdf.datalayer.sparql.orig;
+package nl.erdf.datalayer.sparql;
 
 import java.io.InputStream;
 import java.net.URLEncoder;
@@ -15,19 +15,16 @@ import javax.xml.parsers.SAXParserFactory;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.openrdf.model.BNode;
+import org.openrdf.model.Value;
+import org.openrdf.model.impl.BNodeImpl;
+import org.openrdf.model.impl.LiteralImpl;
+import org.openrdf.model.impl.URIImpl;
+import org.openrdf.query.algebra.StatementPattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
-
-import com.hp.hpl.jena.datatypes.TypeMapper;
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Node_Blank;
-import com.hp.hpl.jena.graph.Triple;
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryFactory;
-import com.hp.hpl.jena.rdf.model.AnonId;
-import com.hp.hpl.jena.sparql.syntax.ElementGroup;
 
 /**
  * @author tolgam
@@ -78,7 +75,7 @@ public class CacheUpdateTask implements Runnable {
 		private int total = 0;
 
 		private boolean inBind = false;
-		private Node node = null;
+		private Value node = null;
 		private String literType = null;
 		private String literLang = null;
 		private StringBuffer buffer = new StringBuffer();
@@ -145,15 +142,14 @@ public class CacheUpdateTask implements Runnable {
 					node = null;
 				}
 			} else if (qname.equals("uri")) {
-				node = Node.createURI(buffer.toString());
+				node = new URIImpl(buffer.toString());
 				buffer.delete(0, buffer.length());
 			} else if (qname.equals("bnode")) {
 				buffer.append(BNODE_SRC_MARKER).append(Integer.toString(source.hashCode()));
-				node = Node.createAnon(new AnonId(buffer.toString()));
+				node = new BNodeImpl(buffer.toString());
 				buffer.delete(0, buffer.length());
 			} else if (qname.equals("literal")) {
-				node = Node.createLiteral(buffer.toString(), literLang,
-						TypeMapper.getInstance().getTypeByName(literType));
+				node = new LiteralImpl(buffer.toString(), literLang, TypeMapper.getInstance().getTypeByName(literType));
 				buffer.delete(0, buffer.length());
 			}
 		}
@@ -207,38 +203,38 @@ public class CacheUpdateTask implements Runnable {
 				return;
 
 			// Get the triple
-			Triple pattern = resourceSet.getPattern();
+			StatementPattern pattern = resourceSet.getPattern();
 
 			// Don't query if a blank node not issued by that peer is in use
 			String srcid = Integer.toString(endpoint.hashCode());
-			if (pattern.getSubject() instanceof Node_Blank)
-				if (!pattern.getSubject().getBlankNodeLabel().split(BNODE_SRC_MARKER)[1].equals(srcid))
-					return;
-			if (pattern.getPredicate() instanceof Node_Blank)
-				if (!pattern.getPredicate().getBlankNodeLabel().split(BNODE_SRC_MARKER)[1].equals(srcid))
-					return;
-			if (pattern.getObject() instanceof Node_Blank)
-				if (!pattern.getObject().getBlankNodeLabel().split(BNODE_SRC_MARKER)[1].equals(srcid))
-					return;
+			if (pattern.getSubjectVar().hasValue())
+				if (pattern.getSubjectVar().getValue() instanceof BNode)
+					if (!pattern.getSubjectVar().getValue().toString().split(BNODE_SRC_MARKER)[1].equals(srcid))
+						return;
+			if (pattern.getPredicateVar().hasValue())
+				if (pattern.getPredicateVar().getValue() instanceof BNode)
+					if (!pattern.getPredicateVar().getValue().toString().split(BNODE_SRC_MARKER)[1].equals(srcid))
+						return;
+			if (pattern.getObjectVar().hasValue())
+				if (pattern.getObjectVar().getValue() instanceof BNode)
+					if (!pattern.getObjectVar().getValue().toString().split(BNODE_SRC_MARKER)[1].equals(srcid))
+						return;
 
 			HttpGet httpget = null;
 			HttpEntity entity = null;
 			String uri = null;
 
-			// Prepare the query
-			ElementGroup elg = new ElementGroup();
-			elg.addTriplePattern(pattern);
-			Query query = QueryFactory.make();
-			query.setQuerySelectType();
-			query.setQueryPattern(elg);
-			query.addResultVar(SPARQLDataLayer.RETURN);
-			query.setLimit(1000);
-			query.setDistinct(true);
-			query.setOffset(0);
+			// Generate the query
+			StringBuffer queryBuffer = new StringBuffer();
+			queryBuffer.append("SELECT DISTINCT ?").append(SPARQLDataLayer.RETURN.getName()).append(" WHERE {");
+			queryBuffer.append(pattern.toString()).append("} ");
 
 			try {
 				boolean getNextPage = true;
 				int totalResults = 0;
+				int pageSize = 100;
+				int limit = 1000;
+				long offset = 0;
 
 				// Get current time
 				long start = System.nanoTime();
@@ -247,19 +243,18 @@ public class CacheUpdateTask implements Runnable {
 					// Assume it will be the last page
 					getNextPage = false;
 
-					// Get the query
-					uri = endpoint.getURI() + "?query=" + URLEncoder.encode(query.serialize(), "UTF-8");
+					// Get the query for this page
+					StringBuffer localQueryBuffer = new StringBuffer(queryBuffer);
+					localQueryBuffer.append(" LIMIT ").append(limit);
+					localQueryBuffer.append(" OFFSET ").append(offset);
+
+					uri = endpoint.getURI() + "?query=" + URLEncoder.encode(localQueryBuffer.toString(), "UTF-8");
 
 					// Record the request
 					endpoint.setRequestsCounter(endpoint.getRequestsCounter() + 1);
 
-					// Open the connection
+					// Prepare the query
 					httpget = new HttpGet(uri);
-					httpget.addHeader("Accept", "application/sparql-results+xml");
-
-					// Execute the request
-					if (!endpoint.isEnabled())
-						return;
 					HttpResponse response = endpoint.getHttpClient().execute(httpget);
 					entity = response.getEntity();
 
@@ -275,9 +270,9 @@ public class CacheUpdateTask implements Runnable {
 
 						// Wait for completion
 						int total = handler.waitForCompletion();
-						if (total == 1000) {
+						if (total == pageSize) {
 							getNextPage = true;
-							query.setOffset(query.getOffset() + 1000);
+							offset += pageSize;
 						}
 						totalResults += total;
 						// entity.consumeContent();

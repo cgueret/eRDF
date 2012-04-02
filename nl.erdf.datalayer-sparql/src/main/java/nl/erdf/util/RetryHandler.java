@@ -1,4 +1,4 @@
-package nl.erdf.datalayer.sparql;
+package nl.erdf.util;
 
 import java.io.IOException;
 

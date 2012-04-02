@@ -1,7 +1,7 @@
 /**
  * 
  */
-package nl.erdf.datalayer.sparql.orig;
+package nl.erdf.datalayer.sparql;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -10,11 +10,10 @@ import java.util.Set;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.openrdf.model.Value;
+import org.openrdf.query.algebra.StatementPattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
 
 /**
  * @author cgueret
@@ -28,11 +27,10 @@ public class NodeSet {
 	public final static NodeSet EMPTY_SET = new NodeSet(null);
 
 	// Actual content of the set
-	private final Set<Node> content = Collections
-			.synchronizedSet(new HashSet<Node>());
+	private final Set<Value> content = Collections.synchronizedSet(new HashSet<Value>());
 
 	// The query pattern this set of resources correspond to
-	private final Triple pattern;
+	private final StatementPattern pattern;
 
 	// Locking system to wait for first result to arrive or completion of update
 	// process
@@ -47,18 +45,18 @@ public class NodeSet {
 	/**
 	 * A resource set must be associated to a given pattern
 	 * 
-	 * @param p
+	 * @param pattern
 	 */
-	public NodeSet(Triple p) {
-		this.pattern = p;
+	public NodeSet(StatementPattern pattern) {
+		this.pattern = pattern;
 	}
 
 	/**
 	 * Returns the query pattern associated to this set of resources
 	 * 
-	 * @return the QueryPattern of the set
+	 * @return the StatementPattern of the set
 	 */
-	public Triple getPattern() {
+	public StatementPattern getPattern() {
 		return pattern;
 	}
 
@@ -68,7 +66,7 @@ public class NodeSet {
 	 * @param resource
 	 *            the resource to add
 	 */
-	public void add(Node resource) {
+	public void add(Value resource) {
 		// Lock the access
 		contentLock.lock();
 
@@ -94,18 +92,18 @@ public class NodeSet {
 	 *            a random number generator
 	 * @return a resource from the set or URI.BLANK if the set is empty
 	 */
-	public Node get(Random random) {
+	public Value get(Random random) {
 		// Lock access to the content
 		contentLock.lock();
 
 		try {
 			// If the resource set is empty, we return a blank
 			if (content.isEmpty())
-				return Node.NULL;
+				return null;
 
 			// Uniformly pick one of the resources
 			int index = random.nextInt(content.size());
-			return (Node) content.toArray()[index];
+			return (Value) content.toArray()[index];
 		} finally {
 			// Release the lock
 			contentLock.unlock();
@@ -119,13 +117,12 @@ public class NodeSet {
 	 *            a Resource to check
 	 * @return true if the resource is in the set
 	 */
-	public boolean contains(Node resource) {
+	public boolean contains(Value resource) {
 		// Lock access to the content
 		contentLock.lock();
 
 		try {
 			// TODO Implement different similarity measures here
-
 			return content.contains(resource);
 		} finally {
 			// Release the lock
@@ -299,7 +296,7 @@ public class NodeSet {
 		StringBuffer buffer = new StringBuffer();
 		contentLock.lock();
 		try {
-			for (Node node : content)
+			for (Value node : content)
 				buffer.append(node.toString() + "(" + node.getClass() + ") ");
 			return buffer.toString();
 		} finally {
@@ -312,7 +309,7 @@ public class NodeSet {
 	/**
 	 * @return
 	 */
-	public Set<Node> content() {
+	public Set<Value> content() {
 		return content;
 	}
 }

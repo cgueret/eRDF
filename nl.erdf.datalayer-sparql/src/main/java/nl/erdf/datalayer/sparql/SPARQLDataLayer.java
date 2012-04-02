@@ -1,18 +1,21 @@
-package nl.erdf.datalayer.sparql.orig;
+package nl.erdf.datalayer.sparql;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Observable;
+import java.util.Random;
 import java.util.Set;
 
 import nl.erdf.datalayer.DataLayer;
+import nl.erdf.model.impl.Triple;
 
+import org.openrdf.model.Value;
+import org.openrdf.query.algebra.StatementPattern;
+import org.openrdf.query.algebra.Var;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Node_Variable;
-import com.hp.hpl.jena.graph.Triple;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /**
  * @author tolgam
@@ -23,7 +26,7 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 	// every function will block until the final results are known
 	private static final boolean BLOCKING = true;
 
-	public static final Node RETURN = new Node_Variable("erdf");
+	public static final Var RETURN = new Var("erdf");
 
 	// Query cache for gets
 	private final Cache cache;
@@ -53,15 +56,6 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 		cache.clear();
 	}
 
-	/**
-	 * @param t
-	 * @param o
-	 * @return
-	 */
-	private boolean contains(Triple t, Node o) {
-		return (t.getSubject().equals(o) || t.getPredicate().equals(o) || t.getObject().equals(o));
-	}
-
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -75,11 +69,22 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see datalayer.DataLayer#getNumberOfResources(datalayer.wod.QueryPattern)
+	 * @see
+	 * nl.erdf.datalayer.DataLayer#getNumberOfResources(nl.erdf.model.impl.Triple
+	 * )
 	 */
 	public long getNumberOfResources(Triple pattern) {
+		if (pattern.getNumberNulls() != 1)
+			return 0;
+
+		// Create a pattern
+		Var s = (pattern.getSubject() == null ? RETURN : new Var("s", pattern.getSubject()));
+		Var p = (pattern.getPredicate() == null ? RETURN : new Var("p", pattern.getPredicate()));
+		Var o = (pattern.getObject() == null ? RETURN : new Var("o", pattern.getObject()));
+		StatementPattern triplePattern = new StatementPattern(s, p, o);
+
 		// Try to get the result from the cache
-		NodeSet resources = cache.get(pattern);
+		NodeSet resources = cache.get(triplePattern);
 
 		// If blocking, wait until the result set is finished
 		if (BLOCKING)
@@ -113,17 +118,17 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * nl.erdf.datalayer.DataLayer#getResources(com.hp.hpl.jena.graph.Triple)
+	 * @see nl.erdf.datalayer.DataLayer#getResource(nl.erdf.model.impl.Triple)
 	 */
-	public Set<Node> getResources(Triple t) {
-		//logger.info("[GET] " + t);
+	public Value getResource(Triple pa) {
+		if (pa.getNumberNulls() > 1)
+			return null;
 
 		// Scan the pattern to replace the variable with the return var
-		Node s = (t.getSubject().isVariable() ? RETURN : t.getSubject());
-		Node p = (t.getPredicate().isVariable() ? RETURN : t.getPredicate());
-		Node o = (t.getObject().isVariable() ? RETURN : t.getObject());
-		Triple triplePattern = Triple.create(s, p, o);
+		Var s = (pa.getSubject() == null ? RETURN : new Var("s", pa.getSubject()));
+		Var p = (pa.getPredicate() == null ? RETURN : new Var("p", pa.getPredicate()));
+		Var o = (pa.getObject() == null ? RETURN : new Var("o", pa.getObject()));
+		StatementPattern triplePattern = new StatementPattern(s, p, o);
 
 		// Default resourceSet to use
 		NodeSet resources = NodeSet.EMPTY_SET;
@@ -137,7 +142,32 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 
 		// logger.info(queryPattern.toString());
 		// logger.info(""+resources.size());
-		return resources.content();
+		Set<Value> values = resources.content();
+		int index = (new Random()).nextInt(values.size());
+		return (Value) values.toArray()[index];
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see nl.erdf.datalayer.DataLayer#isValid(nl.erdf.model.impl.Triple)
+	 */
+	public boolean isValid(Triple pattern) {
+		// Create a pattern
+		Var s = (pattern.getSubject() == null ? RETURN : new Var("s", pattern.getSubject()));
+		Var p = (pattern.getPredicate() == null ? RETURN : new Var("p", pattern.getPredicate()));
+		Var o = (pattern.getObject() == null ? RETURN : new Var("o", pattern.getObject()));
+		StatementPattern triplePattern = new StatementPattern(s, p, o);
+
+		// Deal with fully instantiated patterns
+		if (pattern.getNumberNulls() == 0)
+			return isFullyValid(triplePattern);
+
+		// Deal with patterns with 1 variable
+		if (pattern.getNumberNulls() == 1)
+			return isPartiallyValid(triplePattern);
+
+		return false;
 	}
 
 	/**
@@ -148,42 +178,31 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 	 * it may request subjects having generic PO such as rdf:type Person. The
 	 * SP* are expected to lead to fewer results and a complete check.
 	 * 
-	 * @param s
-	 *            The subject
-	 * @param p
-	 *            The predicate
-	 * @param o
-	 *            The object
+	 * @param pattern
+	 *            Pattern
 	 * @return True if this triple exists, false otherwise
 	 */
-	@SuppressWarnings("unused")
-	private boolean isFullyValid(Node s, Node p, Node o) {
-		//logger.info("[F-VALID] " + s + " " + p + " " + o);
+	private boolean isFullyValid(StatementPattern pattern) {
+		// logger.info("[F-VALID] " + s + " " + p + " " + o);
 
 		// Try to see if we have seen SP* before. We start with that
 		// one as we assume there will be less SP->O than PO->S
 		// (for instance, <X,Type,Thing> versus <blah,Type,Y>)
-		Triple partialSP = Triple.create(s, p, RETURN);
+		StatementPattern partialSP = pattern.clone();
+		partialSP.setObjectVar(RETURN);
 		NodeSet resourcesSP = cache.get(partialSP);
-		// logger.info("(1) " + partialSP.toQueryString() + " " +
-		// resourcesSP.contains(o) + "/" + resourcesSP.isFinal() + " " + o + " "
-		// +
-		// o.getClass());
-		if (resourcesSP.contains(o))
+		if (resourcesSP.contains(pattern.getObjectVar().getValue()))
 			return true;
-
 		// If SP is final, we are sure about the answer
-		if (resourcesSP.isFinal()) {
-			// logger.info("Content: " + resourcesSP.toString());
+		if (resourcesSP.isFinal())
 			return false;
-		}
 
 		// Try to see if we have seen *PO before
-		Triple partialPO = Triple.create(new Node_Variable("?erdf"), p, o);
+		StatementPattern partialPO = pattern.clone();
+		partialPO.setSubjectVar(RETURN);
 		NodeSet resourcesPO = cache.get(partialPO);
-		if (resourcesPO.contains(s))
+		if (resourcesPO.contains(pattern.getSubjectVar().getValue()))
 			return true;
-
 		// If the content of PO is final, then the definitive answer is a NO
 		if (resourcesPO.isFinal())
 			return false;
@@ -192,35 +211,25 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 		// we bet on it as it is likely to be the smallest
 		if (BLOCKING) {
 			resourcesSP.waitForFinalContent();
-			return resourcesSP.contains(o);
+			return resourcesSP.contains(pattern.getObjectVar().getValue());
+		} else {
+			// Maybe future content will arrive for one of the two sets,
+			// meanwhile we are not sure of the result
+			return false;
 		}
-
-		// Maybe future content will arrive for one of the two sets,
-		// meanwhile we are not sure of the result
-		// logger.info("" + new QueryPattern(s, p, o));
-		return false;
 	}
 
 	/**
-	 * @param s
-	 * @param p
-	 * @param o
+	 * @param pattern
 	 * @return
 	 */
-	@SuppressWarnings("unused")
-	private boolean isPartiallyValid(Node s, Node p, Node o) {
-		// Create the relevant partial query pattern
-		Node s2 = (s.equals(Node.ANY) ? RETURN : s);
-		Node p2 = (p.equals(Node.ANY) ? RETURN : p);
-		Node o2 = (o.equals(Node.ANY) ? RETURN : o);
-		Triple partialQueryPattern = Triple.create(s2, p2, o2);
-		//logger.info("[P-VALID] " + partialQueryPattern);
+	private boolean isPartiallyValid(StatementPattern pattern) {
+		// logger.info("[P-VALID] " + partialQueryPattern);
 
 		// If the set is not empty, we are sure the triple is partially valid
-		NodeSet resources = cache.get(partialQueryPattern);
+		NodeSet resources = cache.get(pattern);
 		if (!resources.isEmpty())
 			return true;
-
 		// If the content of the set is final, we are sure the pattern is not
 		// valid
 		if (resources.isFinal())
@@ -230,38 +239,11 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 		if (BLOCKING) {
 			resources.waitForSomeContent();
 			return (!resources.isEmpty());
-		}
-
-		// Not sure yet, something may be added in the future
-		return false;
-	};
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see nl.erdf.datalayer.DataLayer#isValid(com.hp.hpl.jena.graph.Triple)
-	 */
-	public boolean isValid(Triple triple) {
-		// Create a query pattern
-		// QueryPattern query = new QueryPattern(triple);
-		//logger.info("[VALID] " + triple);
-
-		// Deal with obvious answers... if there is NULL in the pattern it is
-		// sure the answer is no
-		if (contains(triple, null) || contains(triple, Node.NULL))
-			return false;
-
-		// Now, the normal cases
-		Node s = triple.getSubject();
-		Node p = triple.getPredicate();
-		Node o = triple.getObject();
-		if (contains(triple, Node.ANY)) {
-			return isPartiallyValid(s, p, o);
 		} else {
-			// logger.info("Valid? " + query.getPattern());
-			return isFullyValid(s, p, o);
+			// Not sure yet, something may be added in the future
+			return false;
 		}
-	}
+	};
 
 	/*
 	 * (non-Javadoc)
@@ -294,5 +276,15 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 				e.printStackTrace();
 			}
 		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see nl.erdf.datalayer.DataLayer#add(nl.erdf.model.impl.Triple)
+	 */
+	public void add(nl.erdf.model.impl.Triple statement) {
+		// SPARQL data layer is read only
+		throw new NotImplementedException();
 	}
 }

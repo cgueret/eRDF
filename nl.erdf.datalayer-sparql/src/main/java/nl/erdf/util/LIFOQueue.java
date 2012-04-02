@@ -1,7 +1,7 @@
 /**
  * 
  */
-package nl.erdf.datalayer.sparql;
+package nl.erdf.util;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
