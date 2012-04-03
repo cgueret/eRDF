@@ -17,9 +17,8 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.openrdf.model.BNode;
 import org.openrdf.model.Value;
-import org.openrdf.model.impl.BNodeImpl;
-import org.openrdf.model.impl.LiteralImpl;
-import org.openrdf.model.impl.URIImpl;
+import org.openrdf.model.ValueFactory;
+import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.query.algebra.StatementPattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,6 +72,9 @@ public class CacheUpdateTask implements Runnable {
 
 		// Tracks how many resources have been parsed
 		private int total = 0;
+
+		// Values factory
+		ValueFactory factory = ValueFactoryImpl.getInstance();
 
 		private boolean inBind = false;
 		private Value node = null;
@@ -142,14 +144,19 @@ public class CacheUpdateTask implements Runnable {
 					node = null;
 				}
 			} else if (qname.equals("uri")) {
-				node = new URIImpl(buffer.toString());
+				node = factory.createURI(buffer.toString());
 				buffer.delete(0, buffer.length());
 			} else if (qname.equals("bnode")) {
 				buffer.append(BNODE_SRC_MARKER).append(Integer.toString(source.hashCode()));
-				node = new BNodeImpl(buffer.toString());
+				node = factory.createBNode(buffer.toString());
 				buffer.delete(0, buffer.length());
 			} else if (qname.equals("literal")) {
-				node = new LiteralImpl(buffer.toString(), literLang, TypeMapper.getInstance().getTypeByName(literType));
+				if (literLang != null && literType == null)
+					node = factory.createLiteral(buffer.toString(), literLang);
+				if (literLang == null && literType != null)
+					node = factory.createLiteral(buffer.toString(), factory.createURI(literType));
+				if (literLang == null && literType == null)
+					node = factory.createLiteral(buffer.toString());
 				buffer.delete(0, buffer.length());
 			}
 		}

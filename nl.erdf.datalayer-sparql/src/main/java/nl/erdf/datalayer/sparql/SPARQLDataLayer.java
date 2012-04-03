@@ -15,8 +15,6 @@ import org.openrdf.query.algebra.Var;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
 /**
  * @author tolgam
  * 
@@ -285,6 +283,5 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 	 */
 	public void add(nl.erdf.model.impl.Triple statement) {
 		// SPARQL data layer is read only
-		throw new NotImplementedException();
 	}
 }
