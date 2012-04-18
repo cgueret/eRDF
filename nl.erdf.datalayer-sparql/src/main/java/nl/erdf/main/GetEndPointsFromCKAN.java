@@ -3,9 +3,10 @@ package nl.erdf.main;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.URI;
 
-import nl.erdf.datalayer.sparql.Directory;
+import nl.erdf.model.Directory;
+import nl.erdf.model.EndPoint;
+import nl.erdf.util.EndPointTester;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -91,19 +92,15 @@ public class GetEndPointsFromCKAN {
 
 				// Print status and save end point
 				logger.info("Validated " + uri + " as \"" + label + "\" [" + delay + " ms]");
-				d.add(label, URI.create(uri));
+				d.add(new EndPoint(uri, null, null));
 			} else {
 				logger.warn("Failed on " + uri + " [" + t.getError() + "]");
 			}
 		}
 
 		// Print some information and save
-		logger.info("Directory contains " + d.endPoints().size() + " end points.");
+		logger.info("Directory contains " + d.size() + " end points.");
 		OutputStream os = new FileOutputStream("ckan-endpoints.csv");
-		d.writeTo(os);
 		os.close();
-
-		// Close the directory
-		d.close();
 	}
 }

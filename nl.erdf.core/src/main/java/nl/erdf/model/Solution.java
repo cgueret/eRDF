@@ -87,13 +87,12 @@ public class Solution implements Comparable<Solution> {
 
 		// Compare the assignments
 		for (String var : variables.keySet()) {
-			if (this.getValue(var) == null) {
-				if (other.getValue(var) != null)
-					return false;
-			} else {
-				if (!this.getValue(var).equals(other.getValue(var)))
-					return false;
-			}
+			if (this.getValue(var) == null && other.getValue(var) != null)
+				return false;
+			else if (this.getValue(var) != null && other.getValue(var) == null)
+				return false;
+			else if (this.getValue(var) != null && !this.getValue(var).equals(other.getValue(var)))
+				return false;
 		}
 
 		return true;

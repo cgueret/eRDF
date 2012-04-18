@@ -1,7 +1,7 @@
 /**
  * 
  */
-package nl.erdf.model.impl;
+package nl.erdf.model;
 
 import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;

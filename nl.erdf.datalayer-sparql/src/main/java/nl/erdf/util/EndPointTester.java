@@ -1,7 +1,7 @@
 /**
  * 
  */
-package nl.erdf.main;
+package nl.erdf.util;
 
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;

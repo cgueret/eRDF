@@ -11,7 +11,6 @@ import java.util.Set;
 import nl.erdf.constraints.Constraint;
 import nl.erdf.constraints.Reward;
 import nl.erdf.datalayer.DataLayer;
-import nl.erdf.model.impl.Triple;
 import nl.erdf.util.Convert;
 
 import org.openrdf.query.algebra.StatementPattern;
@@ -24,10 +23,10 @@ import org.slf4j.LoggerFactory;
  */
 public class Request {
 	// Logger
-	private static final Logger logger = LoggerFactory.getLogger(Request.class);
+	protected static final Logger logger = LoggerFactory.getLogger(Request.class);
 
 	// Collection of statement patterns associated with that request
-	private final Set<StatementPattern> statementPatterns = new HashSet<StatementPattern>();
+	private final Set<StatementPattern> patterns = new HashSet<StatementPattern>();
 
 	// Constraints indexed by the variables they contain
 	private final Map<String, List<Constraint>> constraints = new HashMap<String, List<Constraint>>();
@@ -45,8 +44,8 @@ public class Request {
 	 */
 	@Override
 	public String toString() {
-		return "Request [statementPatterns=" + statementPatterns + ", constraints=" + constraints + ", providers="
-				+ providers + ", dataLayer=" + dataLayer + "]";
+		return "Request [statementPatterns=" + patterns + ", constraints=" + constraints + ", providers=" + providers
+				+ ", dataLayer=" + dataLayer + "]";
 	}
 
 	/**
@@ -112,7 +111,6 @@ public class Request {
 	 * @param constraint
 	 */
 	public void addConstraint(Constraint constraint) {
-		logger.info("Add constraint " + constraint);
 		for (String var : constraint.getVariables()) {
 			List<Constraint> cstrs = null;
 			if (!constraints.containsKey(var)) {
@@ -132,8 +130,6 @@ public class Request {
 	 * @param provider
 	 */
 	public void addResourceProvider(ResourceProvider provider) {
-		logger.info("Add provider " + provider);
-
 		for (String var : provider.getVariables()) {
 			List<ResourceProvider> prov = null;
 			if (!providers.containsKey(var)) {
@@ -150,7 +146,7 @@ public class Request {
 	 * @param statementPattern
 	 */
 	public void addStatementPattern(StatementPattern statementPattern) {
-		statementPatterns.add(statementPattern);
+		patterns.add(statementPattern);
 	}
 
 	/**
@@ -166,7 +162,7 @@ public class Request {
 	public Set<Triple> getTripleSet(Solution solution, boolean filter) {
 		Set<Triple> triples = new HashSet<Triple>();
 
-		for (StatementPattern pattern : statementPatterns) {
+		for (StatementPattern pattern : patterns) {
 			Triple triple = Convert.toTriple(pattern, solution);
 			if (!filter || dataLayer.isValid(triple))
 				triples.add(triple);

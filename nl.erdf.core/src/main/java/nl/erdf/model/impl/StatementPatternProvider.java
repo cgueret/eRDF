@@ -9,6 +9,7 @@ import java.util.Set;
 import nl.erdf.datalayer.DataLayer;
 import nl.erdf.model.ResourceProvider;
 import nl.erdf.model.Solution;
+import nl.erdf.model.Triple;
 import nl.erdf.util.Convert;
 
 import org.openrdf.model.Value;
@@ -52,6 +53,16 @@ public class StatementPatternProvider implements ResourceProvider {
 		// Get a value and return it
 		Value resource = dataLayer.getResource(t);
 		return resource;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "StatementPatternProvider [pattern=" + pattern + "]";
 	}
 
 	/*

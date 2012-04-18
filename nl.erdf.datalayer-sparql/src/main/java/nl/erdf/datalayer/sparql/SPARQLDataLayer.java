@@ -1,14 +1,20 @@
 package nl.erdf.datalayer.sparql;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Observable;
 import java.util.Random;
 import java.util.Set;
 
 import nl.erdf.datalayer.DataLayer;
-import nl.erdf.model.impl.Triple;
+import nl.erdf.model.Directory;
+import nl.erdf.model.EndPoint;
+import nl.erdf.model.Triple;
 
+import org.apache.http.conn.scheme.PlainSocketFactory;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.openrdf.model.Value;
 import org.openrdf.query.algebra.StatementPattern;
 import org.openrdf.query.algebra.Var;
@@ -20,8 +26,11 @@ import org.slf4j.LoggerFactory;
  * 
  */
 public class SPARQLDataLayer extends Observable implements DataLayer {
-	// If BLOCKING is set to true, no MAYBE answer will be allowed
-	// every function will block until the final results are known
+	// Logger instance
+	protected final Logger logger = LoggerFactory.getLogger(SPARQLDataLayer.class);
+
+	// If BLOCKING is set to true every function will block until the final
+	// results are known
 	private static final boolean BLOCKING = true;
 
 	public static final Var RETURN = new Var("erdf");
@@ -29,20 +38,34 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 	// Query cache for gets
 	private final Cache cache;
 
-	// The directory
-	private final Directory directory;
+	// The client connection manager which avoids DoS
+	private final ThreadSafeClientConnManager connManager;
 
-	// Logger instance
-	protected final Logger logger = LoggerFactory.getLogger(SPARQLDataLayer.class);
+	// Executors for processing SPARQL queries
+	List<EndPointExecutor> executors = new ArrayList<EndPointExecutor>();
 
 	/**
 	 * @param directory
-	 * @throws FileNotFoundException
-	 * @throws IOException
 	 */
-	public SPARQLDataLayer(Directory directory) throws FileNotFoundException, IOException {
-		this.directory = directory;
-		cache = new Cache(directory);
+	public SPARQLDataLayer(Directory directory) {
+		// Create a scheme registry
+		SchemeRegistry schemeRegistry = new SchemeRegistry();
+		schemeRegistry.register(new Scheme("http", 80, PlainSocketFactory.getSocketFactory()));
+
+		// Create a connection manager
+		connManager = new ThreadSafeClientConnManager(schemeRegistry);
+		connManager.setDefaultMaxPerRoute(2);
+		connManager.setMaxTotal(200);
+
+		// Start the end points
+		for (EndPoint endPoint : directory) {
+			EndPointExecutor executor = new EndPointExecutor(endPoint);
+			executor.start(connManager);
+			executors.add(executor);
+		}
+
+		// Create a cache
+		cache = new Cache(executors);
 	}
 
 	/*
@@ -97,23 +120,6 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 	}
 
 	/*
-	 * public Node getRandomResource(Random rand, QueryPattern queryPattern) {
-	 * 
-	 * // Default resourceSet to use NodeSet resources = NodeSet.EMPTY_SET;
-	 * 
-	 * // Get a set of resources from the cache resources =
-	 * cache.get(queryPattern);
-	 * 
-	 * // If blocking, wait until the result set has something in it if
-	 * (BLOCKING) resources.waitForSomeContent();
-	 * 
-	 * //logger.info(queryPattern.toString());
-	 * //logger.info(""+resources.size());
-	 * 
-	 * // Return a random resource from the set return resources.get(rand); }
-	 */
-
-	/*
 	 * (non-Javadoc)
 	 * 
 	 * @see nl.erdf.datalayer.DataLayer#getResource(nl.erdf.model.impl.Triple)
@@ -141,8 +147,12 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 		// logger.info(queryPattern.toString());
 		// logger.info(""+resources.size());
 		Set<Value> values = resources.content();
-		int index = (new Random()).nextInt(values.size());
-		return (Value) values.toArray()[index];
+		if (values.size() > 0) {
+			int index = (new Random()).nextInt(values.size());
+			return (Value) values.toArray()[index];
+		} else {
+			return null;
+		}
 	}
 
 	/*
@@ -249,8 +259,8 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 	 * @see nl.erdf.main.datalayer.DataLayer#shutdown()
 	 */
 	public void shutdown() {
-		for (EndPoint endpoint : directory.endPoints())
-			endpoint.shutdown();
+		for (EndPointExecutor executor : executors)
+			executor.shutdown();
 	}
 
 	/*
@@ -264,9 +274,9 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 		double load = Double.MAX_VALUE;
 		while (load > 4) {
 			load = 0;
-			for (EndPoint endpoint : directory.endPoints())
-				load += endpoint.getQueueSize();
-			load = load / directory.endPoints().size();
+			for (EndPointExecutor executor : executors)
+				load += executor.getQueueSize();
+			load = load / executors.size();
 
 			try {
 				Thread.sleep((long) (50 + 2 * load));
@@ -281,7 +291,7 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 	 * 
 	 * @see nl.erdf.datalayer.DataLayer#add(nl.erdf.model.impl.Triple)
 	 */
-	public void add(nl.erdf.model.impl.Triple statement) {
+	public void add(nl.erdf.model.Triple statement) {
 		// SPARQL data layer is read only
 	}
 }

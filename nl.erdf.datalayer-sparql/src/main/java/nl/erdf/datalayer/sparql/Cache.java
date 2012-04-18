@@ -1,6 +1,7 @@
 package nl.erdf.datalayer.sparql;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -22,8 +23,8 @@ public class Cache {
 	/** Logger instance */
 	protected final static Logger logger = LoggerFactory.getLogger(Cache.class);
 
-	// The directory contains the list of end points to use
-	private final Directory directory;
+	// The executors for the SPARQL queries
+	private final Collection<EndPointExecutor> executors;
 
 	// The cache content
 	private class Bucket {
@@ -43,11 +44,11 @@ public class Cache {
 	 * Create a new cache instance
 	 * 
 	 * @param directory
-	 *            the {@link Directory} to use
+	 *            the collection of {@link EndPointExecutor} to use
 	 * 
 	 */
-	public Cache(Directory directory) {
-		this.directory = directory;
+	public Cache(Collection<EndPointExecutor> executors) {
+		this.executors = executors;
 
 		clear();
 	}
@@ -129,24 +130,11 @@ public class Cache {
 	 */
 	private void emitRequests(NodeSet resources) {
 		// Declare to the resourceSet the number of updating tasks for it
-		resources.setUpdateTasksCounter(directory.endPoints().size());
+		resources.setUpdateTasksCounter(executors.size());
 
-		// Iterate over all the end points and execute a new update task
-		for (EndPoint endpoint : directory.endPoints()) {
-			// Don't query disabled end points
-			if (!endpoint.isEnabled())
-				continue;
-
-			// Queue an update task for that end point
-			endpoint.executeCacheUpdateTask(resources);
+		// Queue an update task for that end point
+		for (EndPointExecutor executor : executors) {
+			executor.executeCacheUpdateTask(resources);
 		}
 	}
-
-	/**
-	 * @return the directory
-	 */
-	public Directory getDirectory() {
-		return directory;
-	}
-
 }

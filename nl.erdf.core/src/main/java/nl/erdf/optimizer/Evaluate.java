@@ -13,8 +13,8 @@ import nl.erdf.constraints.RewardsTable;
 import nl.erdf.datalayer.DataLayer;
 import nl.erdf.model.Request;
 import nl.erdf.model.Solution;
+import nl.erdf.model.TripleSet;
 import nl.erdf.model.Variable;
-import nl.erdf.model.impl.TripleSet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

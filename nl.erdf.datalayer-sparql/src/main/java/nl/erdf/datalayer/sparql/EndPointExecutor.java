@@ -3,13 +3,13 @@
  */
 package nl.erdf.datalayer.sparql;
 
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import nl.erdf.model.EndPoint;
 import nl.erdf.util.LIFOQueue;
 import nl.erdf.util.RetryHandler;
 
@@ -27,15 +27,12 @@ import org.slf4j.LoggerFactory;
  * @author tolgam
  * 
  */
-public class EndPoint {
+public class EndPointExecutor {
 	// Logger instance
-	static final Logger logger = LoggerFactory.getLogger(EndPoint.class);
+	static final Logger logger = LoggerFactory.getLogger(EndPointExecutor.class);
 
-	// The name of this end point
-	private final String name;
-
-	// The URI poiting to it
-	private final URI URI;
+	// The end point
+	private final EndPoint endPoint;
 
 	// Executor to run the update tasks against this end point
 	private ExecutorService executor;
@@ -56,18 +53,13 @@ public class EndPoint {
 	// Number of queries that returned some results
 	private int informativeCounter = 0;
 
-	// By default, the end point is not enabled
-	private boolean enabled = false;
-
 	/**
 	 * @param name
 	 * @param address
 	 * @throws URISyntaxException
 	 */
-	public EndPoint(String name, URI address) {
-		this.name = name;
-		this.URI = address;
-
+	public EndPointExecutor(EndPoint endPoint) {
+		this.endPoint = endPoint;
 	}
 
 	/**
@@ -99,10 +91,6 @@ public class EndPoint {
 	 * 
 	 */
 	public void shutdown() {
-		if (!isEnabled())
-			return;
-		setEnabled(false);
-
 		// Cancel remaining tasks
 		for (Runnable runnable : jobQueue)
 			if (runnable instanceof CacheUpdateTask)
@@ -122,14 +110,13 @@ public class EndPoint {
 			if (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
 				executor.shutdownNow();
 				if (!executor.awaitTermination(1, TimeUnit.SECONDS))
-					logger.error(name + "'s data pool did not terminate");
+					logger.error(endPoint.getURI() + "'s data pool did not terminate");
 			}
 		} catch (InterruptedException ie) {
-			logger.error(name + " was interrupted");
+			logger.error(endPoint.getURI() + " was interrupted");
 			executor.shutdownNow();
 			Thread.currentThread().interrupt();
 		}
-
 	}
 
 	/**
@@ -156,8 +143,6 @@ public class EndPoint {
 		jobQueue = new LIFOQueue<Runnable>();
 		executor = new ThreadPoolExecutor(2, 2, 10, TimeUnit.SECONDS, jobQueue);
 		((ThreadPoolExecutor) executor).prestartAllCoreThreads();
-
-		setEnabled(true);
 	}
 
 	/**
@@ -167,20 +152,6 @@ public class EndPoint {
 		executor.execute(new CacheUpdateTask(this, resources));
 	}
 
-	/**
-	 * @return name
-	 */
-	public String getName() {
-		return name;
-	}
-
-	/**
-	 * @return query URL
-	 */
-	public URI getURI() {
-		return URI;
-	}
-
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -188,7 +159,7 @@ public class EndPoint {
 	 */
 	@Override
 	public int hashCode() {
-		return URI.hashCode();
+		return endPoint.hashCode();
 	}
 
 	/*
@@ -198,20 +169,10 @@ public class EndPoint {
 	 */
 	@Override
 	public boolean equals(Object obj) {
-		if (!(obj instanceof EndPoint))
+		if (!(obj instanceof EndPointExecutor))
 			return false;
-		EndPoint other = (EndPoint) obj;
-		return URI.equals(other.URI);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#toString()
-	 */
-	@Override
-	public String toString() {
-		return URI.toString();
+		EndPointExecutor other = (EndPointExecutor) obj;
+		return endPoint.equals(other.endPoint);
 	}
 
 	/**
@@ -289,16 +250,9 @@ public class EndPoint {
 	}
 
 	/**
-	 * @return true if the end point seems to be usable
+	 * @return
 	 */
-	public synchronized boolean isEnabled() {
-		return enabled;
-	}
-
-	/**
-	 * @param enabled
-	 */
-	private synchronized void setEnabled(boolean enabled) {
-		this.enabled = enabled;
+	public EndPoint getEndPoint() {
+		return endPoint;
 	}
 }

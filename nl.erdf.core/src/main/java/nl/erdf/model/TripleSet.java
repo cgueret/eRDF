@@ -1,7 +1,7 @@
 /**
  * 
  */
-package nl.erdf.model.impl;
+package nl.erdf.model;
 
 import java.util.HashSet;
 import java.util.Set;

@@ -12,6 +12,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import nl.erdf.util.Converter;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -36,10 +38,10 @@ public class CacheUpdateTask implements Runnable {
 	private final NodeSet resourceSet;
 
 	// The end point to query
-	private final EndPoint endpoint;
+	private final EndPointExecutor endpoint;
 
 	// Is it a cancelled job?
-	private boolean isCanceled = false;
+	private boolean isCancelled = false;
 
 	// Delimiter to source the blank nodes
 	protected final static String BNODE_SRC_MARKER = "####";
@@ -50,7 +52,7 @@ public class CacheUpdateTask implements Runnable {
 	 * @param resourceSet
 	 *            The result to update
 	 */
-	public CacheUpdateTask(EndPoint endpoint, NodeSet resourceSet) {
+	public CacheUpdateTask(EndPointExecutor endpoint, NodeSet resourceSet) {
 		this.endpoint = endpoint;
 		this.resourceSet = resourceSet;
 	}
@@ -65,7 +67,7 @@ public class CacheUpdateTask implements Runnable {
 		private Condition finished = finishLock.newCondition();
 
 		// The end point providing the results
-		private final EndPoint source;
+		private final EndPointExecutor source;
 
 		// The set of resources parsed
 		private final NodeSet resources;
@@ -87,7 +89,7 @@ public class CacheUpdateTask implements Runnable {
 		 *            the address of the sparql endpoint
 		 * @param resources
 		 */
-		public Handler(EndPoint source, NodeSet resources) {
+		public Handler(EndPointExecutor source, NodeSet resources) {
 			this.resources = resources;
 			this.source = source;
 		}
@@ -206,7 +208,7 @@ public class CacheUpdateTask implements Runnable {
 	public void run() {
 		try {
 			// If cancelled, return right away
-			if (isCanceled || !endpoint.isEnabled())
+			if (isCancelled)
 				return;
 
 			// Get the triple
@@ -234,7 +236,7 @@ public class CacheUpdateTask implements Runnable {
 			// Generate the query
 			StringBuffer queryBuffer = new StringBuffer();
 			queryBuffer.append("SELECT DISTINCT ?").append(SPARQLDataLayer.RETURN.getName()).append(" WHERE {");
-			queryBuffer.append(pattern.toString()).append("} ");
+			queryBuffer.append(Converter.toN3(pattern)).append("} ");
 
 			try {
 				boolean getNextPage = true;
@@ -255,7 +257,8 @@ public class CacheUpdateTask implements Runnable {
 					localQueryBuffer.append(" LIMIT ").append(limit);
 					localQueryBuffer.append(" OFFSET ").append(offset);
 
-					uri = endpoint.getURI() + "?query=" + URLEncoder.encode(localQueryBuffer.toString(), "UTF-8");
+					uri = endpoint.getEndPoint().getURI() + "?query="
+							+ URLEncoder.encode(localQueryBuffer.toString(), "UTF-8");
 
 					// Record the request
 					endpoint.setRequestsCounter(endpoint.getRequestsCounter() + 1);
@@ -282,15 +285,10 @@ public class CacheUpdateTask implements Runnable {
 							offset += pageSize;
 						}
 						totalResults += total;
-						// entity.consumeContent();
-
 					} else {
 						if (httpget != null)
 							httpget.abort();
 					}
-					// httpClient.getConnectionManager().releaseConnection(conn,
-					// -1,
-					// null);
 				}
 
 				// Update statistics
@@ -317,7 +315,7 @@ public class CacheUpdateTask implements Runnable {
 	 * 
 	 */
 	public synchronized void cancel() {
-		isCanceled = true;
+		isCancelled = true;
 	}
 }
 

@@ -4,7 +4,7 @@
 package nl.erdf.main;
 
 import nl.erdf.datalayer.DataLayer;
-import nl.erdf.model.impl.Triple;
+import nl.erdf.model.Triple;
 
 import org.openrdf.model.Statement;
 import org.openrdf.rio.RDFHandler;

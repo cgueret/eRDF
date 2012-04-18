@@ -14,7 +14,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import nl.erdf.datalayer.DataLayer;
 import nl.erdf.model.Request;
 import nl.erdf.model.Solution;
-import nl.erdf.model.impl.TripleSet;
+import nl.erdf.model.TripleSet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +28,7 @@ public class Optimizer extends Observable implements Runnable {
 	private static final int POPULATION_SIZE = 5;
 
 	/** Maximum generation to wait before finding an optima */
-	private static final int MAXIMUM_GENERATION = 40;
+	private static final int MAXIMUM_GENERATION = 50;
 
 	/** Logger */
 	protected final Logger logger = LoggerFactory.getLogger(Optimizer.class);
@@ -109,7 +109,7 @@ public class Optimizer extends Observable implements Runnable {
 			// Initialise the population with a dummy individual
 			//
 			if (population.isEmpty())
-				population.add(request.getSolutionPrototype());
+				population.add(getRequest().getSolutionPrototype());
 
 			// Increment the generation counter
 			++generation;
@@ -170,7 +170,7 @@ public class Optimizer extends Observable implements Runnable {
 				// list
 				if (s.isOptimal()) {
 					synchronized (blackListedTriples) {
-						blackListedTriples.addAll(request.getTripleSet(s));
+						blackListedTriples.addAll(getRequest().getTripleSet(s));
 					}
 				}
 
@@ -287,5 +287,12 @@ public class Optimizer extends Observable implements Runnable {
 	 */
 	public int getGenerationsCounter() {
 		return generation;
+	}
+
+	/**
+	 * @return the request
+	 */
+	public Request getRequest() {
+		return request;
 	}
 }
