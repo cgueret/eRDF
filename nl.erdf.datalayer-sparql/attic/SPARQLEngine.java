@@ -15,9 +15,8 @@ import java.util.TimerTask;
 
 import nl.erdf.constraints.impl.StatementPatternConstraint;
 import nl.erdf.datalayer.DataLayer;
-import nl.erdf.datalayer.sparql.Directory;
-import nl.erdf.datalayer.sparql.EndPoint;
 import nl.erdf.datalayer.sparql.SPARQLDataLayer;
+import nl.erdf.model.Directory;
 import nl.erdf.model.Request;
 import nl.erdf.model.Solution;
 import nl.erdf.model.impl.StatementPatternProvider;

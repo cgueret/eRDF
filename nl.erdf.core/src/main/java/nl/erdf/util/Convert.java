@@ -4,7 +4,7 @@
 package nl.erdf.util;
 
 import nl.erdf.model.Solution;
-import nl.erdf.model.impl.Triple;
+import nl.erdf.model.Triple;
 
 import org.openrdf.model.Resource;
 import org.openrdf.model.URI;

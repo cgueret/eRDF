@@ -8,8 +8,8 @@ import nl.erdf.constraints.Reward;
 import nl.erdf.constraints.RewardsTable;
 import nl.erdf.datalayer.DataLayer;
 import nl.erdf.model.Solution;
-import nl.erdf.model.impl.Triple;
-import nl.erdf.model.impl.TripleSet;
+import nl.erdf.model.Triple;
+import nl.erdf.model.TripleSet;
 import nl.erdf.util.Convert;
 
 import org.openrdf.query.algebra.StatementPattern;
@@ -22,6 +22,16 @@ import org.openrdf.query.algebra.Var;
 public class StatementPatternConstraint implements Constraint {
 	// The graph pattern is a triple with variables in it
 	private final StatementPattern pattern;
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "StatementPatternConstraint [pattern=" + pattern + "]";
+	}
 
 	/**
 	 * @param pattern

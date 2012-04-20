@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Random;
 
 import nl.erdf.datalayer.DataLayer;
-import nl.erdf.model.impl.Triple;
+import nl.erdf.model.Triple;
 
 import org.openrdf.model.Statement;
 import org.openrdf.model.Value;

@@ -1,6 +1,6 @@
 package nl.erdf.datalayer;
 
-import nl.erdf.model.impl.Triple;
+import nl.erdf.model.Triple;
 
 import org.openrdf.model.Value;
 
