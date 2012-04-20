@@ -3,3 +3,4 @@
 .classpath
 nl.erdf.datalayer-sparql/.classpath*
 nl.erdf.core/bin/
+nl.erdf.datalayer-sparql/bin/
