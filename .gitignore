@@ -1,3 +1,5 @@
 .project
 .settings
 .classpath
+nl.erdf.datalayer-sparql/.classpath*
+nl.erdf.core/bin/
