@@ -2,6 +2,7 @@ package nl.erdf.datalayer;
 
 import nl.erdf.model.Triple;
 
+import org.openrdf.model.Statement;
 import org.openrdf.model.Value;
 
 /**
@@ -39,7 +40,7 @@ public interface DataLayer {
 	/**
 	 * @param statement
 	 */
-	public void add(Triple statement);
+	public void add(Statement statement);
 
 	/**
 	 * Clear the content of the data layer, relevant in particular if a cache is

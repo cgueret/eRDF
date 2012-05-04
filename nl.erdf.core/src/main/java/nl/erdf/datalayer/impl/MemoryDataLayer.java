@@ -144,13 +144,12 @@ public class MemoryDataLayer implements DataLayer {
 	 * 
 	 * @see nl.erdf.datalayer.DataLayer#add(nl.erdf.model.impl.Triple)
 	 */
-	public void add(Triple t) {
-		assert (t.getNumberNulls() == 0);
+	public void add(Statement statement) {
 
 		SailRepositoryConnection c = null;
 		try {
 			c = repository.getConnection();
-			c.add(t);
+			c.add(statement);
 			c.commit();
 		} catch (RepositoryException e) {
 			e.printStackTrace();

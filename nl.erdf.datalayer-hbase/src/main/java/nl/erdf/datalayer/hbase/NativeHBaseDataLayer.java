@@ -2,11 +2,10 @@ package nl.erdf.datalayer.hbase;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Random;
-import java.util.Set;
 
 import nl.erdf.datalayer.DataLayer;
+import nl.erdf.model.Triple;
 
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -17,11 +16,10 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.openrdf.model.Statement;
+import org.openrdf.model.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.hp.hpl.jena.graph.Node;
-import com.hp.hpl.jena.graph.Triple;
 
 /**
  * A data layer based on HBase.
@@ -39,9 +37,9 @@ import com.hp.hpl.jena.graph.Triple;
  * @author spyros
  * 
  */
-public class HBaseDataLayer implements DataLayer {
+public class NativeHBaseDataLayer implements DataLayer {
 	// Logger
-	protected static Logger logger = LoggerFactory.getLogger(HBaseDataLayer.class);
+	protected static Logger logger = LoggerFactory.getLogger(NativeHBaseDataLayer.class);
 
 	// Prefixes
 	private static final byte[] COLUMN = "a".getBytes();
@@ -72,9 +70,9 @@ public class HBaseDataLayer implements DataLayer {
 	/**
 	 * @throws IOException
 	 */
-	public HBaseDataLayer() throws IOException {
+	public NativeHBaseDataLayer() throws IOException {
 		// Get configuration from the path
-		admin = new HBaseAdmin(new HBaseConfiguration());
+		admin = new HBaseAdmin(HBaseConfiguration.create());
 
 		initialiseTables();
 	}
@@ -145,11 +143,11 @@ public class HBaseDataLayer implements DataLayer {
 	 */
 	private HTable getCountTable(Triple queryPattern) {
 		HTable t;
-		if (queryPattern.getSubject().equals(Node.ANY)) {
+		if (queryPattern.getSubject() == null) {
 			t = po_counts;
-		} else if (queryPattern.getPredicate().equals(Node.ANY)) {
+		} else if (queryPattern.getPredicate() == null) {
 			t = so_counts;
-		} else if (queryPattern.getObject().equals(Node.ANY)) {
+		} else if (queryPattern.getObject() == null) {
 			t = sp_counts;
 		} else
 			throw new IllegalArgumentException("Query pattern must have at least one wildcard");
@@ -163,11 +161,11 @@ public class HBaseDataLayer implements DataLayer {
 	 */
 	private HTable getDataTable(Triple queryPattern) {
 		HTable t;
-		if (queryPattern.getSubject().equals(Node.ANY)) {
+		if (queryPattern.getSubject() == null) {
 			t = po_data;
-		} else if (queryPattern.getPredicate().equals(Node.ANY)) {
+		} else if (queryPattern.getPredicate() == null) {
 			t = so_data;
-		} else if (queryPattern.getObject().equals(Node.ANY)) {
+		} else if (queryPattern.getObject() == null) {
 			t = sp_data;
 		} else
 			throw new IllegalArgumentException("Query pattern must have at least one wildcard");
@@ -199,49 +197,6 @@ public class HBaseDataLayer implements DataLayer {
 			logger.error("Could not get counts", e);
 			return -1;
 		}
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * nl.erdf.datalayer.DataLayer#getResources(com.hp.hpl.jena.graph.Triple)
-	 */
-	public Set<Node> getResources(Triple pattern) {
-		Set<Node> nodes = new HashSet<Node>();
-
-		// FIXME: currently only returns one resource at random
-		try {
-			byte[] query = queryPatternToByteArray(pattern);
-
-			long numberOfResources = getNumberOfResources(pattern);
-			if (numberOfResources == 0)
-				return null; // Nothing matches this pattern
-			// FIXME: optimize: reuse computation
-			long index = random.nextInt((int) numberOfResources);
-
-			byte[] queryWithRandom = new byte[query.length + 8];
-			System.arraycopy(query, 0, queryWithRandom, 0, query.length);
-			Bytes.putLong(queryWithRandom, query.length, index);
-
-			Get g = new Get(queryWithRandom);
-
-			HTable t = getDataTable(pattern);
-
-			Result r = t.get(g);
-			byte[] c = r.getValue(COLUMN, RESOURCE_QUALIFIER);
-
-			if (logger.isDebugEnabled())
-				logger.debug("Getting " + Arrays.toString(queryWithRandom) + " from table "
-						+ t.getTableDescriptor().getNameAsString() + " -> " + (c == null ? "null" : Arrays.toString(c)));
-
-			if (c != null)
-				nodes.add(NodeSerializer.fromBytes(c));
-		} catch (IOException e) {
-			logger.error("Could not perform scan", e);
-		}
-
-		return nodes;
 	}
 
 	/**
@@ -314,36 +269,6 @@ public class HBaseDataLayer implements DataLayer {
 		data_table.put(put);
 	}
 
-	/**
-	 * @param sub
-	 * @param pred
-	 * @param obj
-	 */
-	public void insert(Node sub, Node pred, Node obj) {
-		try {
-			if (logger.isDebugEnabled())
-				logger.debug("Inserting: " + sub + " " + pred + " " + obj);
-
-			// FIXME: Can be made more compact by using resourcesToBytes
-			byte[] s = NodeSerializer.toBytes(sub);
-			byte[] p = NodeSerializer.toBytes(pred);
-			byte[] o = NodeSerializer.toBytes(obj);
-
-			byte[] sp = concat(s, p);
-			byte[] po = concat(p, o);
-			byte[] so = concat(s, o);
-			byte[] spo = concat(s, concat(p, o));
-
-			insert(sp, sp_data, sp_counts, o);
-			insert(po, po_data, po_counts, s);
-			insert(so, so_data, so_counts, p);
-			insert(spo, spo_data);
-
-		} catch (IOException e) {
-			logger.error("Could not insert triple", e);
-		}
-	}
-
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -370,11 +295,11 @@ public class HBaseDataLayer implements DataLayer {
 	 * @return
 	 */
 	protected byte[] queryPatternToByteArray(Triple pattern) {
-		if (pattern.getSubject().equals(Node.ANY))
+		if (pattern.getSubject() == null)
 			return resourcesToBytes(pattern.getPredicate(), pattern.getObject());
-		else if (pattern.getPredicate().equals(Node.ANY))
+		else if (pattern.getPredicate() == null)
 			return resourcesToBytes(pattern.getSubject(), pattern.getObject());
-		else if (pattern.getObject().equals(Node.ANY))
+		else if (pattern.getObject() == null)
 			return resourcesToBytes(pattern.getSubject(), pattern.getPredicate());
 		else
 			throw new IllegalArgumentException("Query pattern has no wildcards: " + pattern);
@@ -384,7 +309,7 @@ public class HBaseDataLayer implements DataLayer {
 	 * @param r
 	 * @return
 	 */
-	private byte[] resourcesToBytes(Node... r) {
+	private byte[] resourcesToBytes(Value... r) {
 		byte[][] ba = new byte[r.length][];
 		int count = 0;
 
@@ -435,6 +360,76 @@ public class HBaseDataLayer implements DataLayer {
 			Thread.sleep(10);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see nl.erdf.datalayer.DataLayer#getResource(nl.erdf.model.Triple)
+	 */
+	public Value getResource(Triple pattern) {
+		try {
+			byte[] query = queryPatternToByteArray(pattern);
+
+			long numberOfResources = getNumberOfResources(pattern);
+			if (numberOfResources == 0)
+				return null; // Nothing matches this pattern
+
+			// FIXME: optimize: reuse computation
+			long index = random.nextInt((int) numberOfResources);
+
+			byte[] queryWithRandom = new byte[query.length + 8];
+			System.arraycopy(query, 0, queryWithRandom, 0, query.length);
+			Bytes.putLong(queryWithRandom, query.length, index);
+
+			Get g = new Get(queryWithRandom);
+
+			HTable t = getDataTable(pattern);
+
+			Result r = t.get(g);
+			byte[] c = r.getValue(COLUMN, RESOURCE_QUALIFIER);
+
+			if (logger.isDebugEnabled())
+				logger.debug("Getting " + Arrays.toString(queryWithRandom) + " from table "
+						+ t.getTableDescriptor().getNameAsString() + " -> " + (c == null ? "null" : Arrays.toString(c)));
+
+			if (c != null)
+				return NodeSerializer.fromBytes(c);
+		} catch (IOException e) {
+			logger.error("Could not perform scan", e);
+		}
+
+		return null;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see nl.erdf.datalayer.DataLayer#add(nl.erdf.model.Triple)
+	 */
+	public void add(Statement statement) {
+		try {
+			if (logger.isDebugEnabled())
+				logger.debug("Inserting: " + statement);
+
+			// FIXME: Can be made more compact by using resourcesToBytes
+			byte[] s = NodeSerializer.toBytes(statement.getSubject());
+			byte[] p = NodeSerializer.toBytes(statement.getPredicate());
+			byte[] o = NodeSerializer.toBytes(statement.getObject());
+
+			byte[] sp = concat(s, p);
+			byte[] po = concat(p, o);
+			byte[] so = concat(s, o);
+			byte[] spo = concat(s, concat(p, o));
+
+			insert(sp, sp_data, sp_counts, o);
+			insert(po, po_data, po_counts, s);
+			insert(so, so_data, so_counts, p);
+			insert(spo, spo_data);
+
+		} catch (IOException e) {
+			logger.error("Could not insert triple", e);
 		}
 	}
 }
