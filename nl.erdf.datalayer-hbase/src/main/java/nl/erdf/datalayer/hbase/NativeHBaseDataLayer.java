@@ -83,25 +83,21 @@ public class NativeHBaseDataLayer implements DataLayer {
 	 * @see nl.erdf.datalayer.DataLayer#clear()
 	 */
 	public void clear() {
-		logger.info("Clearing tables");
-		shutdown();
-		try {
-			disableAndDeleteTable(sp_data);
-			disableAndDeleteTable(po_data);
-			disableAndDeleteTable(so_data);
-
-			disableAndDeleteTable(sp_counts);
-			disableAndDeleteTable(po_counts);
-			disableAndDeleteTable(so_counts);
-
-			disableAndDeleteTable(spo_data);
-
-			initialiseTables();
-
-		} catch (IOException e) {
-			logger.error("Could not clear tables", e);
-		}
-		logger.info("Tables cleared");
+		/*
+		 * logger.info("Clearing tables"); shutdown(); try {
+		 * disableAndDeleteTable(sp_data); disableAndDeleteTable(po_data);
+		 * disableAndDeleteTable(so_data);
+		 * 
+		 * disableAndDeleteTable(sp_counts); disableAndDeleteTable(po_counts);
+		 * disableAndDeleteTable(so_counts);
+		 * 
+		 * disableAndDeleteTable(spo_data);
+		 * 
+		 * initialiseTables();
+		 * 
+		 * } catch (IOException e) { logger.error("Could not clear tables", e);
+		 * } logger.info("Tables cleared");
+		 */
 	}
 
 	/**
@@ -131,7 +127,7 @@ public class NativeHBaseDataLayer implements DataLayer {
 	 * @param table
 	 * @throws IOException
 	 */
-	private void disableAndDeleteTable(HTable table) throws IOException {
+	protected void disableAndDeleteTable(HTable table) throws IOException {
 		admin.disableTable(table.getTableName());
 		admin.deleteTable(table.getTableName());
 	}

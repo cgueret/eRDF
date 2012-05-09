@@ -5,26 +5,22 @@ package nl.erdf.datalayer.hbase;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
 
 import nl.erdf.datalayer.DataLayer;
 import nl.erdf.model.Triple;
 import nl.vu.datalayer.hbase.schema.HBHexastoreSchema;
 
-import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.io.TimeRange;
+import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.rest.client.Client;
 import org.apache.hadoop.hbase.rest.client.Cluster;
 import org.apache.hadoop.hbase.rest.client.RemoteHTable;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.log4j.Logger;
 import org.openrdf.model.Statement;
 import org.openrdf.model.Value;
 import org.openrdf.model.impl.URIImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Christophe Guéret <christophe.gueret@gmail.com>
@@ -34,7 +30,7 @@ public class RestHBaseDataLayer implements DataLayer {
 	private final Client client;
 	private final ArrayList<ArrayList<Integer>> keyPositions = new ArrayList<ArrayList<Integer>>();
 	private final ArrayList<ArrayList<Integer>> valuePositions = new ArrayList<ArrayList<Integer>>();
-	private static Logger logger = Logger.getLogger("HexastoreLogger");
+	private static Logger logger = LoggerFactory.getLogger("HexastoreLogger");
 
 	/**
 	 * 
@@ -133,11 +129,8 @@ public class RestHBaseDataLayer implements DataLayer {
 		System.out.println(Bytes.toStringBinary(key));
 		Get get = new Get(key);
 		RemoteHTable table = new RemoteHTable(client, getTable(triple));
-		TimeRange range = get.getTimeRange();
-		String spec = buildRowSpec(table.getTableName(), get.getRow(), get.getFamilyMap(), range.getMin(),
-				range.getMax(), get.getMaxVersions());
-		System.out.println(spec);
-		// Result r = table.get(get);
+		Result r = table.get(get);
+		System.out.println(r);
 		// byte[] value = r.getValue(HBHexastoreSchema.COLUMN_FAMILY.getBytes(),
 		// HBHexastoreSchema.COLUMN_NAME.getBytes());
 		// if (value != null)
@@ -145,68 +138,6 @@ public class RestHBaseDataLayer implements DataLayer {
 		// else
 		return null;
 
-	}
-
-	@SuppressWarnings("unchecked")
-	protected String buildRowSpec(final byte[] name, final byte[] row, final Map familyMap, final long startTime,
-			final long endTime, final int maxVersions) {
-		StringBuffer sb = new StringBuffer();
-		sb.append('/');
-		sb.append(Bytes.toStringBinary(name));
-		sb.append('/');
-		sb.append(Bytes.toStringBinary(row));
-		Set families = familyMap.entrySet();
-		if (families != null) {
-			Iterator i = familyMap.entrySet().iterator();
-			if (i.hasNext()) {
-				sb.append('/');
-			}
-			while (i.hasNext()) {
-				Map.Entry e = (Map.Entry) i.next();
-				Collection quals = (Collection) e.getValue();
-				if (quals != null && !quals.isEmpty()) {
-					Iterator ii = quals.iterator();
-					while (ii.hasNext()) {
-						sb.append(Bytes.toStringBinary((byte[]) e.getKey()));
-						sb.append(':');
-						Object o = ii.next();
-						// Puts use byte[] but Deletes use KeyValue
-						if (o instanceof byte[]) {
-							sb.append(Bytes.toStringBinary((byte[]) o));
-						} else if (o instanceof KeyValue) {
-							sb.append(Bytes.toStringBinary(((KeyValue) o).getQualifier()));
-						} else {
-							throw new RuntimeException("object type not handled");
-						}
-						if (ii.hasNext()) {
-							sb.append(',');
-						}
-					}
-				} else {
-					sb.append(Bytes.toStringBinary((byte[]) e.getKey()));
-					sb.append(':');
-				}
-				if (i.hasNext()) {
-					sb.append(',');
-				}
-			}
-		}
-		if (startTime != 0 && endTime != Long.MAX_VALUE) {
-			sb.append('/');
-			sb.append(startTime);
-			if (startTime != endTime) {
-				sb.append(',');
-				sb.append(endTime);
-			}
-		} else if (endTime != Long.MAX_VALUE) {
-			sb.append('/');
-			sb.append(endTime);
-		}
-		if (maxVersions > 1) {
-			sb.append("?v=");
-			sb.append(maxVersions);
-		}
-		return sb.toString();
 	}
 
 	/**

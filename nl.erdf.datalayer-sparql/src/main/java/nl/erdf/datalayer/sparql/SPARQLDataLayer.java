@@ -15,6 +15,7 @@ import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
+import org.openrdf.model.Statement;
 import org.openrdf.model.Value;
 import org.openrdf.query.algebra.StatementPattern;
 import org.openrdf.query.algebra.Var;
@@ -289,9 +290,9 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see nl.erdf.datalayer.DataLayer#add(nl.erdf.model.impl.Triple)
+	 * @see nl.erdf.datalayer.DataLayer#add(org.openrdf.model.Statement)
 	 */
-	public void add(nl.erdf.model.Triple statement) {
-		// SPARQL data layer is read only
+	public void add(Statement statement) {
+		// Read only
 	}
 }
