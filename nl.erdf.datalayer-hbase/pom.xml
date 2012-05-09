@@ -25,7 +25,7 @@
 		<dependency>
 			<groupId>org.apache.hbase</groupId>
 			<artifactId>hbase</artifactId>
-			<version>0.92.1</version>
+			<version>[0.90.0, )</version>
 			<exclusions>
 				<exclusion>
 					<groupId>org.slf4j</groupId>
@@ -41,7 +41,7 @@
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-core</artifactId>
-			<version>1.0.2</version>
+			<version>[1.0, )</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>jetty</artifactId>
