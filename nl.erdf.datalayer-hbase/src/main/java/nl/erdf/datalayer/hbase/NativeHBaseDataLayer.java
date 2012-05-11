@@ -101,18 +101,6 @@ public class NativeHBaseDataLayer implements DataLayer {
 	}
 
 	/**
-	 * @param a
-	 * @param b
-	 * @return
-	 */
-	private byte[] concat(byte[] a, byte[] b) {
-		byte[] ret = new byte[a.length + b.length];
-		System.arraycopy(a, 0, ret, 0, a.length);
-		System.arraycopy(b, 0, ret, a.length, b.length);
-		return ret;
-	}
-
-	/**
 	 * @param tableName
 	 * @throws IOException
 	 */
@@ -130,6 +118,18 @@ public class NativeHBaseDataLayer implements DataLayer {
 	protected void disableAndDeleteTable(HTable table) throws IOException {
 		admin.disableTable(table.getTableName());
 		admin.deleteTable(table.getTableName());
+	}
+
+	/**
+	 * @param a
+	 * @param b
+	 * @return
+	 */
+	private byte[] concat(byte[] a, byte[] b) {
+		byte[] ret = new byte[a.length + b.length];
+		System.arraycopy(a, 0, ret, 0, a.length);
+		System.arraycopy(b, 0, ret, a.length, b.length);
+		return ret;
 	}
 
 	/**
@@ -168,31 +168,26 @@ public class NativeHBaseDataLayer implements DataLayer {
 		return t;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * nl.erdf.datalayer.DataLayer#getNumberOfResources(com.hp.hpl.jena.graph
-	 * .Triple)
+	/**
+	 * @param r
+	 * @return
 	 */
-	public long getNumberOfResources(Triple queryPattern) {
-		HTable t = getCountTable(queryPattern);
+	private byte[] resourcesToBytes(Value... r) {
+		byte[][] ba = new byte[r.length][];
+		int count = 0;
 
-		Get g = new Get(queryPatternToByteArray(queryPattern));
-		try {
-			Result r = t.get(g);
-			byte[] c = r.getValue(COLUMN, COUNT_QUALIFIER);
-			if (c == null)
-				return 0;
-			else {
-				long ret = Bytes.toLong(c);
-				assert ret > 0 : ret;
-				return ret;
-			}
-		} catch (IOException e) {
-			logger.error("Could not get counts", e);
-			return -1;
+		for (int i = 0; i < ba.length; i++) {
+			ba[i] = NodeSerializer.toBytes(r[i]);
+			count += ba[i].length;
 		}
+
+		byte[] ret = new byte[count];
+		count = 0;
+		for (int i = 0; i < ba.length; i++) {
+			System.arraycopy(ba[i], 0, ret, count, ba[i].length);
+			count += ba[i].length;
+		}
+		return ret;
 	}
 
 	/**
@@ -265,24 +260,6 @@ public class NativeHBaseDataLayer implements DataLayer {
 		data_table.put(put);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see nl.erdf.datalayer.DataLayer#isValid(com.hp.hpl.jena.graph.Triple)
-	 */
-	public boolean isValid(Triple triple) {
-		try {
-			Get g = new Get(resourcesToBytes(triple.getSubject(), triple.getPredicate(), triple.getObject()));
-			Result res = spo_data.get(g); // FIXME: make sure that an empty byte
-											// array is a good value
-
-			return !res.isEmpty();
-		} catch (IOException e) {
-			logger.error("Could not check existence for " + triple, e);
-			return false;
-		}
-	}
-
 	/**
 	 * Converts a query pattern to a byte array. FIXME: optimise: reduce object
 	 * allocations
@@ -301,26 +278,54 @@ public class NativeHBaseDataLayer implements DataLayer {
 			throw new IllegalArgumentException("Query pattern has no wildcards: " + pattern);
 	}
 
-	/**
-	 * @param r
-	 * @return
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * nl.erdf.datalayer.DataLayer#getNumberOfResources(com.hp.hpl.jena.graph
+	 * .Triple)
 	 */
-	private byte[] resourcesToBytes(Value... r) {
-		byte[][] ba = new byte[r.length][];
-		int count = 0;
+	public long getNumberOfResources(Triple queryPattern) {
+		HTable t = getCountTable(queryPattern);
 
-		for (int i = 0; i < ba.length; i++) {
-			ba[i] = NodeSerializer.toBytes(r[i]);
-			count += ba[i].length;
+		Get g = new Get(queryPatternToByteArray(queryPattern));
+		try {
+			Result r = t.get(g);
+			byte[] c = r.getValue(COLUMN, COUNT_QUALIFIER);
+			if (c == null)
+				return 0;
+			else {
+				long ret = Bytes.toLong(c);
+				assert ret > 0 : ret;
+				return ret;
+			}
+		} catch (IOException e) {
+			logger.error("Could not get counts", e);
+			return -1;
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see nl.erdf.datalayer.DataLayer#isValid(com.hp.hpl.jena.graph.Triple)
+	 */
+	public boolean isValid(Triple triple) {
+		try {
+			if (triple.getNumberNulls() == 0) {
+				Get g = new Get(resourcesToBytes(triple.getSubject(), triple.getPredicate(), triple.getObject()));
+				Result res = spo_data.get(g);
+				return !res.isEmpty();
+			} else if (triple.getNumberNulls() == 1) {
+				return (getResource(triple) != null);
+			}
+		} catch (IOException e) {
+			logger.error("Could not check existence for " + triple, e);
+			return false;
 		}
 
-		byte[] ret = new byte[count];
-		count = 0;
-		for (int i = 0; i < ba.length; i++) {
-			System.arraycopy(ba[i], 0, ret, count, ba[i].length);
-			count += ba[i].length;
-		}
-		return ret;
+		// In doubt, say the triple is not valid
+		return false;
 	}
 
 	/*
