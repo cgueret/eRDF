@@ -61,9 +61,8 @@ public class Evaluate {
 		if (executor == null) {
 
 			// No executor, sequential code
-			for (final Solution solution : population) {
-				solution.setFitness(evaluate(solution));
-			}
+			for (final Solution solution : population)
+				evaluate(solution);
 
 		} else {
 
@@ -72,7 +71,7 @@ public class Evaluate {
 			for (final Solution solution : population) {
 				Future<?> job = executor.submit(new Runnable() {
 					public void run() {
-						solution.setFitness(evaluate(solution));
+						evaluate(solution);
 					}
 				});
 				list.add(job);
@@ -97,9 +96,8 @@ public class Evaluate {
 	 * individual rewards each binding received.
 	 * 
 	 * @param solution
-	 * @return the fitness value of that candidate solution
 	 */
-	public double evaluate(Solution solution) {
+	public void evaluate(Solution solution) {
 		// Reset the rewards of that solution
 		solution.resetScores();
 
@@ -115,7 +113,7 @@ public class Evaluate {
 			}
 		}
 
-		// Return the fitness value
-		return solution.getTotalReward() / request.getMaximumReward();
+		// Set the fitness of the solution
+		solution.setFitness(solution.getTotalReward() / request.getMaximumReward());
 	}
 }

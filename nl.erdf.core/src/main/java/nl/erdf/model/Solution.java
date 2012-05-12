@@ -7,6 +7,8 @@ import java.util.Map;
 import nl.erdf.util.Format;
 
 import org.openrdf.model.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A solution to a request is a set of bindings
@@ -15,6 +17,9 @@ import org.openrdf.model.Value;
  * 
  */
 public class Solution implements Comparable<Solution> {
+	/** Logger */
+	protected final Logger logger = LoggerFactory.getLogger(Solution.class);
+
 	// The age of that solution
 	private int age = 0;
 
@@ -81,10 +86,6 @@ public class Solution implements Comparable<Solution> {
 			return false;
 		Solution other = (Solution) obj;
 
-		// Compare the set of variables
-		if (!this.variables.keySet().equals(other.variables.keySet()))
-			return false;
-
 		// Compare the assignments
 		for (String var : variables.keySet()) {
 			if (this.getValue(var) == null && other.getValue(var) != null)
@@ -122,6 +123,8 @@ public class Solution implements Comparable<Solution> {
 	 * @return the value bound to the variable
 	 */
 	public Value getValue(String variableName) {
+		if (!variables.containsKey(variableName))
+			return null;
 		return variables.get(variableName).getValue();
 	}
 
@@ -130,6 +133,8 @@ public class Solution implements Comparable<Solution> {
 	 * @return the variable
 	 */
 	public Variable getVariable(String variableName) {
+		if (!variables.containsKey(variableName))
+			return null;
 		return variables.get(variableName);
 	}
 
@@ -139,6 +144,7 @@ public class Solution implements Comparable<Solution> {
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
+	// FIXME BROKEN! Two identical solutions must have the same hashcode
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
@@ -185,10 +191,12 @@ public class Solution implements Comparable<Solution> {
 	public String toString() {
 		StringBuffer buffer = new StringBuffer();
 		buffer.append(Format.format.format(getFitness())).append(" ").append(" [");
-		for (Variable variable : this.variables.values())
-			buffer.append(variable.getName()).append("=").append(variable.getValue()).append(",");
+		for (Variable variable : this.variables.values()) {
+			buffer.append(variable.getName()).append("=").append(variable.getValue()).append(" (");
+			buffer.append(Format.format.format(variable.getReward())).append("),");
+		}
 		buffer.setCharAt(buffer.length() - 1, ']');
-		return buffer.append(" age=").append(getAge()).toString();
+		return buffer.append(" age=").append(getAge()).append(" " + this.hashCode()).toString();
 	}
 
 	/**

@@ -68,8 +68,12 @@ public class Generate {
 
 			// Build a roulette with the reward of all the variables
 			Roulette roulette = new Roulette();
-			for (Variable variable : child.getVariables())
-				roulette.add(variable, 1.0 / (1.0 + variable.getReward()));
+			for (Variable variable : child.getVariables()) {
+				double p = 1.0 / (1.0 + variable.getReward());
+				// if (variable.getValue() == null)
+				p = 1.0;
+				roulette.add(variable, p);
+			}
 
 			// Get a variable to change at random
 			roulette.prepare();
@@ -84,7 +88,8 @@ public class Generate {
 			child.getVariable(variable.getName()).setValue(v);
 
 			// FIXME check if the equals for Solution is accurate
-			target.add(child);
+			if (!target.contains(child))
+				target.add(child);
 		}
 	}
 
@@ -115,7 +120,8 @@ public class Generate {
 
 				}
 
-				target.add(child);
+				if (!target.contains(child))
+					target.add(child);
 			}
 		}
 	}

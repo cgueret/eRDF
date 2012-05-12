@@ -15,6 +15,16 @@ import java.util.Set;
 public class RewardsTable {
 	private final Map<String, Double> rewards = new HashMap<String, Double>();
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "RewardsTable [rewards=" + rewards + "]";
+	}
+
 	/**
 	 * @return the rewards
 	 */

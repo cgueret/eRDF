@@ -403,9 +403,12 @@ public class NativeHBaseDataLayer implements DataLayer {
 			Result r = t.get(g);
 			byte[] c = r.getValue(COLUMN, RESOURCE_QUALIFIER);
 
-			if (logger.isDebugEnabled())
-				logger.debug("Getting " + Arrays.toString(queryWithRandom) + " from table "
-						+ t.getTableDescriptor().getNameAsString() + " -> " + (c == null ? "null" : Arrays.toString(c)));
+			/*
+			 * if (logger.isDebugEnabled()) logger.debug("Getting " +
+			 * Arrays.toString(queryWithRandom) + " from table " +
+			 * t.getTableDescriptor().getNameAsString() + " -> " + (c == null ?
+			 * "null" : Arrays.toString(c)));
+			 */
 
 			if (c != null)
 				return NodeSerializer.fromBytes(c);

@@ -88,15 +88,13 @@ public class StatementPatternConstraint implements Constraint {
 		// Instantiate the pattern with the solution
 		Triple t = Convert.toTriple(pattern, solution);
 
-		// Every pattern has at most one variable, if that variable is not
-		// instantiated
-		// we return no rewards (an empty table)
-		if (t.getNumberNulls() != 0)
+		// We can not reward triples with more than one null
+		if (t.getNumberNulls() > 1)
 			return rewards;
 
 		// Check if it is a black listed triple
-		if (blackList != null && blackList.contains(t)) {
-			// Assign the min reward to all the variables
+		if (t.getNumberNulls() == 0 && blackList != null && blackList.contains(t)) {
+			// Assign the minimal reward to all the variables
 			for (String variable : getVariables())
 				rewards.set(variable, Reward.LOW);
 			return rewards;
@@ -104,33 +102,55 @@ public class StatementPatternConstraint implements Constraint {
 
 		// Check if the triple is valid
 		if (dataLayer.isValid(t)) {
-			// Assign the max reward to all the variables
-			for (String variable : getVariables())
-				rewards.set(variable, Reward.HIGH);
-			return rewards;
+			// It was a fully instanciated triple
+			if (t.getNumberNulls() == 0) {
+				// Assign the maximum reward to all the variables
+				for (String variable : getVariables())
+					rewards.set(variable, Reward.HIGH);
+				return rewards;
+			}
+
+			// There was a null in it
+			if (t.getNumberNulls() == 1) {
+				if (!pattern.getSubjectVar().hasValue())
+					if (solution.getVariable(pattern.getSubjectVar().getName()).getValue() != null)
+						rewards.set(pattern.getSubjectVar().getName(), Reward.MEDIUM);
+				if (!pattern.getPredicateVar().hasValue())
+					if (solution.getVariable(pattern.getPredicateVar().getName()).getValue() != null)
+						rewards.set(pattern.getPredicateVar().getName(), Reward.MEDIUM);
+				if (!pattern.getObjectVar().hasValue())
+					if (solution.getVariable(pattern.getObjectVar().getName()).getValue() != null)
+						rewards.set(pattern.getObjectVar().getName(), Reward.MEDIUM);
+				return rewards;
+			}
 		}
 
-		// Ok, that triple is wrong. Let's try to see if it is at least
-		// partially valid
-		if (dataLayer.isValid(new Triple(t.getSubject(), t.getPredicate(), null))) {
+		// If we arrive here, that triple is wrong or has a null in it.
+		if (t.getNumberNulls() == 0 && dataLayer.isValid(new Triple(t.getSubject(), t.getPredicate(), null))) {
 			if (!pattern.getSubjectVar().hasValue())
-				rewards.set(pattern.getSubjectVar().getName(), Reward.MEDIUM);
+				if (solution.getVariable(pattern.getSubjectVar().getName()).getValue() != null)
+					rewards.set(pattern.getSubjectVar().getName(), Reward.MEDIUM);
 			if (!pattern.getPredicateVar().hasValue())
-				rewards.set(pattern.getPredicateVar().getName(), Reward.MEDIUM);
+				if (solution.getVariable(pattern.getPredicateVar().getName()).getValue() != null)
+					rewards.set(pattern.getPredicateVar().getName(), Reward.MEDIUM);
 			return rewards;
 		}
-		if (dataLayer.isValid(new Triple(null, t.getPredicate(), t.getObject()))) {
+		if (t.getNumberNulls() == 0 && dataLayer.isValid(new Triple(null, t.getPredicate(), t.getObject()))) {
 			if (!pattern.getPredicateVar().hasValue())
-				rewards.set(pattern.getPredicateVar().getName(), Reward.MEDIUM);
+				if (solution.getVariable(pattern.getPredicateVar().getName()).getValue() != null)
+					rewards.set(pattern.getPredicateVar().getName(), Reward.MEDIUM);
 			if (!pattern.getObjectVar().hasValue())
-				rewards.set(pattern.getObjectVar().getName(), Reward.MEDIUM);
+				if (solution.getVariable(pattern.getObjectVar().getName()).getValue() != null)
+					rewards.set(pattern.getObjectVar().getName(), Reward.MEDIUM);
 			return rewards;
 		}
-		if (dataLayer.isValid(new Triple(t.getSubject(), null, t.getObject()))) {
+		if (t.getNumberNulls() == 0 && dataLayer.isValid(new Triple(t.getSubject(), null, t.getObject()))) {
 			if (!pattern.getSubjectVar().hasValue())
-				rewards.set(pattern.getSubjectVar().getName(), Reward.MEDIUM);
+				if (solution.getVariable(pattern.getSubjectVar().getName()).getValue() != null)
+					rewards.set(pattern.getSubjectVar().getName(), Reward.MEDIUM);
 			if (!pattern.getObjectVar().hasValue())
-				rewards.set(pattern.getObjectVar().getName(), Reward.MEDIUM);
+				if (solution.getVariable(pattern.getObjectVar().getName()).getValue() != null)
+					rewards.set(pattern.getObjectVar().getName(), Reward.MEDIUM);
 			return rewards;
 		}
 

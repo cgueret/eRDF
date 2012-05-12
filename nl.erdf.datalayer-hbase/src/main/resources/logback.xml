@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+	<!-- Uncomment if you are using the logback plugin for eclipse <consolePlugin/> -->
+	<appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%d{HH:mm:ss.SSS} [%p] %c - %m%n</pattern>
+		</encoder>
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>INFO</level>
+		</filter>
+	</appender>
+	<root level="INFO">
+		<appender-ref ref="CONSOLE" />
+	</root>
+	<logger name="org.apache.zookeeper" level="WARN" />
+	<logger name="org.apache.hadoop.hbase.zookeeper" level="WARN" />
+</configuration>
