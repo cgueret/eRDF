@@ -60,5 +60,9 @@ public class DBpediaTests {
 		Assert.assertTrue(dl.isValid(new Triple(s, p, null)));
 		Assert.assertTrue(dl.isValid(new Triple(s, null, o)));
 		Assert.assertTrue(dl.isValid(new Triple(null, p, o)));
+
+		URI p2 = f.createURI("http://dbpedia.org/ontology/birthName");
+		Value o2 = f.createURI("http://dbpedia.org/resource/Kingdom_of_the_Netherlands");
+		Assert.assertFalse(dl.isValid(new Triple(null, p2, o2)));
 	}
 }

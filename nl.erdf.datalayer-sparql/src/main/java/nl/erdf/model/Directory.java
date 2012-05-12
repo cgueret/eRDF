@@ -63,6 +63,8 @@ public class Directory extends ArrayList<EndPoint> {
 					directory.add(new EndPoint(endpoint, defaultGraph, EndPointType.VIRTUOSO));
 				else if (lang.equals("owlim"))
 					directory.add(new EndPoint(endpoint, defaultGraph, EndPointType.OWLIM));
+				else if (lang.equals("hbase"))
+					directory.add(new EndPoint(endpoint, defaultGraph, EndPointType.HBASE));
 				else
 					throw new Exception("Unknown language");
 			}

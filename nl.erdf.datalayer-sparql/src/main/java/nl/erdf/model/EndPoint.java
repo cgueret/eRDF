@@ -8,7 +8,7 @@ import java.net.URI;
  */
 public class EndPoint {
 	public enum EndPointType {
-		OWLIM, VIRTUOSO, UNKNOWN
+		OWLIM, VIRTUOSO, HBASE, UNKNOWN
 	}
 
 	private final String defaultGraph;

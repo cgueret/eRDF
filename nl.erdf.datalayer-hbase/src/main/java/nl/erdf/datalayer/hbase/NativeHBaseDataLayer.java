@@ -10,6 +10,8 @@ import nl.erdf.model.Triple;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.MasterNotRunningException;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
@@ -70,11 +72,18 @@ public class NativeHBaseDataLayer implements DataLayer {
 	/**
 	 * @throws IOException
 	 */
-	public NativeHBaseDataLayer() throws IOException {
+	public NativeHBaseDataLayer() {
 		// Get configuration from the path
-		admin = new HBaseAdmin(HBaseConfiguration.create());
-
-		initialiseTables();
+		try {
+			admin = new HBaseAdmin(HBaseConfiguration.create());
+			initialiseTables();
+		} catch (MasterNotRunningException e) {
+			e.printStackTrace();
+		} catch (ZooKeeperConnectionException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/*
@@ -116,8 +125,8 @@ public class NativeHBaseDataLayer implements DataLayer {
 	 * @throws IOException
 	 */
 	protected void disableAndDeleteTable(HTable table) throws IOException {
-		admin.disableTable(table.getTableName());
-		admin.deleteTable(table.getTableName());
+		// admin.disableTable(table.getTableName());
+		// admin.deleteTable(table.getTableName());
 	}
 
 	/**
@@ -370,6 +379,9 @@ public class NativeHBaseDataLayer implements DataLayer {
 	 * @see nl.erdf.datalayer.DataLayer#getResource(nl.erdf.model.Triple)
 	 */
 	public Value getResource(Triple pattern) {
+		if (pattern.getNumberNulls() != 1)
+			return null;
+
 		try {
 			byte[] query = queryPatternToByteArray(pattern);
 
