@@ -1,8 +1,8 @@
 package nl.erdf.model;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import nl.erdf.util.Format;
 
@@ -29,8 +29,8 @@ public class Solution implements Comparable<Solution> {
 	// Is that an optimal solution?
 	private boolean isOptimal = false;
 
-	// Index the variables by name
-	private final Map<String, Variable> variables = new HashMap<String, Variable>();
+	// Index the variables by name (sorted tree is important for the hash code)
+	private final Map<String, Variable> variables = new TreeMap<String, Variable>();
 
 	/**
 	 * @param variable
@@ -144,11 +144,11 @@ public class Solution implements Comparable<Solution> {
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
-	// FIXME BROKEN! Two identical solutions must have the same hashcode
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((variables == null) ? 0 : variables.hashCode());
+		for (Variable var : variables.values())
+			result = prime * result + ((var.getValue() == null) ? 0 : var.getValue().hashCode());
 		return result;
 	}
 
