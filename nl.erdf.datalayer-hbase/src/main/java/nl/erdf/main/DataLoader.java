@@ -66,6 +66,7 @@ public class DataLoader implements RDFHandler {
 		parser.setRDFHandler(this);
 		parser.parse(new BZip2CompressorInputStream(new FileInputStream(fileName)), "http://dbpedia.org");
 		logger.info("End");
+		datalayer.shutdown();
 	}
 
 	/*

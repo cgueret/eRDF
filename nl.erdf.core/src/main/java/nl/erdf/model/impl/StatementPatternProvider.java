@@ -78,4 +78,11 @@ public class StatementPatternProvider implements ResourceProvider {
 		return result;
 	}
 
+	/**
+	 * @return the pattern
+	 */
+	public StatementPattern getStatement() {
+		return pattern;
+	}
+
 }

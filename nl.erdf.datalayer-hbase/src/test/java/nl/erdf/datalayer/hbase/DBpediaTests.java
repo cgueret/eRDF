@@ -56,7 +56,7 @@ public class DBpediaTests {
 		URI p = RDF.TYPE;
 		Value o = f.createURI("http://dbpedia.org/ontology/PopulatedPlace");
 		Assert.assertTrue(dl.isValid(new Triple(s, p, o)));
-		System.out.println(dl.getResource(new Triple(s, p, null)));
+		System.out.println("Amsterdam is a " + dl.getResource(new Triple(s, p, null)));
 		Assert.assertTrue(dl.isValid(new Triple(s, p, null)));
 		Assert.assertTrue(dl.isValid(new Triple(s, null, o)));
 		Assert.assertTrue(dl.isValid(new Triple(null, p, o)));
@@ -64,5 +64,9 @@ public class DBpediaTests {
 		URI p2 = f.createURI("http://dbpedia.org/ontology/birthName");
 		Value o2 = f.createURI("http://dbpedia.org/resource/Kingdom_of_the_Netherlands");
 		Assert.assertFalse(dl.isValid(new Triple(null, p2, o2)));
+
+		Resource s2 = f.createURI("http://dbpedia.org/resource/Hip_Hop_Is_Dead");
+		p2 = f.createURI("http://dbpedia.org/ontology/artist");
+		System.out.println("Artist of album is " + dl.getResource(new Triple(s2, p2, null)));
 	}
 }

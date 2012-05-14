@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
  */
 public class Optimizer extends Observable implements Runnable {
 	/** Population size */
-	private static final int POPULATION_SIZE = 5;
+	private static final int POPULATION_SIZE = 10;
 
 	/** Maximum generation to wait before finding an optima */
 	private static final int MAXIMUM_GENERATION = 50;

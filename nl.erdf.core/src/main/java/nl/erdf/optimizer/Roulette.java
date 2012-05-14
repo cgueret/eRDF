@@ -105,4 +105,11 @@ public class Roulette implements Enumeration<Object> {
 
 		return content.get(0).object;
 	}
+
+	/**
+	 * @return true if the roulette is empty
+	 */
+	public boolean isEmpty() {
+		return content.isEmpty();
+	}
 }

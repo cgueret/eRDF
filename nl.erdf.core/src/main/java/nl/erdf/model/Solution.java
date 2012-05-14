@@ -196,7 +196,7 @@ public class Solution implements Comparable<Solution> {
 			buffer.append(Format.format.format(variable.getReward())).append("),");
 		}
 		buffer.setCharAt(buffer.length() - 1, ']');
-		return buffer.append(" age=").append(getAge()).append(" " + this.hashCode()).toString();
+		return buffer.append(" age=").append(getAge()).toString();
 	}
 
 	/**

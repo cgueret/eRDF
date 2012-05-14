@@ -26,4 +26,5 @@ public interface ResourceProvider {
 	 * @return the set of variables used by the provider
 	 */
 	abstract public Set<String> getVariables();
+
 }

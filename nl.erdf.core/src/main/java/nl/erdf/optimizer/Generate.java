@@ -1,17 +1,24 @@
 package nl.erdf.optimizer;
 
-import java.util.List;
-import java.util.Random;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.SortedSet;
 
+import nl.erdf.constraints.Constraint;
+import nl.erdf.constraints.impl.StatementPatternConstraint;
 import nl.erdf.datalayer.DataLayer;
 import nl.erdf.model.Request;
 import nl.erdf.model.ResourceProvider;
 import nl.erdf.model.Solution;
+import nl.erdf.model.Triple;
 import nl.erdf.model.Variable;
+import nl.erdf.model.impl.StatementPatternProvider;
+import nl.erdf.util.Convert;
 
+import org.openrdf.model.Resource;
+import org.openrdf.model.URI;
 import org.openrdf.model.Value;
+import org.openrdf.query.algebra.StatementPattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +59,7 @@ public class Generate {
 		enforce(population, target);
 
 		// Do crossover among the population
-		crossover(population, target);
+		// crossover(population, target);
 
 		logger.info("Created " + target.size() + " new individuals from " + population.size() + " parents");
 	}
@@ -63,6 +70,8 @@ public class Generate {
 	 */
 	private void enforce(SortedSet<Solution> population, Set<Solution> target) {
 		for (Solution parent : population) {
+			Set<String> changed = new HashSet<String>();
+
 			// Clone the parent
 			Solution child = parent.clone();
 
@@ -70,26 +79,98 @@ public class Generate {
 			Roulette roulette = new Roulette();
 			for (Variable variable : child.getVariables()) {
 				double p = 1.0 / (1.0 + variable.getReward());
-				// if (variable.getValue() == null)
-				p = 1.0;
-				roulette.add(variable, p);
+				roulette.add(variable.getName(), p);
 			}
 
 			// Get a variable to change at random
 			roulette.prepare();
-			Variable variable = (Variable) roulette.nextElement();
+			String variable = (String) roulette.nextElement();
 
 			// Pick one of the providers at random
-			List<ResourceProvider> providers = request.getResourceProvidersFor(variable.getName());
-			Random rand = new Random();
-			ResourceProvider p = providers.get(rand.nextInt(providers.size()));
+			Roulette roulette2 = new Roulette();
+			for (ResourceProvider provider : request.getResourceProvidersFor(variable)) {
+				if (provider instanceof StatementPatternProvider) {
+					StatementPatternProvider prov = (StatementPatternProvider) provider;
+					StatementPattern ptrn = prov.getStatement();
+					Value s = ptrn.getSubjectVar().getName().equals(variable) ? null : Convert.getValue(
+							ptrn.getSubjectVar(), child);
+					Value p = ptrn.getPredicateVar().getName().equals(variable) ? null : Convert.getValue(
+							ptrn.getPredicateVar(), child);
+					Value o = ptrn.getObjectVar().getName().equals(variable) ? null : Convert.getValue(
+							ptrn.getObjectVar(), child);
 
-			Value v = p.getResource(variable.getName(), child, dataLayer);
-			child.getVariable(variable.getName()).setValue(v);
+					Triple t = new Triple((Resource) s, (URI) p, o);
 
-			// FIXME check if the equals for Solution is accurate
+					if (t.getNumberNulls() == 1) {
+						long nb = dataLayer.getNumberOfResources(t);
+						if (nb > 0) {
+							double pp = 0.5;
+							if (dataLayer.isValid(Convert.toTriple(ptrn, child)))
+								pp *= 2;
+							// logger.info(child.hashCode() + "=>  " + variable
+							// + " " + t.toString() + " " + pp);
+							roulette2.add(provider, pp);
+						}
+					}
+				}
+
+			}
+			if (roulette2.isEmpty())
+				continue;
+
+			ResourceProvider p = (ResourceProvider) roulette2.nextElement();
+
+			// Get a new value
+			Value v = p.getResource(variable, child, dataLayer);
+			child.getVariable(variable).setValue(v);
+			logger.info("Assign " + v + " to " + variable);
+
+			// Add this variable to the changed variables
+			changed.add(variable);
+
+			// Do cascading changes
+			propagateChange(child, variable, changed);
+
+			// Add the new individual
 			if (!target.contains(child))
 				target.add(child);
+		}
+	}
+
+	/**
+	 * @param variable
+	 * @param changed
+	 */
+	private void propagateChange(Solution child, String variable, Set<String> changed) {
+		// Iterate over the constraints
+		for (Constraint cstr : request.constraints()) {
+			if (cstr instanceof StatementPatternConstraint) {
+				Set<String> vars = cstr.getVariables();
+				if (vars.remove(variable) && vars.size() == 1) {
+					String secondVariable = (String) vars.toArray()[0];
+					if (!changed.contains(secondVariable)) {
+						// Use all the providers to get a new value
+						Value v = null;
+						for (ResourceProvider provider : request.getResourceProvidersFor(secondVariable)) {
+							if (provider.getVariables().contains(variable)) {
+								// Assign a new value
+								Value v2 = provider.getResource(secondVariable, child, dataLayer);
+								if (v2 != null) {
+									logger.info(child.hashCode() + "=>  " + v2);
+									v = v2;
+								}
+							}
+						}
+						child.getVariable(secondVariable).setValue(v);
+
+						logger.info("Change " + secondVariable + "=" + v + " after " + variable);
+
+						// See what can be changed from here
+						changed.add(secondVariable);
+						propagateChange(child, secondVariable, changed);
+					}
+				}
+			}
 		}
 	}
 
