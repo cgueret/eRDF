@@ -92,21 +92,26 @@ public class NativeHBaseDataLayer implements DataLayer {
 	 * @see nl.erdf.datalayer.DataLayer#clear()
 	 */
 	public void clear() {
-		/*
-		 * logger.info("Clearing tables"); shutdown(); try {
-		 * disableAndDeleteTable(sp_data); disableAndDeleteTable(po_data);
-		 * disableAndDeleteTable(so_data);
-		 * 
-		 * disableAndDeleteTable(sp_counts); disableAndDeleteTable(po_counts);
-		 * disableAndDeleteTable(so_counts);
-		 * 
-		 * disableAndDeleteTable(spo_data);
-		 * 
-		 * initialiseTables();
-		 * 
-		 * } catch (IOException e) { logger.error("Could not clear tables", e);
-		 * } logger.info("Tables cleared");
-		 */
+
+		logger.info("Clearing tables");
+		shutdown();
+		try {
+			disableAndDeleteTable(sp_data);
+			disableAndDeleteTable(po_data);
+			disableAndDeleteTable(so_data);
+
+			disableAndDeleteTable(sp_counts);
+			disableAndDeleteTable(po_counts);
+			disableAndDeleteTable(so_counts);
+
+			disableAndDeleteTable(spo_data);
+
+			initialiseTables();
+
+		} catch (IOException e) {
+			logger.error("Could not clear tables", e);
+		}
+		logger.info("Tables cleared");
 	}
 
 	/**
@@ -426,8 +431,8 @@ public class NativeHBaseDataLayer implements DataLayer {
 	 */
 	public void add(Statement statement) {
 		try {
-			if (logger.isDebugEnabled())
-				logger.debug("Inserting: " + statement);
+			// if (logger.isDebugEnabled())
+			// logger.debug("Inserting: " + statement);
 
 			// FIXME: Can be made more compact by using resourcesToBytes
 			byte[] s = NodeSerializer.toBytes(statement.getSubject());

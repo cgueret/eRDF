@@ -107,9 +107,7 @@ public class DataLoader implements RDFHandler {
 	 * org.openrdf.rio.RDFHandler#handleStatement(org.openrdf.model.Statement)
 	 */
 	public void handleStatement(Statement st) throws RDFHandlerException {
-		System.out.println(st);
 		datalayer.add(st);
-
 	}
 
 	/*
