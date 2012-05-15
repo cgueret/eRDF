@@ -135,6 +135,8 @@ public class Optimizer extends Observable implements Runnable {
 			 * String buffer = "Fitnesses "; for (Solution s : newPopulation)
 			 * buffer += s.getFitness() + " "; logger.info(buffer);
 			 */
+			for (Solution s : newPopulation)
+				logger.info(s.toString());
 
 			// Provide feed back to the generation operator
 			// generateOp.updateProviderRewards(newPopulation);

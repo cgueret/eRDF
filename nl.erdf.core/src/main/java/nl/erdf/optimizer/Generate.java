@@ -1,6 +1,8 @@
 package nl.erdf.optimizer;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Random;
 import java.util.Set;
 import java.util.SortedSet;
 
@@ -10,15 +12,9 @@ import nl.erdf.datalayer.DataLayer;
 import nl.erdf.model.Request;
 import nl.erdf.model.ResourceProvider;
 import nl.erdf.model.Solution;
-import nl.erdf.model.Triple;
 import nl.erdf.model.Variable;
-import nl.erdf.model.impl.StatementPatternProvider;
-import nl.erdf.util.Convert;
 
-import org.openrdf.model.Resource;
-import org.openrdf.model.URI;
 import org.openrdf.model.Value;
-import org.openrdf.query.algebra.StatementPattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +55,7 @@ public class Generate {
 		enforce(population, target);
 
 		// Do crossover among the population
-		// crossover(population, target);
+		crossover(population, target);
 
 		logger.info("Created " + target.size() + " new individuals from " + population.size() + " parents");
 	}
@@ -88,32 +84,29 @@ public class Generate {
 
 			// Pick one of the providers at random
 			Roulette roulette2 = new Roulette();
+			logger.info(request.getResourceProvidersFor(variable).toString());
 			for (ResourceProvider provider : request.getResourceProvidersFor(variable)) {
-				if (provider instanceof StatementPatternProvider) {
-					StatementPatternProvider prov = (StatementPatternProvider) provider;
-					StatementPattern ptrn = prov.getStatement();
-					Value s = ptrn.getSubjectVar().getName().equals(variable) ? null : Convert.getValue(
-							ptrn.getSubjectVar(), child);
-					Value p = ptrn.getPredicateVar().getName().equals(variable) ? null : Convert.getValue(
-							ptrn.getPredicateVar(), child);
-					Value o = ptrn.getObjectVar().getName().equals(variable) ? null : Convert.getValue(
-							ptrn.getObjectVar(), child);
-
-					Triple t = new Triple((Resource) s, (URI) p, o);
-
-					if (t.getNumberNulls() == 1) {
-						long nb = dataLayer.getNumberOfResources(t);
-						if (nb > 0) {
-							double pp = 0.5;
-							if (dataLayer.isValid(Convert.toTriple(ptrn, child)))
-								pp *= 2;
-							// logger.info(child.hashCode() + "=>  " + variable
-							// + " " + t.toString() + " " + pp);
-							roulette2.add(provider, pp);
-						}
-					}
-				}
-
+				roulette2.add(provider, 1.0);
+				/*
+				 * if (provider instanceof StatementPatternProvider) {
+				 * StatementPatternProvider prov = (StatementPatternProvider)
+				 * provider; StatementPattern ptrn = prov.getStatement(); Value
+				 * s = ptrn.getSubjectVar().getName().equals(variable) ? null :
+				 * Convert.getValue( ptrn.getSubjectVar(), child); Value p =
+				 * ptrn.getPredicateVar().getName().equals(variable) ? null :
+				 * Convert.getValue( ptrn.getPredicateVar(), child); Value o =
+				 * ptrn.getObjectVar().getName().equals(variable) ? null :
+				 * Convert.getValue( ptrn.getObjectVar(), child);
+				 * 
+				 * Triple t = new Triple((Resource) s, (URI) p, o);
+				 * 
+				 * if (t.getNumberNulls() == 1) { long nb =
+				 * dataLayer.getNumberOfResources(t); if (nb > 0) { double pp =
+				 * 0.5; if (dataLayer.isValid(Convert.toTriple(ptrn, child))) pp
+				 * *= 2; logger.info(child.hashCode() + "=>  " + variable + " "
+				 * + t.toString() + " " + pp); roulette2.add(provider, pp); } }
+				 * }
+				 */
 			}
 			if (roulette2.isEmpty())
 				continue;
@@ -123,7 +116,7 @@ public class Generate {
 			// Get a new value
 			Value v = p.getResource(variable, child, dataLayer);
 			child.getVariable(variable).setValue(v);
-			logger.info("Assign " + v + " to " + variable);
+			// logger.info("Assign " + v + " to " + variable);
 
 			// Add this variable to the changed variables
 			changed.add(variable);
@@ -150,20 +143,23 @@ public class Generate {
 					String secondVariable = (String) vars.toArray()[0];
 					if (!changed.contains(secondVariable)) {
 						// Use all the providers to get a new value
-						Value v = null;
+						ArrayList<Value> v = new ArrayList<Value>();
 						for (ResourceProvider provider : request.getResourceProvidersFor(secondVariable)) {
 							if (provider.getVariables().contains(variable)) {
 								// Assign a new value
 								Value v2 = provider.getResource(secondVariable, child, dataLayer);
-								if (v2 != null) {
-									logger.info(child.hashCode() + "=>  " + v2);
-									v = v2;
-								}
+								if (v2 != null)
+									v.add(v2);
 							}
 						}
-						child.getVariable(secondVariable).setValue(v);
+						Random rand = new Random();
+						if (!v.isEmpty())
+							child.getVariable(secondVariable).setValue(v.get(rand.nextInt(v.size())));
+						else
+							child.getVariable(secondVariable).setValue(null);
 
-						logger.info("Change " + secondVariable + "=" + v + " after " + variable);
+						// logger.info("Change " + secondVariable + "=" + v +
+						// " after " + variable);
 
 						// See what can be changed from here
 						changed.add(secondVariable);
