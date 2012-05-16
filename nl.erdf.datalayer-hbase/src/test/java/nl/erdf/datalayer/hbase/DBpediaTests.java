@@ -17,12 +17,17 @@ import org.openrdf.model.Value;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.model.vocabulary.RDF;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Christophe Guéret <christophe.gueret@gmail.com>
  * 
  */
 public class DBpediaTests {
+	/** Logger */
+	final Logger logger = LoggerFactory.getLogger(DBpediaTests.class);
+
 	private NativeHBaseDataLayer dl = null;
 
 	/**
@@ -56,22 +61,29 @@ public class DBpediaTests {
 		URI p = RDF.TYPE;
 		Value o = f.createURI("http://dbpedia.org/ontology/PopulatedPlace");
 		Assert.assertTrue(dl.isValid(new Triple(s, p, o)));
-		System.out.println("Amsterdam is a " + dl.getResource(new Triple(s, p, null)));
+		logger.info("Amsterdam is a " + dl.getResource(new Triple(s, p, null)));
 		Assert.assertTrue(dl.isValid(new Triple(s, p, null)));
 		Assert.assertTrue(dl.isValid(new Triple(s, null, o)));
 		Assert.assertTrue(dl.isValid(new Triple(null, p, o)));
 
-		URI p2 = f.createURI("http://dbpedia.org/ontology/birthName");
-		Value o2 = f.createURI("http://dbpedia.org/resource/Kingdom_of_the_Netherlands");
-		Assert.assertFalse(dl.isValid(new Triple(null, p2, o2)));
+		p = f.createURI("http://dbpedia.org/ontology/birthName");
+		o = f.createURI("http://dbpedia.org/resource/Kingdom_of_the_Netherlands");
+		Assert.assertFalse(dl.isValid(new Triple(null, p, o)));
 
-		Resource s2 = f.createURI("http://dbpedia.org/resource/Hip_Hop_Is_Dead");
-		p2 = f.createURI("http://dbpedia.org/ontology/artist");
-		System.out.println("Artist of album is " + dl.getResource(new Triple(s2, p2, null)));
+		s = f.createURI("http://dbpedia.org/resource/M._C._Escher");
+		p = f.createURI("http://dbpedia.org/ontology/field");
+		logger.info("Field of Escher is " + dl.getResource(new Triple(s, p, null)));
+		Assert.assertTrue(dl.isValid(new Triple(s, p, null)));
 
-		Resource s3 = f.createURI("http://dbpedia.org/resource/M._C._Escher");
-		p2 = f.createURI("http://dbpedia.org/ontology/field");
-		System.out.println("Field of Escher is " + dl.getResource(new Triple(s3, p2, null)));
+		o = f.createURI("http://dbpedia.org/resource/Mariah_Carey");
+		p = f.createURI("http://dbpedia.org/ontology/artist");
+		logger.info("Album of Mariah_Carey " + dl.getResource(new Triple(null, p, o)));
+		Assert.assertTrue(dl.isValid(new Triple(null, p, o)));
+
+		s = f.createURI("http://dbpedia.org/resource/Hip_Hop_Is_Dead");
+		p = f.createURI("http://dbpedia.org/ontology/artist");
+		logger.info("Artist of Hip_Hop_Is_Dead is " + dl.getResource(new Triple(s, p, null)));
+		Assert.assertTrue(dl.isValid(new Triple(s, p, null)));
 
 	}
 }

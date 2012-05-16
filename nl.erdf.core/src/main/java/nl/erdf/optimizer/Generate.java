@@ -205,13 +205,13 @@ public class Generate {
 					Value value = values.get(rand.nextInt(values.size()));
 					child.getVariable(entry.getKey()).setValue(value);
 
-					// See what can be changed from here
-					changed.add(entry.getKey());
-					propagateChange(child, entry.getKey(), changed);
 				} else {
 					child.getVariable(entry.getKey()).setValue(null);
 				}
 
+				// See what can be changed from here
+				changed.add(entry.getKey());
+				propagateChange(child, entry.getKey(), changed);
 			}
 		}
 	}
