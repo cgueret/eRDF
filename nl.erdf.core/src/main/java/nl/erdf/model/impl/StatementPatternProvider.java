@@ -38,21 +38,42 @@ public class StatementPatternProvider implements ResourceProvider {
 	 * nl.erdf.model.ResourceProvider#getResource(org.openrdf.query.algebra.Var,
 	 * nl.erdf.model.Solution, nl.erdf.datalayer.DataLayer)
 	 */
-	public Value getResource(String variable, Solution solution, DataLayer dataLayer) {
+	public Value getResource(String variableName, Solution solution, DataLayer dataLayer) {
 		// Instantiate the pattern
 		Triple t = Convert.toTriple(pattern, solution);
 
 		// Set back the requested variable to null
-		if (pattern.getSubjectVar().getName().equals(variable))
+		if (pattern.getSubjectVar().getName().equals(variableName))
 			t = new Triple(null, t.getPredicate(), t.getObject());
-		if (pattern.getPredicateVar().getName().equals(variable))
+		if (pattern.getPredicateVar().getName().equals(variableName))
 			t = new Triple(t.getSubject(), null, t.getObject());
-		if (pattern.getObjectVar().getName().equals(variable))
+		if (pattern.getObjectVar().getName().equals(variableName))
 			t = new Triple(t.getSubject(), t.getPredicate(), null);
 
 		// Get a value and return it
 		Value resource = dataLayer.getResource(t);
 		return resource;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see nl.erdf.model.ResourceProvider#getNumberResources(java.lang.String,
+	 * nl.erdf.model.Solution, nl.erdf.datalayer.DataLayer)
+	 */
+	public long getNumberResources(String variableName, Solution solution, DataLayer dataLayer) {
+		// Instantiate the pattern
+		Triple t = Convert.toTriple(pattern, solution);
+
+		// Set back the requested variable to null
+		if (pattern.getSubjectVar().getName().equals(variableName))
+			t = new Triple(null, t.getPredicate(), t.getObject());
+		if (pattern.getPredicateVar().getName().equals(variableName))
+			t = new Triple(t.getSubject(), null, t.getObject());
+		if (pattern.getObjectVar().getName().equals(variableName))
+			t = new Triple(t.getSubject(), t.getPredicate(), null);
+
+		return dataLayer.getNumberOfResources(t);
 	}
 
 	/*

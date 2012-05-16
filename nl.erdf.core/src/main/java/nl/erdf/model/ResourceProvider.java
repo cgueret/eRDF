@@ -15,16 +15,24 @@ import org.openrdf.model.Value;
  */
 public interface ResourceProvider {
 	/**
-	 * @param variable
+	 * @param variableName
 	 * @param solution
 	 * @param dataLayer
 	 * @return a resource
 	 */
-	abstract public Value getResource(String variable, Solution solution, DataLayer dataLayer);
+	abstract public Value getResource(String variableName, Solution solution, DataLayer dataLayer);
 
 	/**
 	 * @return the set of variables used by the provider
 	 */
 	abstract public Set<String> getVariables();
+
+	/**
+	 * @param variableName
+	 * @param solution
+	 * @param dataLayer
+	 * @return the number of resources the provider can serve
+	 */
+	abstract public long getNumberResources(String variableName, Solution solution, DataLayer dataLayer);
 
 }

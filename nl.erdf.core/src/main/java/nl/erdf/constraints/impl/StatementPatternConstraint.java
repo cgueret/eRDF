@@ -156,4 +156,11 @@ public class StatementPatternConstraint implements Constraint {
 
 		return rewards;
 	}
+
+	/**
+	 * @return the pattern of this constraint
+	 */
+	public StatementPattern getPattern() {
+		return pattern;
+	}
 }

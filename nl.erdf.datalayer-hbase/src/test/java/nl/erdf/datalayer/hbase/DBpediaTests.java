@@ -68,5 +68,10 @@ public class DBpediaTests {
 		Resource s2 = f.createURI("http://dbpedia.org/resource/Hip_Hop_Is_Dead");
 		p2 = f.createURI("http://dbpedia.org/ontology/artist");
 		System.out.println("Artist of album is " + dl.getResource(new Triple(s2, p2, null)));
+
+		Resource s3 = f.createURI("http://dbpedia.org/resource/M._C._Escher");
+		p2 = f.createURI("http://dbpedia.org/ontology/field");
+		System.out.println("Field of Escher is " + dl.getResource(new Triple(s3, p2, null)));
+
 	}
 }

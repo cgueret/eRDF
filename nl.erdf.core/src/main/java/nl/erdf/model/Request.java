@@ -184,10 +184,22 @@ public class Request {
 	}
 
 	/**
-	 * @param variable
+	 * @param variableName
 	 * @return a list of providers
 	 */
-	public List<ResourceProvider> getResourceProvidersFor(String variable) {
-		return providers.get(variable);
+	public List<ResourceProvider> getResourceProvidersFor(String variableName) {
+		if (!providers.containsKey(variableName))
+			return new ArrayList<ResourceProvider>();
+		return providers.get(variableName);
+	}
+
+	/**
+	 * @param variableName
+	 * @return a lit of constraints
+	 */
+	public List<Constraint> getConstraintsFor(String variableName) {
+		if (!constraints.containsKey(variableName))
+			return new ArrayList<Constraint>();
+		return constraints.get(variableName);
 	}
 }

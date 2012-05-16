@@ -78,4 +78,17 @@ public class StatementPatternSetProvider implements ResourceProvider {
 		return context;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see nl.erdf.model.ResourceProvider#getNumberResources(java.lang.String,
+	 * nl.erdf.model.Solution, nl.erdf.datalayer.DataLayer)
+	 */
+	public long getNumberResources(String variableName, Solution solution, DataLayer dataLayer) {
+		long total = 0;
+		for (StatementPatternProvider provider : providers)
+			total += provider.getNumberResources(variableName, solution, dataLayer);
+		return total;
+	}
+
 }

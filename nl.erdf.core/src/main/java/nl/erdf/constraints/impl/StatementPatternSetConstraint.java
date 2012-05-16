@@ -1,5 +1,6 @@
 package nl.erdf.constraints.impl;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -107,5 +108,12 @@ public class StatementPatternSetConstraint implements Constraint {
 	 */
 	public String getContext() {
 		return context;
+	}
+
+	/**
+	 * @return the pattern constraints
+	 */
+	public Collection<StatementPatternConstraint> getPatternConstraints() {
+		return patterns;
 	}
 }
