@@ -76,10 +76,9 @@ public class TestQuery implements Observer {
 		request.addConstraint(new StatementPatternConstraint(artistStmt));
 		request.addConstraint(new StatementPatternConstraint(fieldStmt));
 
-		// The two statements can be used as data sources
+		// The birth and type can be used as data providers
 		request.addResourceProvider(new StatementPatternProvider(birthPlaceStmt));
 		request.addResourceProvider(new StatementPatternProvider(artistStmt));
-		request.addResourceProvider(new StatementPatternProvider(fieldStmt));
 
 		// Create the optimiser
 		optimizer = new Optimizer(datalayer, request, null);

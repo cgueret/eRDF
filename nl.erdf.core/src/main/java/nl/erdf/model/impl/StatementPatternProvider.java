@@ -15,12 +15,17 @@ import nl.erdf.util.Convert;
 import org.openrdf.model.Value;
 import org.openrdf.query.algebra.StatementPattern;
 import org.openrdf.query.algebra.Var;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Christophe Guéret <christophe.gueret@gmail.com>
  * 
  */
 public class StatementPatternProvider implements ResourceProvider {
+	/** Logger */
+	final Logger logger = LoggerFactory.getLogger(StatementPatternProvider.class);
+
 	// The graph pattern is a triple with variables in it
 	private final StatementPattern pattern;
 
