@@ -18,11 +18,11 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.openrdf.model.Statement;
+import org.openrdf.rio.ParseErrorListener;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.RDFHandlerException;
 import org.openrdf.rio.RDFParseException;
 import org.openrdf.rio.RDFParser;
-import org.openrdf.rio.ntriples.NTriplesParserFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
  * @author Christophe Guéret <christophe.gueret@gmail.com>
  * 
  */
-public class DataLoader implements RDFHandler {
+public class DataLoader implements RDFHandler, ParseErrorListener {
 	// Logger
 	protected static Logger logger = LoggerFactory.getLogger(DataLoader.class);
 
@@ -114,9 +114,11 @@ public class DataLoader implements RDFHandler {
 	public void load(String fileName) throws FileNotFoundException {
 		logger.info("Start loading " + fileName);
 		FileInputStream input = new FileInputStream(fileName);
-		NTriplesParserFactory f = new NTriplesParserFactory();
-		RDFParser parser = f.getParser();
+		RDFParser parser = new NTriplesParser();
 		parser.setRDFHandler(this);
+		parser.setStopAtFirstError(false);
+		parser.setVerifyData(false);
+		parser.setParseErrorListener(this);
 		try {
 			parser.parse(new BZip2CompressorInputStream(input), "http://dbpedia.org");
 		} catch (Exception e) {
@@ -167,6 +169,38 @@ public class DataLoader implements RDFHandler {
 	 * @see org.openrdf.rio.RDFHandler#handleComment(java.lang.String)
 	 */
 	public void handleComment(String comment) throws RDFHandlerException {
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.openrdf.rio.ParseErrorListener#warning(java.lang.String, int,
+	 * int)
+	 */
+	public void warning(String msg, int lineNo, int colNo) {
+		// TODO Auto-generated method stub
+
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.openrdf.rio.ParseErrorListener#error(java.lang.String, int, int)
+	 */
+	public void error(String msg, int lineNo, int colNo) {
+		// TODO Auto-generated method stub
+
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.openrdf.rio.ParseErrorListener#fatalError(java.lang.String, int,
+	 * int)
+	 */
+	public void fatalError(String msg, int lineNo, int colNo) {
+		// TODO Auto-generated method stub
+
 	}
 
 }
