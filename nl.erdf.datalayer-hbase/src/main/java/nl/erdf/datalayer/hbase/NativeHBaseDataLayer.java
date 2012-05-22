@@ -10,8 +10,6 @@ import nl.erdf.model.Triple;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.MasterNotRunningException;
-import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
@@ -69,21 +67,34 @@ public class NativeHBaseDataLayer implements DataLayer {
 	// All triples table
 	protected HTable spo_data;
 
+	// The name of the schema, used as a suffix for table names
+	protected final String schemaName;
+
 	/**
+	 * @param schemaName
+	 * @return
+	 */
+	public static DataLayer getInstance(String schemaName) {
+		try {
+			DataLayer dl = new NativeHBaseDataLayer(schemaName);
+			return dl;
+		} catch (IOException e) {
+			return null;
+		}
+	}
+
+	/**
+	 * @param schemaName
 	 * @throws IOException
 	 */
-	public NativeHBaseDataLayer() {
+	private NativeHBaseDataLayer(String schemaName) throws IOException {
+		this.schemaName = schemaName;
+
 		// Get configuration from the path
-		try {
-			admin = new HBaseAdmin(HBaseConfiguration.create());
-			initialiseTables();
-		} catch (MasterNotRunningException e) {
-			e.printStackTrace();
-		} catch (ZooKeeperConnectionException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		admin = new HBaseAdmin(HBaseConfiguration.create());
+
+		// Prepare the tables
+		initialiseTables();
 	}
 
 	/*
@@ -208,21 +219,24 @@ public class NativeHBaseDataLayer implements DataLayer {
 	 * @throws IOException
 	 */
 	protected void initialiseTables() throws IOException {
-		String[] tableNames = new String[] { "sp_data", "po_data", "so_data", "sp_counts", "po_counts", "so_counts",
-				"spo_data" };
+		// Create the tables if they do not exist
+		String[] tableNames = new String[] { "sp_data_" + schemaName, "po_data_" + schemaName, "so_data_" + schemaName,
+				"sp_counts_" + schemaName, "po_counts_" + schemaName, "so_counts_" + schemaName,
+				"spo_data_" + schemaName };
 		for (String n : tableNames) {
 			if (!admin.tableExists(n))
 				createTable(n);
 		}
-		sp_data = new HTable("sp_data");
-		po_data = new HTable("po_data");
-		so_data = new HTable("so_data");
 
-		sp_counts = new HTable("sp_counts");
-		po_counts = new HTable("po_counts");
-		so_counts = new HTable("so_counts");
+		// Initialise the tables
+		sp_data = new HTable("sp_data_" + schemaName);
+		po_data = new HTable("po_data_" + schemaName);
+		so_data = new HTable("so_data_" + schemaName);
+		sp_counts = new HTable("sp_counts_" + schemaName);
+		po_counts = new HTable("po_counts_" + schemaName);
+		so_counts = new HTable("so_counts_" + schemaName);
+		spo_data = new HTable("spo_data_" + schemaName);
 
-		spo_data = new HTable("spo_data");
 		logger.info("Tables initialised");
 	}
 
@@ -251,13 +265,9 @@ public class NativeHBaseDataLayer implements DataLayer {
 	 * @throws IOException
 	 */
 	protected void insert(byte[] key, HTable data_table, HTable count_table, byte[] value) throws IOException {
-		long c = count_table.incrementColumnValue(key, COLUMN, COUNT_QUALIFIER, 1, false) - 1; // Minus
-																								// one
-																								// because
-																								// it
-																								// returns
-																								// post-increment
-		if (c >= Integer.MAX_VALUE) {
+		// Minus one because it returns post-increment
+		long c = count_table.incrementColumnValue(key, COLUMN, COUNT_QUALIFIER, 1, true) - 1;
+		if (c >= Long.MAX_VALUE) {
 			logger.error("Too many values for key " + Arrays.toString(key) + " for table " + count_table);
 		}
 

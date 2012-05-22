@@ -69,7 +69,7 @@ public class Generate {
 		parents.prepare();
 
 		// Enforce the values of some variable using the value of some others
-		for (int i = 0; i < 50; i++) {
+		for (int i = 0; i < 30; i++) {
 			// Pick a parent
 			Solution parent = (Solution) parents.nextElement();
 

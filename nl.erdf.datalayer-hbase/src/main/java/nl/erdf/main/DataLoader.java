@@ -7,8 +7,15 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import nl.erdf.datalayer.DataLayer;
 import nl.erdf.datalayer.hbase.NativeHBaseDataLayer;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.PosixParser;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.openrdf.model.Statement;
 import org.openrdf.rio.RDFHandler;
@@ -27,13 +34,15 @@ public class DataLoader implements RDFHandler {
 	// Logger
 	protected static Logger logger = LoggerFactory.getLogger(DataLoader.class);
 
-	private final NativeHBaseDataLayer datalayer;
+	// Data layer
+	private final DataLayer datalayer;
 
 	/**
+	 * @param schemaName
 	 * @throws IOException
 	 */
-	public DataLoader() throws IOException {
-		datalayer = new NativeHBaseDataLayer();
+	public DataLoader(DataLayer datalayer) throws IOException {
+		this.datalayer = datalayer;
 	}
 
 	/**
@@ -41,14 +50,58 @@ public class DataLoader implements RDFHandler {
 	 * @throws FileNotFoundException
 	 * @throws RDFHandlerException
 	 * @throws RDFParseException
+	 * @throws ParseException
 	 */
 	public static void main(String[] args) throws RDFParseException, RDFHandlerException, FileNotFoundException,
-			IOException {
-		DataLoader d = new DataLoader();
-		if (args[0].equals("clean"))
-			d.datalayer.clear();
-		else
-			d.load(args[0]);
+			IOException, ParseException {
+		// Compose the options
+		Options options = new Options();
+		options.addOption("i", "input", true, "data input file (data.nt.bz2)");
+		options.addOption("d", "dataset", true, "data set name");
+		options.addOption("c", "command", true, "command (load, clear)");
+		options.addOption("h", "help", false, "print help message");
+
+		// Parse the command line
+		CommandLineParser parser = new PosixParser();
+		CommandLine line = parser.parse(options, args);
+
+		// Handle request for help
+		if (line.hasOption("h"))
+			printHelpAndExit(options, 0);
+
+		// Handle miss-use
+		if (!line.hasOption("c") || !line.hasOption("d"))
+			printHelpAndExit(options, -1);
+
+		// Create an instance of the data loader
+		DataLayer dataLayer = NativeHBaseDataLayer.getInstance(line.getOptionValue("d"));
+		DataLoader dataLoader = new DataLoader(dataLayer);
+
+		// Handle commands
+		if (line.getOptionValue("c").equals("clear")) {
+			// Clear
+			logger.info("Clearing data set " + line.getOptionValue("d"));
+			dataLayer.clear();
+			dataLayer.shutdown();
+		} else if (line.getOptionValue("c").equals("load")) {
+			// Load
+			logger.info("Load " + line.getOptionValue("i") + " into data set " + line.getOptionValue("d"));
+			dataLoader.load(line.getOptionValue("i"));
+			dataLayer.shutdown();
+		} else {
+			// Unknown command
+			logger.info("Unknown command " + line.getOptionValue("c"));
+			printHelpAndExit(options, 0);
+		}
+	}
+
+	/**
+	 * @param exitCode
+	 */
+	public static void printHelpAndExit(Options options, int exitCode) {
+		HelpFormatter formatter = new HelpFormatter();
+		formatter.printHelp(DataLoader.class.getName(), options);
+		System.exit(exitCode);
 	}
 
 	/**
@@ -58,15 +111,18 @@ public class DataLoader implements RDFHandler {
 	 * @throws RDFHandlerException
 	 * @throws RDFParseException
 	 */
-	private void load(String fileName) throws RDFParseException, RDFHandlerException, FileNotFoundException,
-			IOException {
-		logger.info("Start " + fileName);
+	public void load(String fileName) throws FileNotFoundException {
+		logger.info("Start loading " + fileName);
+		FileInputStream input = new FileInputStream(fileName);
 		NTriplesParserFactory f = new NTriplesParserFactory();
 		RDFParser parser = f.getParser();
 		parser.setRDFHandler(this);
-		parser.parse(new BZip2CompressorInputStream(new FileInputStream(fileName)), "http://dbpedia.org");
+		try {
+			parser.parse(new BZip2CompressorInputStream(input), "http://dbpedia.org");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		logger.info("End");
-		datalayer.shutdown();
 	}
 
 	/*
@@ -75,8 +131,6 @@ public class DataLoader implements RDFHandler {
 	 * @see org.openrdf.rio.RDFHandler#startRDF()
 	 */
 	public void startRDF() throws RDFHandlerException {
-		// TODO Auto-generated method stub
-
 	}
 
 	/*
@@ -85,8 +139,6 @@ public class DataLoader implements RDFHandler {
 	 * @see org.openrdf.rio.RDFHandler#endRDF()
 	 */
 	public void endRDF() throws RDFHandlerException {
-		// TODO Auto-generated method stub
-
 	}
 
 	/*
@@ -96,8 +148,6 @@ public class DataLoader implements RDFHandler {
 	 * java.lang.String)
 	 */
 	public void handleNamespace(String prefix, String uri) throws RDFHandlerException {
-		// TODO Auto-generated method stub
-
 	}
 
 	/*
@@ -107,6 +157,7 @@ public class DataLoader implements RDFHandler {
 	 * org.openrdf.rio.RDFHandler#handleStatement(org.openrdf.model.Statement)
 	 */
 	public void handleStatement(Statement st) throws RDFHandlerException {
+		logger.info(st.toString());
 		datalayer.add(st);
 	}
 
@@ -116,8 +167,6 @@ public class DataLoader implements RDFHandler {
 	 * @see org.openrdf.rio.RDFHandler#handleComment(java.lang.String)
 	 */
 	public void handleComment(String comment) throws RDFHandlerException {
-		// TODO Auto-generated method stub
-
 	}
 
 }

@@ -10,6 +10,7 @@ import java.util.Observable;
 import java.util.Observer;
 
 import nl.erdf.constraints.impl.StatementPatternConstraint;
+import nl.erdf.datalayer.DataLayer;
 import nl.erdf.datalayer.hbase.NativeHBaseDataLayer;
 import nl.erdf.model.Request;
 import nl.erdf.model.Solution;
@@ -31,11 +32,11 @@ public class TestQuery implements Observer {
 	static final Logger logger = LoggerFactory.getLogger(TestQuery.class);
 	private final Optimizer optimizer;
 	private final Request request;
-	private final NativeHBaseDataLayer datalayer;
+	private final DataLayer datalayer;
 
 	public TestQuery() throws FileNotFoundException, IOException {
 		// Create a data layer
-		datalayer = new NativeHBaseDataLayer();
+		datalayer = NativeHBaseDataLayer.getInstance("default");
 
 		// Create the request
 		request = new Request(datalayer);

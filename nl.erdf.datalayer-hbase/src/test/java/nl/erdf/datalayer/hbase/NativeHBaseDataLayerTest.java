@@ -3,6 +3,7 @@ package nl.erdf.datalayer.hbase;
 import java.io.IOException;
 import java.util.Random;
 
+import nl.erdf.datalayer.DataLayer;
 import nl.erdf.model.Triple;
 
 import org.junit.After;
@@ -20,7 +21,7 @@ import org.openrdf.model.impl.ValueFactoryImpl;
  * EVERYTHING IN HBASE. It should fail 50% of the time ;-)
  */
 public class NativeHBaseDataLayerTest {
-	private NativeHBaseDataLayer dl = null;
+	private DataLayer dl = null;
 	private int count = 10;
 
 	/**
@@ -29,8 +30,11 @@ public class NativeHBaseDataLayerTest {
 	@Test
 	@Before
 	public void setUp() throws IOException {
-		dl = new NativeHBaseDataLayer();
+		// Connect to the data layer
+		dl = NativeHBaseDataLayer.getInstance("test");
 		Assert.assertTrue(dl != null);
+
+		// Clear the previous content
 		dl.clear();
 	}
 

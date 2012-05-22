@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import nl.erdf.constraints.impl.StatementPatternConstraint;
+import nl.erdf.datalayer.DataLayer;
 import nl.erdf.datalayer.hbase.NativeHBaseDataLayer;
 import nl.erdf.model.Request;
 import nl.erdf.model.Solution;
@@ -28,11 +29,11 @@ import org.slf4j.LoggerFactory;
 public class TestQueryRewards {
 	static final Logger logger = LoggerFactory.getLogger(TestQueryRewards.class);
 	private final Request request;
-	private final NativeHBaseDataLayer datalayer;
+	private final DataLayer datalayer;
 
 	public TestQueryRewards() throws FileNotFoundException, IOException {
 		// Create a data layer
-		datalayer = new NativeHBaseDataLayer();
+		datalayer = NativeHBaseDataLayer.getInstance("default");
 
 		// Create the request
 		request = new Request(datalayer);
