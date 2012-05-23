@@ -37,6 +37,9 @@ public class DataLoader implements RDFHandler, ParseErrorListener {
 	// Data layer
 	private final DataLayer datalayer;
 
+	// Number of triples loaded
+	private long total = 0;
+
 	/**
 	 * @param schemaName
 	 * @throws IOException
@@ -124,7 +127,7 @@ public class DataLoader implements RDFHandler, ParseErrorListener {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		logger.info("End");
+		logger.info("End (" + total + " triples)");
 	}
 
 	/*
@@ -159,8 +162,8 @@ public class DataLoader implements RDFHandler, ParseErrorListener {
 	 * org.openrdf.rio.RDFHandler#handleStatement(org.openrdf.model.Statement)
 	 */
 	public void handleStatement(Statement st) throws RDFHandlerException {
-		logger.info(st.toString());
 		datalayer.add(st);
+		total++;
 	}
 
 	/*
