@@ -24,6 +24,9 @@ public class Triple implements Statement {
 
 	// The statement's object.
 	private final Value object;
+	
+	// The statement's context.
+	private final Resource context;
 
 	/**
 	 * Creates a new Statement with the supplied subject, predicate and object.
@@ -37,11 +40,21 @@ public class Triple implements Statement {
 	 *            The statement's object.
 	 */
 	public Triple(Resource subject, URI predicate, Value object) {
-		assert (getNumberNulls() < 2);
-
 		this.subject = subject;
 		this.predicate = predicate;
 		this.object = object;
+		this.context = null;
+		
+		assert (getNumberNulls() < 3);
+	}
+	
+	public Triple(Resource subject, URI predicate, Value object, Resource context) {
+		this.subject = subject;
+		this.predicate = predicate;
+		this.object = object;
+		this.context = context;
+		
+		assert (getNumberNulls() < 3);
 	}
 
 	/**
@@ -52,6 +65,7 @@ public class Triple implements Statement {
 		nulls += (subject == null ? 1 : 0);
 		nulls += (predicate == null ? 1 : 0);
 		nulls += (object == null ? 1 : 0);
+		nulls += (context == null ? 1 : 0);
 		return nulls;
 	}
 
@@ -76,6 +90,7 @@ public class Triple implements Statement {
 		result = prime * result + ((object == null) ? 0 : object.hashCode());
 		result = prime * result + ((predicate == null) ? 0 : predicate.hashCode());
 		result = prime * result + ((subject == null) ? 0 : subject.hashCode());
+		result = prime * result + ((context == null) ? 0 : context.hashCode());
 		return result;
 	}
 
@@ -98,15 +113,23 @@ public class Triple implements Statement {
 				return false;
 		} else if (!object.equals(other.object))
 			return false;
+		
 		if (predicate == null) {
 			if (other.predicate != null)
 				return false;
 		} else if (!predicate.equals(other.predicate))
 			return false;
+		
 		if (subject == null) {
 			if (other.subject != null)
 				return false;
 		} else if (!subject.equals(other.subject))
+			return false;
+		
+		if (context == null) {
+			if (other.context != null)
+				return false;
+		} else if (!context.equals(other.context))
 			return false;
 		return true;
 	}
@@ -135,7 +158,7 @@ public class Triple implements Statement {
 	 * @see org.openrdf.model.Statement#getContext()
 	 */
 	public Resource getContext() {
-		return null;
+		return context;
 	}
 
 	/**
@@ -152,6 +175,8 @@ public class Triple implements Statement {
 		sb.append(getPredicate());
 		sb.append(", ");
 		sb.append(getObject());
+		sb.append(", ");
+		sb.append(getContext());
 		sb.append(")");
 
 		return sb.toString();
