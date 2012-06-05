@@ -2,10 +2,10 @@ package nl.erdf.datalayer.hbase;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Random;
 
 import nl.erdf.datalayer.DataLayer;
 import nl.erdf.model.Triple;
+import nl.erdf.util.Randomizer;
 
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -50,9 +50,6 @@ public class NativeHBaseDataLayer implements DataLayer {
 
 	// HBase interface
 	private HBaseAdmin admin;
-
-	// A random number generator
-	protected final Random random = new Random();
 
 	// Count tables
 	protected HTable sp_counts;
@@ -405,7 +402,7 @@ public class NativeHBaseDataLayer implements DataLayer {
 				return null; // Nothing matches this pattern
 
 			// FIXME: optimize: reuse computation
-			long index = random.nextInt((int) numberOfResources);
+			long index = Randomizer.instance().nextInt((int) numberOfResources);
 
 			byte[] queryWithRandom = new byte[query.length + 8];
 			System.arraycopy(query, 0, queryWithRandom, 0, query.length);

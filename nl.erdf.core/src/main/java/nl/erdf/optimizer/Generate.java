@@ -20,6 +20,7 @@ import nl.erdf.model.Solution;
 import nl.erdf.model.Triple;
 import nl.erdf.model.Variable;
 import nl.erdf.util.Convert;
+import nl.erdf.util.Randomizer;
 
 import org.openrdf.model.Resource;
 import org.openrdf.model.URI;
@@ -199,7 +200,7 @@ public class Generate {
 					values.add(value);
 				}
 
-				Random rand = new Random();
+				Random rand = Randomizer.instance();
 				if (!values.isEmpty()) {
 					// Assign one of the new value
 					Value value = values.get(rand.nextInt(values.size()));

@@ -5,7 +5,8 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Random;
+
+import nl.erdf.util.Randomizer;
 
 /**
  * @author tolgam
@@ -32,9 +33,6 @@ public class Roulette implements Enumeration<Object> {
 			this.value = value;
 		}
 	}
-
-	// Randomizer
-	private static final Random random = new Random();
 
 	// Entries of the roulette
 	private List<Entry> content = new ArrayList<Entry>();
@@ -91,7 +89,7 @@ public class Roulette implements Enumeration<Object> {
 		if (!hasMoreElements())
 			throw new NoSuchElementException();
 
-		double value = random.nextFloat() * total;
+		double value = Randomizer.instance().nextFloat() * total;
 		double min = 0;
 		for (Entry entry : content) {
 			double entryVal = entry.value;

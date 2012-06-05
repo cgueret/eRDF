@@ -5,10 +5,10 @@ package nl.erdf.datalayer.hbase;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Random;
 
 import nl.erdf.datalayer.DataLayer;
 import nl.erdf.model.Triple;
+import nl.erdf.util.Randomizer;
 import nl.vu.datalayer.hbase.HBaseClientSolution;
 import nl.vu.datalayer.hbase.HBaseFactory;
 import nl.vu.datalayer.hbase.connection.HBaseConnection;
@@ -16,94 +16,153 @@ import nl.vu.datalayer.hbase.schema.HBPrefixMatchSchema;
 
 import org.openrdf.model.Statement;
 import org.openrdf.model.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Christophe Guéret <christophe.gueret@gmail.com>
  * 
  */
 public class RestHBaseDataLayer implements DataLayer {
-	
-	private HBaseConnection con;
-	
-	private HBaseClientSolution sol;
-	
-	private Random r;
-	
-	private ArrayList<ArrayList<Value>> results = null;
+	// Logger
+	private static final Logger logger = LoggerFactory.getLogger(RestHBaseDataLayer.class);
 
-	private int unboundPosition = -1;
-	
+	private HBaseConnection con;
+
+	private HBaseClientSolution sol;
+
+	/**
+	 * 
+	 */
 	public RestHBaseDataLayer() {
 		try {
+			logger.info("Connecting to data layer");
 			con = HBaseConnection.create(HBaseConnection.REST);
 			sol = HBaseFactory.getHBaseSolution(HBPrefixMatchSchema.SCHEMA_NAME, con, null);
-			
-			r = new Random();
+			logger.info("Ready!");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-	private int retrieveInternal(Triple pattern) throws IOException{	
-		Value[] quad = { pattern.getSubject(), pattern.getPredicate(), pattern.getObject(), pattern.getContext() };
-		int unboundPosition = -1;
-		for (int i = 0; i < quad.length; i++) {
-			if (quad[i] == null) {
-				unboundPosition = i;
-				break;
-			}
-		}
-		results = sol.util.getResults(quad);
-
-		return unboundPosition;
+	/**
+	 * @param pattern
+	 * @return
+	 * @throws IOException
+	 */
+	private int retrieveInternal(Triple pattern) {
+		if (pattern.getSubject() == null)
+			return 0;
+		else if (pattern.getPredicate() == null)
+			return 1;
+		else if (pattern.getObject() == null)
+			return 2;
+		else if (pattern.getContext() == null)
+			return 3;
+		else
+			return -1;
 	}
-	
-	
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * nl.erdf.datalayer.DataLayer#getNumberOfResources(nl.erdf.model.Triple)
+	 */
 	public long getNumberOfResources(Triple pattern) {
+		logger.info("[CNT] " + pattern);
 		try {
-			if (results != null){
-				return results.size();
-			}
-			
-			unboundPosition = retrieveInternal(pattern);	
+			Value[] quad = { pattern.getSubject(), pattern.getPredicate(), pattern.getObject(), pattern.getContext() };
+			ArrayList<ArrayList<Value>> results = sol.util.getResults(quad);
+			logger.info("[CNT] " + results.size());
+
 			return results.size();
 		} catch (IOException e) {
 			e.printStackTrace();
 			return -1;
-		}	
+		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see nl.erdf.datalayer.DataLayer#getResource(nl.erdf.model.Triple)
+	 */
 	public Value getResource(Triple pattern) {
+		logger.info("[GET] " + pattern);
 		try {
-			if (results == null){
-				unboundPosition = retrieveInternal(pattern);
+			Value[] quad = { pattern.getSubject(), pattern.getPredicate(), pattern.getObject(), pattern.getContext() };
+			ArrayList<ArrayList<Value>> results = sol.util.getResults(quad);
+
+			Value res = null;
+			if (results.size() != 0) {
+				int resultIndex = Randomizer.instance().nextInt(results.size());
+				res = results.get(resultIndex).get(retrieveInternal(pattern));
 			}
-			
-			int resultIndex = r.nextInt(results.size());
-			return results.get(resultIndex).get(unboundPosition);
+
+			logger.info("[GET] " + res);
+			return res;
 		} catch (IOException e) {
 			e.printStackTrace();
 			return null;
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see nl.erdf.datalayer.DataLayer#isValid(nl.erdf.model.Triple)
+	 */
 	public boolean isValid(Triple pattern) {
+		logger.info("[VLD] " + pattern);
+
+		// null patterns can not be valid
 		if (pattern == null)
 			return false;
-		
-		return (pattern.getNumberNulls() == 1);
+
+		if (pattern.getNumberNulls() != 0) {
+			// Check a partial pattern
+			return (getResource(pattern) != null);
+		} else {
+			// Check a fully instantiated triple
+			try {
+				Value[] quad = { pattern.getSubject(), pattern.getPredicate(), null, pattern.getContext() };
+				ArrayList<ArrayList<Value>> results = sol.util.getResults(quad);
+				for (ArrayList<Value> v : results)
+					if (v.get(2).equals(pattern.getObject()))
+						return true;
+			} catch (IOException e) {
+				e.printStackTrace();
+				return false;
+			}
+
+			return false;
+		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see nl.erdf.datalayer.DataLayer#add(org.openrdf.model.Statement)
+	 */
 	public void add(Statement statement) {
-		// TODO Auto-generated method stub
-		
+		// Not implemented
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see nl.erdf.datalayer.DataLayer#clear()
+	 */
 	public void clear() {
-		results = null;
-		unboundPosition = -1;
+		// Not implemented
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see nl.erdf.datalayer.DataLayer#shutdown()
+	 */
 	public void shutdown() {
 		try {
 			con.close();
@@ -112,9 +171,13 @@ public class RestHBaseDataLayer implements DataLayer {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see nl.erdf.datalayer.DataLayer#waitForLatencyBuffer()
+	 */
 	public void waitForLatencyBuffer() {
-		// TODO Auto-generated method stub
-		
+		// Not implemented
 	}
 
 }
