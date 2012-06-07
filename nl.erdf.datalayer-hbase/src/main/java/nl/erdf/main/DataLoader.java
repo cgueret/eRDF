@@ -8,7 +8,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import nl.erdf.datalayer.DataLayer;
-import nl.erdf.datalayer.hbase.NativeHBaseDataLayer;
+import nl.erdf.datalayer.hbase.SpyrosHBaseDataLayer;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -77,7 +77,7 @@ public class DataLoader implements RDFHandler, ParseErrorListener {
 			printHelpAndExit(options, -1);
 
 		// Create an instance of the data loader
-		DataLayer dataLayer = NativeHBaseDataLayer.getInstance(line.getOptionValue("d"));
+		DataLayer dataLayer = SpyrosHBaseDataLayer.getInstance(line.getOptionValue("d"));
 		DataLoader dataLoader = new DataLoader(dataLayer);
 
 		// Handle commands

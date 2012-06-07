@@ -40,7 +40,7 @@ public class DBpediaTests {
 	@Before
 	public void setUp() throws IOException {
 		// Connect to the data layer
-		dl = NativeHBaseDataLayer.getInstance("test");
+		dl = SpyrosHBaseDataLayer.getInstance("test");
 		Assert.assertTrue(dl != null);
 
 		// Clear the previous content

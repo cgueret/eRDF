@@ -42,7 +42,7 @@ public class HipHopTest {
 	@Before
 	public void setUp() throws IOException, RDFParseException, RDFHandlerException {
 		// Connect to the data layer
-		dl = NativeHBaseDataLayer.getInstance("test");
+		dl = SpyrosHBaseDataLayer.getInstance("test");
 
 		// Clear the previous content
 		dl.clear();

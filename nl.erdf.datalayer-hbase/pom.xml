@@ -70,14 +70,14 @@
 			<version>[1.6.0, )</version>
 		</dependency>
 		<dependency>
-			<groupId>nl.vu.datalayer.sail</groupId>
-			<artifactId>hbase</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
-		</dependency>
-		<dependency>
 			<groupId>net.sf.jsr107cache</groupId>
 			<artifactId>jsr107cache</artifactId>
 			<version>1.1</version>
+		</dependency>
+		<dependency>
+			<groupId>nl.vu</groupId>
+			<artifactId>hbase-rdf</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 	<build>

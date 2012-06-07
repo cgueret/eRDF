@@ -20,9 +20,6 @@ public class Solution implements Comparable<Solution> {
 	/** Logger */
 	protected final Logger logger = LoggerFactory.getLogger(Solution.class);
 
-	// The age of that solution
-	private int age = 0;
-
 	// The fitness of the solution
 	private double fitness = 0;
 
@@ -100,13 +97,6 @@ public class Solution implements Comparable<Solution> {
 	}
 
 	/**
-	 * @return the age
-	 */
-	public int getAge() {
-		return age;
-	}
-
-	/**
 	 * @return the total reward of the variables
 	 */
 	public double getTotalReward() {
@@ -160,14 +150,6 @@ public class Solution implements Comparable<Solution> {
 	}
 
 	/**
-	 * @param age
-	 *            the age to set
-	 */
-	public void setAge(int age) {
-		this.age = age;
-	}
-
-	/**
 	 * @param isOptimal
 	 *            the isOptimal to set
 	 */
@@ -196,7 +178,7 @@ public class Solution implements Comparable<Solution> {
 			buffer.append(Format.format.format(variable.getReward())).append("),");
 		}
 		buffer.setCharAt(buffer.length() - 1, ']');
-		return buffer.append(" age=").append(getAge()).toString();
+		return buffer.toString();
 	}
 
 	/**

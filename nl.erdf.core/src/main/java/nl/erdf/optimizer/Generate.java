@@ -9,6 +9,8 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.concurrent.ExecutorService;
 
 import nl.erdf.constraints.Constraint;
 import nl.erdf.constraints.impl.StatementPatternConstraint;
@@ -44,14 +46,22 @@ public class Generate {
 	// Request
 	private final Request request;
 
+	// Parallel executor to speed stuff up
+	protected ExecutorService executor;
+
+	// Roulette for picking up a variable to change
+	private Roulette rouletteVariable = null;
+
 	/**
 	 * @param dataLayer
 	 * @param request
 	 *            the request to solve
+	 * @param executor
 	 */
-	public Generate(DataLayer dataLayer, Request request) {
+	public Generate(DataLayer dataLayer, Request request, ExecutorService executor) {
 		this.dataLayer = dataLayer;
 		this.request = request;
+		this.executor = executor;
 	}
 
 	/**
@@ -62,15 +72,16 @@ public class Generate {
 	 * @param target
 	 * 
 	 */
-	public void createPopulation(SortedSet<Solution> population, Set<Solution> target) {
+	public void createPopulation(final SortedSet<Solution> population, final Set<Solution> target) {
 		// Prepare a roulette with the parents
 		Roulette parents = new Roulette();
 		for (Solution parent : population)
 			parents.add(parent, parent.getFitness());
 		parents.prepare();
 
-		// Enforce the values of some variable using the value of some others
-		for (int i = 0; i < 30; i++) {
+		// Enforce the values of some variable using the value of some
+		// others
+		for (int i = 0; i < 7 * population.size(); i++) {
 			// Pick a parent
 			Solution parent = (Solution) parents.nextElement();
 
@@ -80,10 +91,24 @@ public class Generate {
 			// Add the new individual
 			if (!target.contains(child))
 				target.add(child);
+
 		}
 
-		// Do crossover among the population
-		// crossover(population, target);
+		// Do some crossover for higher randomization
+		/*
+		 * for (int i = 0; i < 2 * population.size(); i++) { // Pick a parent
+		 * Solution parent1 = (Solution) parents.nextElement();
+		 * 
+		 * // Pick a second parent Solution parent2 = parent1; while
+		 * (parent2.equals(parent1)) parent2 = (Solution) parents.nextElement();
+		 * 
+		 * // Generate a child Solution child = crossover(parent1, parent2);
+		 * 
+		 * // Add the new individual if (!target.contains(child))
+		 * target.add(child);
+		 * 
+		 * }
+		 */
 
 		logger.info("Created " + target.size() + " new individuals from " + population.size() + " parents");
 	}
@@ -101,19 +126,30 @@ public class Generate {
 
 		// Build a roulette for the variable to change
 		// we give higher chances to the most constrained variables
-		Roulette rouletteVariable = new Roulette();
-		for (Variable variable : child.getVariables()) {
-			int nbProviders = request.getResourceProvidersFor(variable.getName()).size();
-			if (nbProviders > 0)
-				rouletteVariable.add(variable.getName(), nbProviders);
+		if (rouletteVariable == null) {
+			rouletteVariable = new Roulette();
+			TreeSet<Pair> list = new TreeSet<Pair>();
+			for (Variable variable : child.getVariables()) {
+				int nbProviders = request.getResourceProvidersFor(variable.getName()).size();
+				if (nbProviders > 0)
+					list.add(new Pair(variable.getName(), nbProviders));
+			}
+
+			int i = 1;
+			for (Pair pair : list) {
+				rouletteVariable.add(pair.getKey(), i);
+				i++;
+			}
+			rouletteVariable.prepare();
 		}
-		rouletteVariable.prepare();
+
 		String variableName = (String) rouletteVariable.nextElement();
 
 		// Build a roulette for the provider to use
 		// we give higher chances to the providers with low cardinality
 		// TODO Sort based on size and assign fixed scores to get rid of
 		// constant value
+		// list.clear();
 		Roulette rouletteProvider = new Roulette();
 		for (ResourceProvider provider : request.getResourceProvidersFor(variableName)) {
 			long nbResources = provider.getNumberResources(variableName, child, dataLayer);
@@ -126,7 +162,7 @@ public class Generate {
 		// Get a new value
 		Value v = provider.getResource(variableName, child, dataLayer);
 		child.getVariable(variableName).setValue(v);
-		// logger.info("Assign " + v + " to " + variable);
+		// logger.info("Assign " + v + " to " + variableName);
 
 		// Add this variable to the changed variables
 		changed.add(variableName);
@@ -221,32 +257,15 @@ public class Generate {
 	 * @param population
 	 * @param target
 	 */
-	private void crossover(SortedSet<Solution> population, Set<Solution> target) {
-		// Prepare an array version of the source population for easy rotate
-		Solution[] sources = new Solution[population.size()];
-		int i = 0;
-		for (Solution solution : population)
-			sources[i++] = solution;
-
-		// Take all parents by pair
-		for (int first = 0; first != population.size() - 1; first++) {
-			Solution firstSol = sources[first];
-			for (int second = first + 1; second != population.size(); second++) {
-				Solution secondSol = sources[second];
-
-				Solution child = firstSol.clone();
-				for (Variable variable : child.getVariables()) {
-					double firstR = firstSol.getVariable(variable.getName()).getReward();
-					double secondR = secondSol.getVariable(variable.getName()).getReward();
-					if (secondR > firstR)
-						child.getVariable(variable.getName()).setValue(
-								secondSol.getVariable(variable.getName()).getValue());
-
-				}
-
-				if (!target.contains(child))
-					target.add(child);
-			}
+	protected Solution crossover(Solution parentA, Solution parentB) {
+		Solution child = parentA.clone();
+		for (Variable variable : child.getVariables()) {
+			double firstR = parentA.getVariable(variable.getName()).getReward();
+			double secondR = parentB.getVariable(variable.getName()).getReward();
+			if (secondR > firstR)
+				child.getVariable(variable.getName()).setValue(parentB.getVariable(variable.getName()).getValue());
 		}
+
+		return child;
 	}
 }

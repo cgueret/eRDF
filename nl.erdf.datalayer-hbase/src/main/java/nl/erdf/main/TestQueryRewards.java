@@ -8,7 +8,7 @@ import java.io.IOException;
 
 import nl.erdf.constraints.impl.StatementPatternConstraint;
 import nl.erdf.datalayer.DataLayer;
-import nl.erdf.datalayer.hbase.NativeHBaseDataLayer;
+import nl.erdf.datalayer.hbase.SpyrosHBaseDataLayer;
 import nl.erdf.model.Request;
 import nl.erdf.model.Solution;
 import nl.erdf.model.TripleSet;
@@ -33,7 +33,7 @@ public class TestQueryRewards {
 
 	public TestQueryRewards() throws FileNotFoundException, IOException {
 		// Create a data layer
-		datalayer = NativeHBaseDataLayer.getInstance("default");
+		datalayer = SpyrosHBaseDataLayer.getInstance("default");
 
 		// Create the request
 		request = new Request(datalayer);

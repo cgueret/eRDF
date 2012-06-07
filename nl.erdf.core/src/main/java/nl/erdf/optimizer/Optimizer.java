@@ -25,10 +25,7 @@ import org.slf4j.LoggerFactory;
  */
 public class Optimizer extends Observable implements Runnable {
 	/** Population size */
-	private static final int POPULATION_SIZE = 10;
-
-	/** Maximum generation to wait before finding an optima */
-	private static final int MAXIMUM_GENERATION = 50;
+	private static final int POPULATION_SIZE = 5;
 
 	/** Logger */
 	protected final Logger logger = LoggerFactory.getLogger(Optimizer.class);
@@ -74,7 +71,7 @@ public class Optimizer extends Observable implements Runnable {
 		this.datalayer = datalayer;
 
 		// Create the operators
-		this.generateOp = new Generate(datalayer, request);
+		this.generateOp = new Generate(datalayer, request, executor);
 		this.evaluateOp = new Evaluate(request, datalayer, blackListedTriples, executor);
 
 	}
@@ -156,14 +153,12 @@ public class Optimizer extends Observable implements Runnable {
 			double topFitness = population.last().getFitness();
 			for (Solution s : population) {
 				// Increment age
-				if (s.getFitness() != topFitness)
-					s.setAge(0);
-				s.setAge(s.getAge() + 1);
+				// if (s.getFitness() != topFitness)
+				// s.setAge(0);
+				// s.setAge(s.getAge() + 1);
 
 				// Check optimality
 				s.setOptimal(false);
-				if (s.getAge() >= MAXIMUM_GENERATION && s.getFitness() > 0)
-					s.setOptimal(true);
 				if (s.getFitness() == 1.0d)
 					s.setOptimal(true);
 

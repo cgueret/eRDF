@@ -1,25 +1,28 @@
 package nl.erdf.datalayer.hbase;
 
 import nl.erdf.model.Triple;
+import nl.vu.datalayer.hbase.connection.HBaseConnection;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.openrdf.model.Literal;
-import org.openrdf.model.Resource;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
-import org.openrdf.rio.ntriples.NTriplesUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Christophe Guéret <christophe.gueret@gmail.com>
  * 
  */
 public class RestHBaseDataLayerTest {
-	private RestHBaseDataLayer dl = null;
+	// Logger
+	private static final Logger logger = LoggerFactory.getLogger(RestHBaseDataLayerTest.class);
+
+	private SeverHBaseDataLayer dl = null;
 
 	private ValueFactory valueFactory = null;
 
@@ -30,7 +33,7 @@ public class RestHBaseDataLayerTest {
 	@Before
 	public void setUp() {
 		valueFactory = new ValueFactoryImpl();
-		dl = new RestHBaseDataLayer();
+		dl = new SeverHBaseDataLayer(HBaseConnection.REST, true);
 		Assert.assertTrue(dl != null);
 		dl.clear();
 	}
@@ -46,65 +49,42 @@ public class RestHBaseDataLayerTest {
 		dl = null;
 	}
 
-	/**
-	 * 
+	/*
+	 * @Test public void testArea() { Resource s =
+	 * NTriplesUtil.parseResource("<http://dbpedia.org/resource/Alabama>",
+	 * valueFactory); URI p =
+	 * valueFactory.createURI("http://dbpedia.org/ontology/PopulatedPlace/areaTotal"
+	 * ); Literal o = valueFactory.createLiteral("135765.",
+	 * valueFactory.createURI("http://dbpedia.org/datatype/squareKilometre"));
+	 * Resource c = NTriplesUtil
+	 * .parseResource("<http://en.wikipedia.org/wiki/Alabama#absolute-line=33>",
+	 * valueFactory); Assert.assertTrue(dl.getResource(new Triple(s, null, o,
+	 * c)).equals(p)); }
 	 */
+
 	@Test
-	public void testValid() {
-		System.out.println(dl.isValid(null));
+	public void testDBpediaArtist() {
+		URI p = valueFactory.createURI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
+		URI o = valueFactory.createURI("http://dbpedia.org/ontology/MartialArtist");
+		Assert.assertTrue(dl.getNumberOfResources(new Triple(null, p, o)) > 0);
 	}
 
 	@Test
-	public void testArea() {
-		Resource subject = NTriplesUtil.parseResource("<http://dbpedia.org/resource/Alabama>", valueFactory);
-		URI predicate = NTriplesUtil.parseURI("<http://dbpedia.org/ontology/PopulatedPlace/areaTotal>", valueFactory);
-		Literal object = valueFactory.createLiteral("135765.",
-				valueFactory.createURI("http://dbpedia.org/datatype/squareKilometre"));
-		Resource context = NTriplesUtil.parseResource("<http://en.wikipedia.org/wiki/Alabama#absolute-line=33>",
-				valueFactory);
-
-		Triple t = new Triple(subject, predicate, null, context);
-		Assert.assertTrue(dl.getResource(t).equals(object));
+	public void testDBpediaArtist2() {
+		URI p = valueFactory.createURI("http://dbpedia.org/ontology/artist");
+		URI o = valueFactory.createURI("http://dbpedia.org/resource/Jimmy_Sturr");
+		logger.info(dl.getResource(new Triple(null, p, o)).toString());
 	}
 
 	@Test
-	public void testReadWrite2() {
-
-		Resource subject = NTriplesUtil.parseResource("<http://dbpedia.org/resource/Wim_Sonneveld>", valueFactory);
-		URI predicate = NTriplesUtil.parseURI("<http://dbpedia.org/ontology/wikiPageWikiLink>", valueFactory);
-		Resource context = NTriplesUtil.parseResource("<http://en.wikipedia.org/wiki/Wim_Sonneveld#absolute-line=29>",
-				valueFactory);
-		Triple t = new Triple(subject, predicate, null, context);
-
-		Value result = dl.getResource(t);
-
-		System.out.println(result);
-	}
-
-	@Test
-	public void testNumberOfResources() {
-
-		Resource subject = NTriplesUtil.parseResource("<http://dbpedia.org/resource/Wim_Sonneveld>", valueFactory);
-		URI predicate = NTriplesUtil.parseURI("<http://dbpedia.org/ontology/wikiPageWikiLink>", valueFactory);
-		Resource context = NTriplesUtil.parseResource("<http://en.wikipedia.org/wiki/Wim_Sonneveld#absolute-line=29>",
-				valueFactory);
-		Triple t = new Triple(subject, predicate, null, context);
-
-		long resultsNo = dl.getNumberOfResources(t);
-
-		System.out.println(resultsNo);
-	}
-
-	@Test
-	public void testNumberOfResources2() {
-
-		Resource s = NTriplesUtil.parseResource("<http://dbpedia.org/resource/Wim_Sonneveld>", valueFactory);
-		URI p = NTriplesUtil.parseURI("<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>", valueFactory);
-		Resource o = NTriplesUtil.parseResource("<http://dbpedia.org/ontology/Artist>", valueFactory);
-		Triple t = new Triple(null, p, o, null);
-
-		long resultsNo = dl.getNumberOfResources(t);
-
-		System.out.println(resultsNo);
+	public void testFreeBaseArtist() {
+		URI s = valueFactory.createURI("http://rdf.freebase.com/ns/m.0100346");
+		URI p = valueFactory.createURI("http://rdf.freebase.com/ns/music.track.artist");
+		Value o = valueFactory.createURI("http://rdf.freebase.com/ns/m.01qmmjp");
+		Assert.assertTrue(dl.getResource(new Triple(s, p, null)).equals(o));
+		Assert.assertTrue(dl.getResource(new Triple(s, null, o)).equals(p));
+		Assert.assertTrue(dl.getNumberOfResources(new Triple(null, p, o)) > 0);
+		for (int i = 0; i < 10; i++)
+			logger.info(dl.getResource(new Triple(null, p, o)) + "");
 	}
 }

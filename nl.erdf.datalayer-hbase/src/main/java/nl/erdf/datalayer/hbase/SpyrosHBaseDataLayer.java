@@ -37,9 +37,9 @@ import org.slf4j.LoggerFactory;
  * @author spyros
  * 
  */
-public class NativeHBaseDataLayer implements DataLayer {
+public class SpyrosHBaseDataLayer implements DataLayer {
 	// Logger
-	protected static Logger logger = LoggerFactory.getLogger(NativeHBaseDataLayer.class);
+	protected static Logger logger = LoggerFactory.getLogger(SpyrosHBaseDataLayer.class);
 
 	// Prefixes
 	private static final byte[] COLUMN = "a".getBytes();
@@ -73,7 +73,7 @@ public class NativeHBaseDataLayer implements DataLayer {
 	 */
 	public static DataLayer getInstance(String schemaName) {
 		try {
-			DataLayer dl = new NativeHBaseDataLayer(schemaName);
+			DataLayer dl = new SpyrosHBaseDataLayer(schemaName);
 			return dl;
 		} catch (IOException e) {
 			return null;
@@ -84,7 +84,7 @@ public class NativeHBaseDataLayer implements DataLayer {
 	 * @param schemaName
 	 * @throws IOException
 	 */
-	private NativeHBaseDataLayer(String schemaName) throws IOException {
+	private SpyrosHBaseDataLayer(String schemaName) throws IOException {
 		this.schemaName = schemaName;
 
 		// Get configuration from the path
@@ -391,6 +391,8 @@ public class NativeHBaseDataLayer implements DataLayer {
 	 * @see nl.erdf.datalayer.DataLayer#getResource(nl.erdf.model.Triple)
 	 */
 	public Value getResource(Triple pattern) {
+		// logger.info("[GET] " + pattern.toString());
+
 		if (pattern.getNumberNulls() != 1)
 			return null;
 
