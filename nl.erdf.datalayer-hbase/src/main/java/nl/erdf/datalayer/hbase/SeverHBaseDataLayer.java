@@ -4,6 +4,7 @@
 package nl.erdf.datalayer.hbase;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,7 +18,6 @@ import nl.vu.datalayer.hbase.connection.HBaseConnection;
 import nl.vu.datalayer.hbase.schema.HBPrefixMatchSchema;
 
 import org.apache.jcs.JCS;
-import org.apache.jcs.access.exception.CacheException;
 import org.openrdf.model.Statement;
 import org.openrdf.model.Value;
 import org.slf4j.Logger;
@@ -46,38 +46,20 @@ public class SeverHBaseDataLayer implements DataLayer {
 	 * @param useCache
 	 * 
 	 */
-	public SeverHBaseDataLayer(byte connectionType, boolean useCache) {
+	public SeverHBaseDataLayer(byte connectionType) {
 		try {
 			con = HBaseConnection.create(connectionType);
-			sol = HBaseFactory.getHBaseSolution(HBPrefixMatchSchema.SCHEMA_NAME, con, null, useCache);
+			sol = HBaseFactory.getHBaseSolution(HBPrefixMatchSchema.SCHEMA_NAME, con, null);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
 		try {
 			resultCache = JCS.getInstance("validate");
-		} catch (CacheException e) {
+		} catch (org.apache.jcs.access.exception.CacheException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
-	}
-
-	/**
-	 * @param pattern
-	 * @return
-	 * @throws IOException
-	 */
-	private int retrieveInternal(Triple pattern) {
-		if (pattern.getSubject() == null)
-			return 0;
-		else if (pattern.getPredicate() == null)
-			return 1;
-		else if (pattern.getObject() == null)
-			return 2;
-		else if (pattern.getContext() == null)
-			return 3;
-		else
-			return -1;
 	}
 
 	/*
@@ -96,7 +78,8 @@ public class SeverHBaseDataLayer implements DataLayer {
 			try {
 				Value[] quad = { pattern.getSubject(), pattern.getPredicate(), pattern.getObject(),
 						pattern.getContext() };
-				results = sol.util.getNumberResults(quad);
+				ArrayList<ArrayList<Value>> r = sol.util.getResults(quad);
+				results = r.size();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -115,11 +98,27 @@ public class SeverHBaseDataLayer implements DataLayer {
 		try {
 			// logger.info("[GET] " + pattern);
 
+			// Get all the triples that match the pattern
 			Value[] quad = { pattern.getSubject(), pattern.getPredicate(), pattern.getObject(), null };
-			Value[] result = sol.util.getSingleResult(quad, Randomizer.instance());
-			Value res = (result != null ? result[retrieveInternal(pattern)] : null);
+			ArrayList<ArrayList<Value>> r = sol.util.getResults(quad);
 
-			return res;
+			// If nothing matches, return null
+			if (r.size() == 0)
+				return null;
+
+			// Pick one triple at random
+			ArrayList<Value> t = r.get(Randomizer.instance().nextInt(r.size()));
+
+			// Return the value for the sought variable (assuming there is only
+			// one)
+			if (pattern.getSubject() == null)
+				return t.get(0);
+			else if (pattern.getPredicate() == null)
+				return t.get(1);
+			else if (pattern.getObject() == null)
+				return t.get(2);
+			else
+				return null;
 		} catch (IOException e) {
 			e.printStackTrace();
 			return null;
@@ -147,12 +146,12 @@ public class SeverHBaseDataLayer implements DataLayer {
 				// Check a fully instantiated triple
 				try {
 					Value[] quad = { pattern.getSubject(), pattern.getPredicate(), null, null };
-					Collection<Value[]> results = sol.util.getAllResults(quad);
-					if (results == null) {
+					Collection<ArrayList<Value>> results = sol.util.getResults(quad);
+					if (results == null || results.size() == 0) {
 						result = new Boolean(false);
 					} else {
-						for (Value[] r : results)
-							if (r[2] != null && r[2].equals(pattern.getObject()))
+						for (ArrayList<Value> r : results)
+							if (r.get(2) != null && r.get(2).equals(pattern.getObject()))
 								result = new Boolean(true);
 					}
 				} catch (IOException e) {
@@ -166,8 +165,7 @@ public class SeverHBaseDataLayer implements DataLayer {
 
 		try {
 			resultCache.put(pattern, result);
-		} catch (CacheException e) {
-			// TODO Auto-generated catch block
+		} catch (org.apache.jcs.access.exception.CacheException e) {
 			e.printStackTrace();
 		}
 

@@ -18,11 +18,11 @@ import org.slf4j.LoggerFactory;
  * @author Christophe Guéret <christophe.gueret@gmail.com>
  * 
  */
-public class RestHBaseDataLayerTest {
+public class SeverRestHBaseDataLayerTest {
 	// Logger
-	private static final Logger logger = LoggerFactory.getLogger(RestHBaseDataLayerTest.class);
+	private static final Logger logger = LoggerFactory.getLogger(SeverRestHBaseDataLayerTest.class);
 
-	private SeverHBaseDataLayer dl = null;
+	private SeverNativeHBaseDataLayer dl = null;
 
 	private ValueFactory valueFactory = null;
 
@@ -33,7 +33,7 @@ public class RestHBaseDataLayerTest {
 	@Before
 	public void setUp() {
 		valueFactory = new ValueFactoryImpl();
-		dl = new SeverHBaseDataLayer(HBaseConnection.REST, true);
+		dl = new SeverNativeHBaseDataLayer(HBaseConnection.REST, true);
 		Assert.assertTrue(dl != null);
 		dl.clear();
 	}

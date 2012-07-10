@@ -142,7 +142,6 @@ public class Generate {
 			}
 			rouletteVariable.prepare();
 		}
-
 		String variableName = (String) rouletteVariable.nextElement();
 
 		// Build a roulette for the provider to use
@@ -157,18 +156,21 @@ public class Generate {
 				rouletteProvider.add(provider, 1.0 / (1.0 + (nbResources / 10000.0)));
 		}
 		rouletteProvider.prepare();
-		ResourceProvider provider = (ResourceProvider) rouletteProvider.nextElement();
 
-		// Get a new value
-		Value v = provider.getResource(variableName, child, dataLayer);
-		child.getVariable(variableName).setValue(v);
-		// logger.info("Assign " + v + " to " + variableName);
+		if (!rouletteProvider.isEmpty()) {
+			ResourceProvider provider = (ResourceProvider) rouletteProvider.nextElement();
 
-		// Add this variable to the changed variables
-		changed.add(variableName);
+			// Get a new value
+			Value v = provider.getResource(variableName, child, dataLayer);
+			child.getVariable(variableName).setValue(v);
+			// logger.info("Assign " + v + " to " + variableName);
 
-		// Do cascading changes
-		propagateChange(child, variableName, changed);
+			// Add this variable to the changed variables
+			changed.add(variableName);
+
+			// Do cascading changes
+			propagateChange(child, variableName, changed);
+		}
 
 		return child;
 	}
@@ -229,11 +231,14 @@ public class Generate {
 					Value o = Convert.getValue(pattern.getObjectVar(), child);
 					if (pattern.getObjectVar().getName().equals(entry.getKey()))
 						o = null;
-					Triple t = new Triple((Resource) s, (URI) p, o);
 
-					// Get a value
-					Value value = dataLayer.getResource(t);
-					values.add(value);
+					if (s instanceof Resource && p instanceof URI) {
+						Triple t = new Triple((Resource) s, (URI) p, o);
+
+						// Get a value
+						Value value = dataLayer.getResource(t);
+						values.add(value);
+					}
 				}
 
 				Random rand = Randomizer.instance();

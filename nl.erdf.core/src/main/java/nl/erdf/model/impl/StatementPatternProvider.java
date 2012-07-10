@@ -47,6 +47,10 @@ public class StatementPatternProvider implements ResourceProvider {
 		// Instantiate the pattern
 		Triple t = Convert.toTriple(pattern, solution);
 
+		// Return null in case of invalid triple
+		if (t == null)
+			return null;
+
 		// Set back the requested variable to null
 		if (pattern.getSubjectVar().getName().equals(variableName))
 			t = new Triple(null, t.getPredicate(), t.getObject());
@@ -69,6 +73,10 @@ public class StatementPatternProvider implements ResourceProvider {
 	public long getNumberResources(String variableName, Solution solution, DataLayer dataLayer) {
 		// Instantiate the pattern
 		Triple t = Convert.toTriple(pattern, solution);
+
+		// Return 0 in case of invalid triple
+		if (t == null)
+			return 0;
 
 		// Set back the requested variable to null
 		if (pattern.getSubjectVar().getName().equals(variableName))

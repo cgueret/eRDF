@@ -89,6 +89,10 @@ public class StatementPatternConstraint implements Constraint {
 		Triple t = Convert.toTriple(pattern, solution);
 
 		// We can not reward triples with more than one null
+		if (t == null)
+			return rewards;
+
+		// We can not reward triples with more than one null
 		if (t.getNumberNulls() > 1)
 			return rewards;
 

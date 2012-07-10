@@ -75,9 +75,14 @@
 			<version>1.1</version>
 		</dependency>
 		<dependency>
-			<groupId>nl.vu</groupId>
-			<artifactId>hbase-rdf</artifactId>
+			<groupId>nl.vu.datalayer.sail</groupId>
+			<artifactId>hbase</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.jcs</groupId>
+			<artifactId>jcs</artifactId>
+			<version>1.3</version>
 		</dependency>
 	</dependencies>
 	<build>

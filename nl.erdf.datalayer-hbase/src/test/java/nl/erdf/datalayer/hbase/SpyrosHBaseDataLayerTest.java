@@ -20,7 +20,7 @@ import org.openrdf.model.impl.ValueFactoryImpl;
  * Test. Takes as single argument the number of triples to check. IT WILL DELETE
  * EVERYTHING IN HBASE. It should fail 50% of the time ;-)
  */
-public class NativeHBaseDataLayerTest {
+public class SpyrosHBaseDataLayerTest {
 	private DataLayer dl = null;
 	private int count = 10;
 
