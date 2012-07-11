@@ -5,7 +5,6 @@ package nl.erdf.datalayer.hbase;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -69,24 +68,23 @@ public class SeverHBaseDataLayer implements DataLayer {
 	 * nl.erdf.datalayer.DataLayer#getNumberOfResources(nl.erdf.model.Triple)
 	 */
 	public synchronized long getNumberOfResources(Triple pattern) {
-		long results = 0;
+		long results = 1000;
 
 		if (countersCache.containsKey(pattern)) {
 			results = countersCache.get(pattern);
 		} else {
-			// logger.info("[CNT] " + pattern);
+			logger.info("[CNT] " + pattern);
+			Value[] quad = { pattern.getSubject(), pattern.getPredicate(), pattern.getObject(), pattern.getContext() };
 			try {
-				Value[] quad = { pattern.getSubject(), pattern.getPredicate(), pattern.getObject(),
-						pattern.getContext() };
-				ArrayList<ArrayList<Value>> r = sol.util.getResults(quad);
-				results = r.size();
-			} catch (IOException e) {
+				results = sol.util.countResults(quad, 1000);
+			} catch (Exception e) {
+				logger.error("Error in datalayer !");
 				e.printStackTrace();
 			}
 			countersCache.put(pattern, new Long(results));
 		}
-		return results;
 
+		return results;
 	}
 
 	/*
@@ -95,34 +93,32 @@ public class SeverHBaseDataLayer implements DataLayer {
 	 * @see nl.erdf.datalayer.DataLayer#getResource(nl.erdf.model.Triple)
 	 */
 	public Value getResource(Triple pattern) {
+		logger.info("[GET] " + pattern);
+
+		// Get all the triples that match the pattern
+		Value[] quad = { pattern.getSubject(), pattern.getPredicate(), pattern.getObject(), null };
+		ArrayList<Value> t = null;
 		try {
-			// logger.info("[GET] " + pattern);
-
-			// Get all the triples that match the pattern
-			Value[] quad = { pattern.getSubject(), pattern.getPredicate(), pattern.getObject(), null };
-			ArrayList<ArrayList<Value>> r = sol.util.getResults(quad);
-
-			// If nothing matches, return null
-			if (r.size() == 0)
-				return null;
-
-			// Pick one triple at random
-			ArrayList<Value> t = r.get(Randomizer.instance().nextInt(r.size()));
-
-			// Return the value for the sought variable (assuming there is only
-			// one)
-			if (pattern.getSubject() == null)
-				return t.get(0);
-			else if (pattern.getPredicate() == null)
-				return t.get(1);
-			else if (pattern.getObject() == null)
-				return t.get(2);
-			else
-				return null;
-		} catch (IOException e) {
+			t = sol.util.getSingleResult(quad, Randomizer.instance());
+		} catch (Exception e) {
+			logger.error("Error in datalayer !");
 			e.printStackTrace();
-			return null;
 		}
+
+		// In case there is no result, return null
+		if (t == null)
+			return null;
+
+		// Return the value for the sought variable (assuming there is only
+		// one)
+		if (pattern.getSubject() == null)
+			return t.get(0);
+		else if (pattern.getPredicate() == null)
+			return t.get(1);
+		else if (pattern.getObject() == null)
+			return t.get(2);
+		else
+			return null;
 	}
 
 	/*
@@ -137,29 +133,36 @@ public class SeverHBaseDataLayer implements DataLayer {
 
 		Boolean result = (Boolean) resultCache.get(pattern);
 		if (result == null) {
-			// logger.info("[VLD] " + pattern);
-
+			result = new Boolean(false);
 			if (pattern.getNumberNulls() != 0) {
 				// Check a partial pattern
-				result = new Boolean(getResource(pattern) != null);
+				Value[] quad = { pattern.getSubject(), pattern.getPredicate(), pattern.getObject(), null };
+				boolean b = false;
+				try {
+					b = sol.util.hasResults(quad);
+				} catch (Exception e) {
+					logger.error("[VLD] " + pattern);
+					e.printStackTrace();
+				}
+				result = new Boolean(b);
 			} else {
 				// Check a fully instantiated triple
+				Value[] quad = { pattern.getSubject(), pattern.getPredicate(), null, null };
+				ArrayList<ArrayList<Value>> results = new ArrayList<ArrayList<Value>>();
 				try {
-					Value[] quad = { pattern.getSubject(), pattern.getPredicate(), null, null };
-					Collection<ArrayList<Value>> results = sol.util.getResults(quad);
-					if (results == null || results.size() == 0) {
-						result = new Boolean(false);
-					} else {
-						for (ArrayList<Value> r : results)
-							if (r.get(2) != null && r.get(2).equals(pattern.getObject()))
-								result = new Boolean(true);
-					}
-				} catch (IOException e) {
+					results = sol.util.getResults(quad);
+				} catch (Exception e) {
+					logger.error("[VLD] " + pattern);
 					e.printStackTrace();
 				}
 
-				if (result == null)
+				if (results == null || results.size() == 0) {
 					result = new Boolean(false);
+				} else {
+					for (ArrayList<Value> r : results)
+						if (r.get(2) != null && r.get(2).equals(pattern.getObject()))
+							result = new Boolean(true);
+				}
 			}
 		}
 

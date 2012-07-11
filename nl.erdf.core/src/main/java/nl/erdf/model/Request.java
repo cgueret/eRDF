@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import nl.erdf.constraints.Constraint;
@@ -201,5 +202,31 @@ public class Request {
 		if (!constraints.containsKey(variableName))
 			return new ArrayList<Constraint>();
 		return constraints.get(variableName);
+	}
+
+	/**
+	 * @return
+	 */
+	public int getNbConstraints() {
+		Set<Constraint> s = new HashSet<Constraint>();
+		for (Entry<String, List<Constraint>> c : constraints.entrySet())
+			s.addAll(c.getValue());
+		return s.size();
+	}
+
+	/**
+	 * @return
+	 */
+	public int getNbVariables() {
+		return constraints.keySet().size();
+	}
+
+	/**
+	 * 
+	 */
+	public void printProviders() {
+		for (Entry<String, List<ResourceProvider>> p : providers.entrySet())
+			for (ResourceProvider pp : p.getValue())
+				logger.info(p.getKey() + " <- " + pp);
 	}
 }

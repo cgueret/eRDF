@@ -41,11 +41,14 @@ public class Convert {
 		Value p = Convert.getValue(statementPattern.getPredicateVar(), solution);
 		Value o = Convert.getValue(statementPattern.getObjectVar(), solution);
 
-		Triple t = null;
-		if (s instanceof Resource && p instanceof URI) {
-			t = new Triple((Resource) s, (URI) p, o);
-		}
+		// Non valid triple
+		if (s != null && !(s instanceof Resource))
+			return null;
 
-		return t;
+		// Non valid triple
+		if (p != null && !(p instanceof URI))
+			return null;
+
+		return new Triple((Resource) s, (URI) p, o);
 	}
 }
