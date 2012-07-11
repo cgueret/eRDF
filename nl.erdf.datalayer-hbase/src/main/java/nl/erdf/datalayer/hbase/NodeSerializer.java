@@ -53,6 +53,13 @@ public class NodeSerializer {
 
 		} catch (IOException e) {
 			throw new IllegalStateException("Something went wrong in deserialization");
+		} finally {
+			try {
+				if (dib != null)
+					dib.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 
 		return resource;

@@ -36,7 +36,7 @@
 	</scm>
 	<modules>
 		<module>nl.erdf.core</module>
-		<!-- Ignored because of compilation problems <module>nl.erdf.datalayer-hbase</module> -->
+		<module>nl.erdf.datalayer-hbase</module>
 		<module>nl.erdf.datalayer-sparql</module>
 		<!-- Not ready yet <module>nl.erdf.www</module> -->
 	</modules>

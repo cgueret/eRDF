@@ -143,6 +143,7 @@ public class Generate {
 			rouletteVariable.prepare();
 		}
 		String variableName = (String) rouletteVariable.nextElement();
+		logger.info("Change " + variableName);
 
 		// Build a roulette for the provider to use
 		// we give higher chances to the providers with low cardinality
