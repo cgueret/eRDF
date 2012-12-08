@@ -1,5 +1,6 @@
 package nl.erdf.datalayer.sparql;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
@@ -10,15 +11,20 @@ import nl.erdf.datalayer.DataLayer;
 import nl.erdf.model.Directory;
 import nl.erdf.model.EndPoint;
 import nl.erdf.model.Triple;
+import nl.erdf.util.Converter;
 
+import org.apache.commons.httpclient.HttpClient;
 import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.openrdf.model.Statement;
 import org.openrdf.model.Value;
+import org.openrdf.query.QueryEvaluationException;
 import org.openrdf.query.algebra.StatementPattern;
 import org.openrdf.query.algebra.Var;
+import org.openrdf.repository.sparql.query.SPARQLBooleanQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -176,6 +182,36 @@ public class SPARQLDataLayer extends Observable implements DataLayer {
 		if (pattern.getNumberNulls() == 1)
 			return isPartiallyValid(triplePattern);
 
+		// Deal with patterns with 2 variables
+		if (pattern.getNumberNulls() == 2)
+			return isValidWithTwoVars(triplePattern);
+		
+		// Three variables are always true
+		return true;
+	}
+
+	/**
+	 * @param triplePattern
+	 * @return
+	 * TODO fix that hack
+	 */
+	private boolean isValidWithTwoVars(StatementPattern triplePattern) {
+		String query = "ASK {" + Converter.toN3Ask(triplePattern) + "}";
+		logger.info(query);
+		
+		for (EndPointExecutor executor: executors) {
+			EndPoint endPoint = executor.getEndPoint();
+			URI uri = endPoint.getURI();
+			HttpClient client = new HttpClient();
+			try {
+				SPARQLBooleanQuery q = new SPARQLBooleanQuery(client, uri.toString(), "", query);
+				if (q.evaluate())
+					return true;
+			} catch (QueryEvaluationException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 		return false;
 	}
 

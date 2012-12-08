@@ -44,6 +44,34 @@ public class Converter {
 	}
 
 	/**
+	 * @param pattern
+	 * @return
+	 */
+	public static String toN3Ask(StatementPattern pattern) {
+		StringBuffer t = new StringBuffer();
+
+		if (pattern.getSubjectVar().hasValue())
+			t.append(toN3(pattern.getSubjectVar().getValue()));
+		else
+			t.append("?s");
+		t.append(" ");
+
+		if (pattern.getPredicateVar().hasValue())
+			t.append(toN3(pattern.getPredicateVar().getValue()));
+		else
+			t.append("?p");
+		t.append(" ");
+
+		if (pattern.getObjectVar().hasValue())
+			t.append(toN3(pattern.getObjectVar().getValue()));
+		else
+			t.append("?o");
+		t.append(".");
+
+		return t.toString();
+	}
+	
+	/**
 	 * @param value
 	 * @return
 	 */
